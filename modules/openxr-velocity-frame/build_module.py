@@ -12,6 +12,7 @@ def package(ndk,runtime):
   names=['module.prop','action.sh','customize.sh']
   if variant=='auto':names+=['auto.sh','service.sh']
   files={n:(HERE/'module'/n).read_bytes() for n in names}
+  for shared in ('live-control.sh','action-report.sh'): files[shared]=(HERE.parents[1]/'tools'/shared).read_bytes()
   p=dict(props);p['name']+=f' ({variant})'
   files['module.prop']=''.join(f'{k}={v}\n' for k,v in p.items()).encode()
   files['skip_mount']=b''

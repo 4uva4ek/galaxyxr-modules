@@ -1,8 +1,9 @@
 #!/system/bin/sh
 set -eu
 MODDIR=${0%/*}
+if [ "$#" = 0 ]; then . "$MODDIR/action-report.sh"; fi
 STATE=/dev/gxr_openxr_velocity_frame
-fail() { echo "$*"; exit 1; }
+fail() { [ "${1:-}" = "" ] || echo "$*"; [ "${MODE:-status}" = status ] || : > "$MODDIR/disable"; exit 1; }
 [ "$(id -u)" = 0 ] || fail 'Root required'
 awk '$2 == "/dev" && $3 == "tmpfs" {ok=1} END {exit !ok}' /proc/mounts || fail '/dev must be tmpfs'
 [ ! -L "$STATE" ] || fail 'Unsafe state path'
@@ -12,11 +13,19 @@ DEFAULT=toggle
 [ ! -f "$MODDIR/auto.sh" ] || DEFAULT=status
 MODE=${1:-$DEFAULT}
 case "$MODE" in on|off|status|toggle|_auto-on|_auto-off) ;; *) fail 'Expected on, off, status or toggle';; esac
+if [ -f "$MODDIR/auto.sh" ]; then
+  if [ "$MODE" = toggle ]; then
+    if [ -f "$MODDIR/disable" ]; then MODE=on; else MODE=off; fi
+  fi
+  [ "$MODE" != on ] || exec sh "$MODDIR/live-control.sh" enable
+elif [ "$MODE" = on ] || [ "$MODE" = toggle ]; then
+  rm -f "$MODDIR/disable"
+fi
 if [ "$MODE" = off ] || [ "$MODE" = toggle ]; then
   [ ! -f "$MODDIR/auto.sh" ] || sh "$MODDIR/auto.sh" disable
 fi
-mkdir "$STATE/lock" 2>/dev/null || fail 'Another action is active'
-trap 'rmdir "$STATE/lock"' EXIT
+mkdir "$STATE/lock" 2>/dev/null || { echo 'Another action is active'; exit 2; }
+trap 'code=$?; rmdir "$STATE/lock"; if [ "$code" -ne 0 ] && [ "$MODE" != status ]; then : > "$MODDIR/disable"; fi; exit "$code"' EXIT
 (cd "$MODDIR" && sha256sum -c SHA256SUMS) > "$STATE/checksums.log" || fail 'Module checksum failure'
 "$MODDIR/bin/gxr-openxr-velocity" list > "$STATE/targets"
 FILTER=
@@ -26,6 +35,7 @@ if [ "$MODE" = _auto-on ]; then
   MODE=on
 fi
 [ "$MODE" != _auto-off ] || MODE=off
+[ "$MODE" != off ] || : > "$MODDIR/disable"
 if [ "$MODE" = on ]; then
   [ ! -f "$MODDIR/disable" ] && [ ! -f "$MODDIR/remove" ] || fail 'Module disabled'
   [ ! -f /data/adb/modules/gxr_controller_extrapolation/autostart/enabled ] || fail 'Disable extrapolation autostart first'
@@ -41,6 +51,7 @@ while read -r TARGET STARTED PACKAGE; do
     "$MODDIR/bin/gxr-openxr-velocity" "$TARGET" status > "$STATE/log"
     if grep -q '^CORRECTED ' "$STATE/log"; then OP=off; else OP=on; fi
   fi
+  [ "$OP" != off ] || : > "$MODDIR/disable"
   if [ "$OP" = on ]; then
     [ ! -f "$MODDIR/disable" ] && [ ! -f "$MODDIR/remove" ] || fail 'Module disabled'
     [ ! -f /data/adb/modules/gxr_controller_extrapolation/autostart/enabled ] || fail 'Disable extrapolation autostart first'

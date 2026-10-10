@@ -71,13 +71,22 @@ case "${1:-status}" in
       if [ ! -f "$record" ]; then
         : > "$MODDIR/auto.pending"
         sync
-        sh "$MODDIR/action.sh" _auto-on "$pid:$started"
+        if sh "$MODDIR/action.sh" _auto-on "$pid:$started"; then :; else
+          result=$?
+          [ "$result" = 2 ] && continue
+          exit "$result"
+        fi
         printf '%s %s %s\n' "$started" "$now" "$now" > "$record"
       else
         read -r saved ready checked < "$record"
         [ "$saved" = "$started" ] || exit 1
         if [ $((now-checked)) -ge 30 ]; then
-          "$MODDIR/bin/gxr-openxr-velocity" "$pid" status > "$STATE/auto-status.log"
+          # Serialize health reads with user status/patch operations.
+          if ! mkdir "$STATE/lock" 2>/dev/null; then continue; fi
+          result=0
+          "$MODDIR/bin/gxr-openxr-velocity" "$pid" status > "$STATE/auto-status.log" || result=$?
+          rmdir "$STATE/lock"
+          [ "$result" = 0 ] || exit "$result"
           grep -q '^CORRECTED pid=' "$STATE/auto-status.log"
           printf '%s %s %s\n' "$started" "$ready" "$now" > "$record"
           echo "Verified CORRECTED $package pid=$pid"

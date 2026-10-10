@@ -19,5 +19,9 @@
   ],
   "auto_shared_files": [
     "autostart.sh"
+  ],
+  "shared_files": [
+    "live-control.sh",
+    "action-report.sh"
   ]
 }

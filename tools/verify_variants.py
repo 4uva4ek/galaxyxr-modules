@@ -15,7 +15,7 @@ def verify(module):
         with zipfile.ZipFile(archive) as z:
             assert z.testzip() is None
             names = set(z.namelist())
-            expected = {'action.sh', 'customize.sh', 'module.prop', 'skip_mount',
+            expected = {'action.sh', 'customize.sh', 'module.prop', 'skip_mount', 'live-control.sh', 'action-report.sh',
                         'bin/'+config['binary'], 'SHA256SUMS', 'NOTICE.txt', 'NDK-NOTICE.txt'}
             if variant == 'auto':
                 expected |= {'auto.sh', 'autostart.sh', 'service.sh', 'auto-default'}

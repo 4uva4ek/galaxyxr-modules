@@ -38,6 +38,7 @@ sync() { :; }
 sha256sum() { return 0; }
 pidof() { cat pid; }
 sh() {
+  if [ "$2" = _auto-off ]; then echo restored > restored; return 0; fi
   if [ "$2" = status ]; then echo "MAIN pid=123"; return 0; fi
   [ "$2" = _auto-on ] && [ "$3" = 123:99 ] || return 90
   echo "$3" >> calls
@@ -53,6 +54,7 @@ set -- _run
 '''.replace('SYSTEM_VALUE', str(system)).replace('ACTION_RESULT',
                     'return 1' if scenario == 'failure' else 'return 0')
             steps = {
+                'busy': ':',
                 'once': ':',
                 'failure': ':',
                 'service_restart': '[ "$tick" -ne 2 ] || echo 456 > pid',
@@ -63,6 +65,9 @@ if [ "$tick" = 3 ]; then echo 123 > pid; fi''',
                 'not_ready': ':',
                 'healthy': '[ "$tick" -ne 2 ] || echo "140.0 0.0" > proc/uptime',
             }
+            if scenario == 'busy':
+                script = script.replace('  return 0\n}\ntick=0',
+                    '  [ "$(wc -l < calls)" -gt 1 ] || return 2\n  return 0\n}\ntick=0')
             if scenario == 'not_ready':
                 (work/'proc/123/maps').write_text('')
             script = script.replace('SCENARIO', steps[scenario])
@@ -83,15 +88,15 @@ if [ "$tick" = 3 ]; then echo 123 > pid; fi''',
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(len(calls), 1)
 
-    def test_resume_is_opt_in_and_blocks_unfinished_attempt(self):
+    def test_resume_respects_checkbox_and_blocks_unfinished_attempt(self):
         for enabled, pending in [(False, False), (True, True), (True, False)]:
             with self.subTest(enabled=enabled, pending=pending), tempfile.TemporaryDirectory() as temp:
                 work = Path(temp)
                 (work/'proc').mkdir()
                 (work/'proc/mounts').write_text('tmpfs /dev tmpfs rw 0 0\n')
                 (work/'autostart').mkdir()
-                if enabled:
-                    (work/'autostart/enabled').touch()
+                if not enabled:
+                    (work/'disable').touch()
                 if pending:
                     (work/'autostart/pending').touch()
                 script = '''MODDIR=.
@@ -137,6 +142,7 @@ set -- resume
                 if first:
                     (work/'launched').unlink()
                     (work/'autostart/enabled').unlink()
+                    (work/'disable').touch()
                     (work/'state/auto.enabled').unlink()
                     (work/'state/auto.worker').rmdir()
 
@@ -144,6 +150,11 @@ set -- resume
         result, calls = self.run_worker('once')
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(len(calls), 1)
+
+    def test_busy_status_reader_retries_without_failure_latch(self):
+        result, calls = self.run_worker('busy')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(len(calls), 2)
 
     def test_failed_activation_stops(self):
         result, calls = self.run_worker('failure')
@@ -167,7 +178,7 @@ set -- resume
 
     def test_disabled_module_never_patched(self):
         result, calls = self.run_worker('disabled')
-        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(result.returncode, 0)
         self.assertEqual(calls, [])
 
     def test_missing_library_never_patched(self):

@@ -1,14 +1,16 @@
-# Controller extrapolation 0.2.0
+# Controller extrapolation 0.3.0
 
-**Downloads:** [Manual ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.2.0/gxr-controller-extrapolation-0.2.0-manual.zip) · [Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.2.0/gxr-controller-extrapolation-0.2.0-auto.zip).
-Choose one variant; both use the same module ID. See the [release](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/controller-extrapolation/v0.2.0) for SHA-256 files.
+Current controls: [Action report and recovery](../../docs/ACTION-REPORT.md).
+
+**Downloads:** [Manual ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.3.0/gxr-controller-extrapolation-0.3.0-manual.zip) · [Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.3.0/gxr-controller-extrapolation-0.3.0-auto.zip).
+Choose one variant; both use the same module ID. See the [release](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/controller-extrapolation/v0.3.0) for SHA-256 files.
 
 Enables the existing OpenXR runtime's controller extrapolation inside the running
-`com.valvesoftware.steamlinkvr` process. KernelSU Action toggles the change manually and disables auto. This
+`com.valvesoftware.steamlinkvr` process. KernelSU Action reports state and recovery instructions without toggling. This
 does not add a HAL client, change the tracking algorithm or force a 60 ms horizon.
 The runtime extrapolates to the timestamp requested by the application.
 
-Choose `-manual.zip` for Action only or `-auto.zip` for automatic activation. Autostart resumes through KernelSU after root
+Choose `-manual.zip` for explicit `action.sh on` activation or `-auto.zip` for automatic activation. Autostart resumes through KernelSU after root
 is available, waits for Steam Link, and disables itself on a detected failure.
 See [manual/auto mode selection and recovery](../../docs/AUTOSTART.md).
 

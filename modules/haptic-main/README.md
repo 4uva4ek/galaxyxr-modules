@@ -1,13 +1,15 @@
-# Haptic MAIN 0.3.0
+# Haptic MAIN 0.4.0
 
-**Downloads:** [Manual ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.3.0/gxr-haptic-main-0.3.0-manual.zip) · [Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.3.0/gxr-haptic-main-0.3.0-auto.zip).
-Choose one variant; both use the same module ID. See the [release](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/haptic-main/v0.3.0) for SHA-256 files.
+Current controls: [Action report and recovery](../../docs/ACTION-REPORT.md).
+
+**Downloads:** [Manual ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.4.0/gxr-haptic-main-0.4.0-manual.zip) · [Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.4.0/gxr-haptic-main-0.4.0-auto.zip).
+Choose one variant; both use the same module ID. See the [release](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/haptic-main/v0.4.0) for SHA-256 files.
 
 A KernelSU module for Galaxy XR SM-I610 that routes standard OpenXR vibration
 from SUB near the trigger to MAIN in the grip. The user confirmed operation on
 both controllers in Steam Link 2.0.20 without HAL layers on October 10, 2026.
 
-**Action** toggles MAIN ↔ STOCK manually and disables autostart. Choose `-manual.zip` for Action only or `-auto.zip` for automatic activation. Autostart resumes through KernelSU after root is
+**Action** reports state and recovery instructions without toggling. Choose manual for explicit `action.sh on`, or auto for startup activation. Autostart resumes after root is
 available and disables itself on a detected failure. See [manual/auto mode selection
 and recovery](../../docs/AUTOSTART.md).
 
