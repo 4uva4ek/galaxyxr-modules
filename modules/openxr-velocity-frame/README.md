@@ -7,7 +7,7 @@ private OpenXR runtime mapping. It also accounts for the velocity of offset pose
 origins (`omega cross offset`). Controller poses and timestamps are unchanged;
 this module does not enable additional prediction.
 
-Version **0.2.0** has two packages, sharing ID `gxr_openxr_velocity_frame`:
+Version **0.2.1** has two packages, sharing ID `gxr_openxr_velocity_frame`:
 
 - **manual**: no startup script. Action reports status; use `action.sh on` to apply.
 - **auto**: KernelSU `service.sh` starts a watcher after Android boot completes.

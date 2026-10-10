@@ -1,9 +1,9 @@
-# Controller extrapolation 0.3.0
+# Controller extrapolation 0.3.1
 
 Current controls: [Action report and recovery](../../docs/ACTION-REPORT.md).
 
-**Downloads:** [Manual ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.3.0/gxr-controller-extrapolation-0.3.0-manual.zip) · [Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.3.0/gxr-controller-extrapolation-0.3.0-auto.zip).
-Choose one variant; both use the same module ID. See the [release](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/controller-extrapolation/v0.3.0) for SHA-256 files.
+**Downloads:** [Manual ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.3.1/gxr-controller-extrapolation-0.3.1-manual.zip) · [Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.3.1/gxr-controller-extrapolation-0.3.1-auto.zip).
+Choose one variant; both use the same module ID. See the [release](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/controller-extrapolation/v0.3.1) for SHA-256 files.
 
 Enables the existing OpenXR runtime's controller extrapolation inside the running
 `com.valvesoftware.steamlinkvr` process. KernelSU Action reports state and recovery instructions without toggling. This

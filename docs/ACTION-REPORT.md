@@ -1,20 +1,20 @@
 # Action button report
 
-Action invokes a Russian status report for all three modules, in both variants.
+Action invokes a English status report for all three modules, in both variants.
 It reports status without toggling, stopping, restarting or applying a patch.
 A failed status read does not change the KernelSU checkbox.
 
 The report explains the saved permission separately from live state:
-`MAIN`, `CORRECTED` or `EXTRAPOLATION` means applied; `STOCK` means unpatched;
-`WAITING` means the target process or library is not ready.
+`ENABLED` means the patch is applied; `DISABLED` means it is not applied.
+Waiting is a reason attached to DISABLED. Failed verification is reported as
+unconfirmed rather than inventing a successful state. The checkbox is shown as ON/OFF.
 
 The report prints commands using the actual installed module path:
 - `action.sh on`: explicit activation; for auto, restart the worker and retry.
 - `action.sh off`: stop automatic application and restore live code.
 - `action.sh status`: raw state for diagnostics.
 
-For a retry, enable the checkbox first and run the displayed `on` command in a
-root terminal. Action itself does not retry. Recheck the result with Action.
-Do not retry firmware mismatches or conflicting patches without resolving them.
-Old KernelSU checkbox cycling alone does not immediately start a stopped worker.
-No Manager APK or kernel change is required by this release.
+With KernelSU GXR live-control, the checkbox immediately starts or stops the
+module. After fixing an error, enable it again; if already checked but inactive,
+toggle off/on. The report also provides root-shell fallback commands for older
+Managers. Action itself remains a read-only status request. No button is renamed.

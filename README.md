@@ -6,9 +6,9 @@ rules are shared across the repository.
 
 | Module | Purpose | Version | Manual ZIP | Auto ZIP |
 | --- | --- | --- | --- | --- |
-| [haptic-main](modules/haptic-main/README.md) | Route SUB haptics to MAIN in service memory | 0.4.0 | [Download manual](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.4.0/gxr-haptic-main-0.4.0-manual.zip) | [Download auto](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.4.0/gxr-haptic-main-0.4.0-auto.zip) |
-| [controller-extrapolation](modules/controller-extrapolation/README.md) | Enable stock OpenXR controller extrapolation in Steam Link memory | 0.3.0 | [Download manual](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.3.0/gxr-controller-extrapolation-0.3.0-manual.zip) | [Download auto](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.3.0/gxr-controller-extrapolation-0.3.0-auto.zip) |
-| [openxr-velocity-frame](modules/openxr-velocity-frame/README.md) | Correct controller velocity coordinates in third-party apps using the supported OpenXR runtime | 0.2.0 | [Download manual](https://github.com/4uva4ek/galaxyxr-modules/releases/download/openxr-velocity-frame/v0.2.0/gxr-openxr-velocity-frame-0.2.0-manual.zip) | [Download auto](https://github.com/4uva4ek/galaxyxr-modules/releases/download/openxr-velocity-frame/v0.2.0/gxr-openxr-velocity-frame-0.2.0-auto.zip) |
+| [haptic-main](modules/haptic-main/README.md) | Route SUB haptics to MAIN in service memory | 0.4.1 | [Download manual](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.4.1/gxr-haptic-main-0.4.1-manual.zip) | [Download auto](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.4.1/gxr-haptic-main-0.4.1-auto.zip) |
+| [controller-extrapolation](modules/controller-extrapolation/README.md) | Enable stock OpenXR controller extrapolation in Steam Link memory | 0.3.1 | [Download manual](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.3.1/gxr-controller-extrapolation-0.3.1-manual.zip) | [Download auto](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.3.1/gxr-controller-extrapolation-0.3.1-auto.zip) |
+| [openxr-velocity-frame](modules/openxr-velocity-frame/README.md) | Correct controller velocity coordinates in third-party apps using the supported OpenXR runtime | 0.2.1 | [Download manual](https://github.com/4uva4ek/galaxyxr-modules/releases/download/openxr-velocity-frame/v0.2.1/gxr-openxr-velocity-frame-0.2.1-manual.zip) | [Download auto](https://github.com/4uva4ek/galaxyxr-modules/releases/download/openxr-velocity-frame/v0.2.1/gxr-openxr-velocity-frame-0.2.1-auto.zip) |
 
 **Action:** reports state and recovery commands; it does not toggle the patch.
 **Manual:** start with `action.sh on`. **Auto:** apply through the
@@ -64,8 +64,8 @@ python tools/build.py controller-extrapolation --ndk /path/to/android-ndk
 python modules/controller-extrapolation/tests/verify_package.py
 ```
 
-Output: `dist/haptic-main/gxr-haptic-main-0.4.0-{manual,auto}.zip` and a SHA-256 checksum file.
-Extrapolation output: `dist/controller-extrapolation/gxr-controller-extrapolation-0.3.0-{manual,auto}.zip`
+Output: `dist/haptic-main/gxr-haptic-main-0.4.1-{manual,auto}.zip` and a SHA-256 checksum file.
+Extrapolation output: `dist/controller-extrapolation/gxr-controller-extrapolation-0.3.1-{manual,auto}.zip`
 and a SHA-256 checksum file for each ZIP. Pass `--variant manual` or
 `--variant auto` to build just one variant.
 The build does not connect to the headset or install the module.
@@ -79,12 +79,13 @@ uses the failure guards described in [AUTOSTART.md](docs/AUTOSTART.md).
 See [AGENTS.md](AGENTS.md) for the complete requirements.
 
 See [Action reports](docs/ACTION-REPORT.md) and [checkbox limitations](docs/LIVE-CONTROL.md).
-This release does not require or install a modified KernelSU Manager.
+Immediate checkbox activation requires [KernelSU GXR live-control](https://github.com/4uva4ek/KernelSU-GXR/releases).
+Modules without the opt-in flag retain standard behavior; Action remains a status report.
 
 Samsung and Steam Link APKs, device dumps, signing keys, dependencies, and compiled
 files are excluded from Git. Module ZIPs are published separately in Releases.
-Versions and tags are independent for each module: `haptic-main/v0.4.0`
-and `controller-extrapolation/v0.3.0`.
+Versions and tags are independent for each module: `haptic-main/v0.4.1`
+and `controller-extrapolation/v0.3.1`.
 See the [release guidelines](docs/RELEASING.md) and
 [original headset validation record](docs/VALIDATION-2026-10-10.md) and
 [manual/auto validation record](docs/VALIDATION-2026-10-11-AUTOSTART.md).

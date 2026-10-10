@@ -14,7 +14,8 @@ The report prints complete commands for its own path.
 Auto uses the standard KernelSU `service.sh` stage, waits for completed Android
 boot and a supported target. A running worker observes a disabled checkbox and
 attempts rollback. On old KernelSU, checking an idle module does not immediately
-launch its worker; use the explicit command. No modified Manager is required.
+launch its worker; use the explicit command. With live-control support the
+checkbox invokes guarded start/stop directly. Use KernelSU GXR live-control for immediate checkbox activation.
 
 The checkbox is the saved permission. Haptic/extrapolation's legacy
 `autostart/enabled` is only a compatibility mirror. Pending activation and failure

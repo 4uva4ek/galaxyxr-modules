@@ -1,18 +1,27 @@
-# Checkbox behavior and scope
+# Opt-in KernelSU live checkbox control
 
-The proposed custom KernelSU live-toggle integration was dropped at the user's
-request. This release does not require it and does not register its opt-in flag.
-The internal `live-control.sh` is called by explicit module commands only.
+Requires KernelSU GXR live-control Manager. Our modules declare
+`gxrLiveControl=1` in module.prop and provide `live-control.sh enable|disable`.
+The Manager's embedded ksud invokes this hook when its checkbox changes.
+Modules without the flag keep the existing KernelSU path. Action is unchanged
+and invokes the module's status report; no extra button is added.
 
-The KernelSU checkbox is a saved permission, not proof of an applied patch.
-An automatic worker respects `disable`; when it is already running it observes
-a disabled checkbox and attempts live rollback. A stopped worker does not start
-merely because an older Manager removes the marker. Use `action.sh on` explicitly
-or the ordinary KernelSU service stage. Action reports state and instructions.
+Enable starts guarded activation immediately. Automatic variants wait for an
+absent target and apply once it loads. Disable stops the worker and restores live
+patches. Failure leaves the disable marker present; use Action for diagnostics,
+resolve the cause and enable again. The Manager list may need refreshing for
+failures detected by background health checks. A checkbox is permission to run;
+the report confirms actual runtime state separately.
 
-Existing fail-closed guards can still create `disable` on activation/health
-failure. Automatic checkbox refresh is not promised; refresh the Manager list.
-No KernelSU patch is shipped solely to synchronize this UI. The previous separate
-`autostart/enabled` file is now only a compatibility mirror, not a second preference.
+The hook path is validated, execution is bounded to 45 seconds, and these
+memory-only modules skip metadata/preinit regeneration on toggles. All normal
+firmware/process guards remain. No kernel, system library or root acquisition
+change is part of this integration. Reboot is not rollback while auto is enabled.
 
-Read [Action report](ACTION-REPORT.md) and [recovery](AUTOSTART.md).
+Manual variants have no startup worker; after a process exit they require another
+explicit activation. Automatic variants use the existing KernelSU service stage.
+If temporary-root startup skips that stage, toggle the module off/on after root
+is available. No extra boot-persistence mechanism is installed.
+
+Older Managers ignore the opt-in flag; their checkboxes alone cannot start an idle
+worker. Explicit `action.sh on|off` commands remain available as a fallback.

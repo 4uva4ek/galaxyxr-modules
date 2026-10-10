@@ -1,9 +1,9 @@
-# Haptic MAIN 0.4.0
+# Haptic MAIN 0.4.1
 
 Current controls: [Action report and recovery](../../docs/ACTION-REPORT.md).
 
-**Downloads:** [Manual ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.4.0/gxr-haptic-main-0.4.0-manual.zip) · [Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.4.0/gxr-haptic-main-0.4.0-auto.zip).
-Choose one variant; both use the same module ID. See the [release](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/haptic-main/v0.4.0) for SHA-256 files.
+**Downloads:** [Manual ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.4.1/gxr-haptic-main-0.4.1-manual.zip) · [Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.4.1/gxr-haptic-main-0.4.1-auto.zip).
+Choose one variant; both use the same module ID. See the [release](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/haptic-main/v0.4.1) for SHA-256 files.
 
 A KernelSU module for Galaxy XR SM-I610 that routes standard OpenXR vibration
 from SUB near the trigger to MAIN in the grip. The user confirmed operation on
