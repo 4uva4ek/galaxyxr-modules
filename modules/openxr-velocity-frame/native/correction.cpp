@@ -28,8 +28,12 @@ static V add(V a,V b){return {a.x+b.x,a.y+b.y,a.z+b.z};}
 static V scale(V a,float b){return {a.x*b,a.y*b,a.z*b};}
 static bool finite(V a){return __builtin_isfinite(a.x)&&__builtin_isfinite(a.y)&&__builtin_isfinite(a.z);}
 __attribute__((noinline)) static V rotate(Q q,V a){V t=scale(cross({q.x,q.y,q.z},a),2);return add(a,add(scale(t,q.w),cross({q.x,q.y,q.z},t)));}
-API void gxr_correct(Relation* r,U device,U input){
- if(!gxr_enabled||!r||(device!=2&&device!=3)||(input&0xffff)!=5)return;
+API void gxr_correct(Relation* r,U device,U input,V* predictionAngular){
+ // The stock predictor adds translation in world axes but right-multiplies
+ // orientation: it requires angular velocity in the input pose's local axes.
+ if(!r)return;
+ *predictionAngular=r->w;
+ if(!gxr_enabled||(device!=2&&device!=3)||(input&0xffff)!=5)return;
  U index=(input>>16)-0x13;if(index>=6||!(r->flags&1))return;
  Q q=r->q;float norm=q.x*q.x+q.y*q.y+q.z*q.z+q.w*q.w;
  if(!(norm>.999f&&norm<1.001f))return;
@@ -38,6 +42,10 @@ API void gxr_correct(Relation* r,U device,U input){
  q={q.x*g.c+q.w*g.s,q.y*g.c+q.z*g.s,q.z*g.c-q.y*g.s,q.w*g.c-q.x*g.s};
  const V angular=r->w;
  const bool have_w=(r->flags&0x40)&&finite(angular);
+ if(have_w){
+   float c=1-2*g.s*g.s,s=2*g.s*g.c;
+   *predictionAngular={angular.x,c*angular.y-s*angular.z,s*angular.y+c*angular.z};
+ }
  if((r->flags&0x20)&&finite(r->v)){
    if(index==1) { V out=rotate(q,r->v);if(finite(out))r->v=out; }
    else if(have_w){V out=rotate(q,add(r->v,cross(angular,g.p)));if(finite(out))r->v=out;}

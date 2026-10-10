@@ -19,6 +19,11 @@
 #include <stdexcept>
 #include <chrono>
 #include "expected.h"
+#include "tuning.h"
+#include <sys/uio.h>
+#include <elf.h>
+#include <asm/ptrace.h>
+static constexpr uintptr_t TUNE = 0x12870;
 
 static constexpr char PACKAGE[] = "com.sec.android.secxrcontrollerservice";
 static constexpr char LIBRARY[] = "/system/lib64/libsecxrcontrollerservice_jni.xrcontroller.samsung.so";
@@ -55,9 +60,14 @@ static uint32_t validate(Memory& mem, uintptr_t base) {
     std::vector<unsigned char> bytes(sizeof(EXPECTED)); mem.get(base + FUNCTION, bytes.data(), bytes.size());
     uint32_t instruction; memcpy(&instruction, bytes.data() + SITE - FUNCTION, 4);
     require(instruction == STOCK || instruction == MAIN, "Unknown instruction; refusing modification");
+    bool tuned = !memcmp(bytes.data()+TUNE-FUNCTION,TUNING,sizeof(TUNING));
+    if(tuned) {
+        require(instruction==MAIN,"Partial tuning patch");
+        memcpy(bytes.data()+TUNE-FUNCTION,EXPECTED+TUNE-FUNCTION,sizeof(TUNING));
+    }
     memcpy(bytes.data() + SITE - FUNCTION, &STOCK, 4);
     require(!memcmp(bytes.data(), EXPECTED, bytes.size()), "Function differs from pinned stock code");
-    return instruction;
+    return tuned?2:(instruction==MAIN?1:0);
 }
 struct Frozen {
     struct Thread { pid_t id; bool stopped; int signal; };
@@ -100,6 +110,7 @@ struct Frozen {
         throw std::runtime_error("Thread list did not stabilize");
     }
 };
+#include "transaction.h"
 int main(int argc, char** argv) {
     try {
         require(argc==3,"Usage: gxr-main PID status|on|off|toggle");
@@ -110,25 +121,15 @@ int main(int argc, char** argv) {
         auto disk=read(LIBRARY);
         require(disk.size()==176016 && !memcmp(disk.data()+FUNCTION,EXPECTED,sizeof(EXPECTED)),"Disk function mismatch");
         uintptr_t base=mapping(pid); Memory mem(pid); uint32_t before=validate(mem,base);
-        if(mode=="status") { printf("%s pid=%d site=%lx\n",before==MAIN?"MAIN":"STOCK",pid,base+SITE); return 0; }
+        if(mode=="status") { printf("%s pid=%d site=%lx profile=step2-amplitude-stock\n",before==2?"MAIN":(before==1?"LEGACY_MAIN":"STOCK"),pid,base+SITE); return 0; }
         // Short critical section: ignore terminal termination, never use EXITKILL.
         signal(SIGINT,SIG_IGN); signal(SIGTERM,SIG_IGN); signal(SIGHUP,SIG_IGN);
         Frozen frozen; frozen.freeze(pid);
         require(mapping(pid)==base,"Mapping changed during attach"); before=validate(mem,base);
-        uint32_t after=mode=="toggle"?(before==MAIN?STOCK:MAIN):(mode=="on"?MAIN:STOCK);
-        if(before!=after) {
-            uintptr_t aligned=(base+SITE)&~uintptr_t(7);
-            uint64_t word; mem.get(aligned,&word,8); uint64_t modified=word;
-            memcpy(reinterpret_cast<char*>(&modified)+(base+SITE-aligned),&after,4);
-            require(ptrace(PTRACE_POKETEXT,pid,reinterpret_cast<void*>(aligned),reinterpret_cast<void*>(modified))==0,"PTRACE_POKETEXT denied");
-            try { require(validate(mem,base)==after,"Patch readback failed"); }
-            catch(...) {
-                if(ptrace(PTRACE_POKETEXT,pid,reinterpret_cast<void*>(aligned),reinterpret_cast<void*>(word))!=0)
-                    fprintf(stderr,"RESTORE FAILED: reboot required\n");
-                throw;
-            }
-        }
-        printf("%s pid=%d: verified one instruction in private memory; %zu threads released on exit\n",after==MAIN?"MAIN":"STOCK",pid,frozen.threads.size());
+        uint32_t after=mode=="toggle"?(before?0:2):(mode=="on"?2:0);
+        if(before!=after) change(pid,mem,base,frozen,after);
+        printf("%s pid=%d: profile=step2-amplitude-stock; private memory verified; %zu threads released on exit\n",
+               after?"MAIN":"STOCK",pid,frozen.threads.size());
         return 0;
     } catch(const std::exception& e) { fprintf(stderr,"ERROR: %s (errno=%d %s)\n",e.what(),errno,strerror(errno)); return 1; }
 }

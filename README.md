@@ -4,11 +4,18 @@ Independent KernelSU modules for Samsung Galaxy XR in one repository.
 Each module has its own version and ZIP package. Build tools and device safety
 rules are shared across the repository.
 
-| Module | Purpose | Version | ZIP |
+| Module | Purpose | Version | Release |
 | --- | --- | --- | --- |
-| [haptic-main](modules/haptic-main/README.md) | Route SUB haptics to MAIN in service memory | 0.4.1 | [Download auto](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.4.1/gxr-haptic-main-0.4.1-auto.zip) |
-| [controller-extrapolation](modules/controller-extrapolation/README.md) | Enable stock OpenXR controller extrapolation in Steam Link memory | 0.3.1 | [Download auto](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.3.1/gxr-controller-extrapolation-0.3.1-auto.zip) |
-| [openxr-velocity-frame](modules/openxr-velocity-frame/README.md) | Correct controller velocity coordinates in third-party apps using the supported OpenXR runtime | 0.2.1 | [Download auto](https://github.com/4uva4ek/galaxyxr-modules/releases/download/openxr-velocity-frame/v0.2.1/gxr-openxr-velocity-frame-0.2.1-auto.zip) |
+| [Haptics MAIN](modules/haptic-main/README.md) | MAIN motor, step 2 frequency, unchanged amplitude | 0.5.1 | [Regular](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/haptic-main/v0.5.1) |
+| [Velocity Frame](modules/openxr-velocity-frame/README.md) | Correct velocity coordinates before app-side prediction | 0.3.0 | [Regular](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/openxr-velocity-frame/v0.3.0) |
+| [Controller Extrapolation](modules/controller-extrapolation/README.md) | Enable OpenXR prediction in Steam Link | 0.4.0 | [Experimental](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/controller-extrapolation/v0.4.0) |
+| [HAL Prediction +30 ms](modules/hal-prediction-30/README.md) | Advance the shared controller HAL request | 0.1.1 | [Experimental](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/hal-prediction-30/v0.1.1) |
+
+All new packages are automatic variants, shipped disabled. Enable separately after
+installation. Velocity Frame 0.3.0 and Extrapolation 0.4.0 support each other;
+upgrade both, stop the app, and clear old live patches first. HAL +30 ms modifies
+a separate service. Combined tracking quality and prediction overshoot still
+require testing; experimental modules are GitHub prereleases.
 
 **Action:** reports state and recovery commands; it does not toggle the patch.
 Apply through the
@@ -34,7 +41,7 @@ Each module ships an `-auto.zip` package. It uses standard KernelSU startup and 
 - [Install KernelSU GXR with DFRoot](https://github.com/4uva4ek/KernelSU-GXR/blob/galaxyxr/GALAXYXR.md#installation).
 - [Haptic MAIN module installation](modules/haptic-main/README.md#installation), including the tested installer's persistent-write caveat.
 - [Controller extrapolation deployment](modules/controller-extrapolation/README.md#build-and-deployment) (manual deployment only).
-- [OpenXR velocity correction](modules/openxr-velocity-frame/README.md#installation-and-rollback): automatic activation, third-party app discovery, exact firmware checks. Keep the separate extrapolation patch off with this release.
+- [OpenXR velocity correction](modules/openxr-velocity-frame/README.md#installation-and-rollback): automatic activation, third-party app discovery, exact firmware checks. Use Extrapolation 0.4.0 or newer; earlier combinations are unsupported.
 
 Read the linked instructions and safety notes before installing.
 
@@ -51,18 +58,18 @@ dist/                  local build artifacts, excluded from Git
 
 ## Building
 
-Requires Python 3.10+ and Android NDK **28.2.13676358**. No third-party Python
-or npm packages are required. Set `ANDROID_NDK_HOME` to your NDK installation,
+Requires Python 3.10+ and Android NDK **28.2.13676358**. The ARM64 integration test additionally requires `unicorn==2.1.4`. Set `ANDROID_NDK_HOME` to your NDK installation,
 or pass its path with `--ndk`.
 
 ```sh
 python tools/build.py haptic-main --ndk /path/to/android-ndk
 python modules/haptic-main/tests/verify_package.py
+python modules/openxr-velocity-frame/build_module.py --ndk /path/to/android-ndk --runtime /path/to/libopenxr_android.so
 python tools/build.py controller-extrapolation --ndk /path/to/android-ndk
 python modules/controller-extrapolation/tests/verify_package.py
 ```
 
-Output: `dist/haptic-main/gxr-haptic-main-0.4.1-auto.zip` and a SHA-256 checksum file.
+Output: `dist/haptic-main/gxr-haptic-main-0.5.1-auto.zip` and a SHA-256 checksum file.
 Extrapolation output: `dist/controller-extrapolation/gxr-controller-extrapolation-0.3.1-auto.zip`
 and a SHA-256 checksum file for each ZIP. Only automatic release packages are built.
 The build does not connect to the headset or install the module.

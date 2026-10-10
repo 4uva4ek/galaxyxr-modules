@@ -1,0 +1,25 @@
+{
+  "artifact": "gxr-hal-prediction-30",
+  "binary": "gxr-hal-lead30",
+  "ndk": "28.2.13676358",
+  "api": 29,
+  "files": [
+    "action.sh",
+    "action-report.sh",
+    "common.sh",
+    "live-control.sh",
+    "customize.sh",
+    "module.prop",
+    "skip_mount",
+    "disable"
+  ],
+  "variants": [
+    "auto"
+  ],
+  "auto_files": [
+    "auto.sh",
+    "service.sh"
+  ],
+  "auto_shared_files": [],
+  "shared_files": []
+}

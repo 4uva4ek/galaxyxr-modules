@@ -1,24 +1,31 @@
-# Controller extrapolation 0.3.1
+# Controller extrapolation 0.4.0 ? Experimental
 
 Current controls: [Action report and recovery](../../docs/ACTION-REPORT.md).
 
-**Downloads:** [Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.3.1/gxr-controller-extrapolation-0.3.1-auto.zip).
-See the [release](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/controller-extrapolation/v0.3.1) for SHA-256 files.
+Version **0.4.0** is compatible with OpenXR Velocity Frame **0.3.0** and
+HAL Prediction +30 ms **0.1.1**. Automatic package only, shipped disabled.
+Build Velocity Frame first to regenerate the exact shared native compatibility
+contract. Unknown/partial hooks are rejected; each module restores only its sites.
+
+The correction supplies the predictor with world linear and input-local angular
+velocity while returning world angular velocity to OpenXR. HAL +30 ms is a separate
+service patch; combined motion quality/overshoot is not yet user-validated.
 
 Enables the existing OpenXR runtime's controller extrapolation inside the running
 `com.valvesoftware.steamlinkvr` process. KernelSU Action reports state and recovery instructions without toggling. This
 does not add a HAL client, change the tracking algorithm or force a 60 ms horizon.
 The runtime extrapolates to the timestamp requested by the application.
 
-The `-auto.zip` package provides automatic activation. Autostart resumes through KernelSU after root
-is available, waits for Steam Link, and disables itself on a detected failure.
-See [activation and recovery](../../docs/AUTOSTART.md).
+Automatic activation requires a separate user request. The KernelSU checkbox is
+the sole preference. If the worker cannot stop, `off` still attempts guarded native
+restoration and reports the worker timeout separately. A shared operation lock
+serializes this module with Velocity Frame.
 
 There are no mounts, properties, or policy changes. The original runtime file is
 never written. Closing the app process or rebooting clears the current patch,
 but auto can apply it again. Disable auto before rebooting for rollback. Opening
-the menu alone may not end the process. Disabling the module does not undo an
-existing memory patch: use `action.sh off` or disable auto and terminate the app.
+the menu alone may not end the process. Disabling via live control attempts restoration. Verify the runtime result; if
+restoration fails, leave disabled and terminate the app.
 
 ```sh
 su -c 'sh /data/adb/modules/gxr_controller_extrapolation/action.sh status'

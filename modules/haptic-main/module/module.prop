@@ -1,7 +1,7 @@
 id=gxr_haptic_main
 name=Galaxy XR Haptics MAIN - Live control
-version=0.4.1
-versionCode=5
+version=0.5.1
+versionCode=7
 author=GalaxyXR
-description=Action toggles MAIN/STOCK in controller service memory. Tested on both controllers. Optional auto; disables auto on detected failure. Disable auto before reboot to restore stock.
+description=MAIN pulse tuning: step 2 (100 Hz request), unchanged amplitude. Action reports status and recovery.
 gxrLiveControl=1

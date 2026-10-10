@@ -1,0 +1,1 @@
+Native helper derived from the previously tested manual HAL request-time experiment in diagnostics/hal-prediction-no-shizuku-20261011/native-test. Only private controller-service memory is changed. No firmware, original library, metadata or root startup modifications.

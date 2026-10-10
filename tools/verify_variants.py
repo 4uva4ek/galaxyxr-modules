@@ -1,4 +1,4 @@
-"""Check the automatic release artifact for one module."""
+"""Check the disabled automatic release artifact for one module."""
 import hashlib
 import json
 import zipfile
@@ -18,8 +18,8 @@ def verify(module):
             expected = {'action.sh', 'customize.sh', 'module.prop', 'skip_mount', 'live-control.sh', 'action-report.sh',
                         'bin/'+config['binary'], 'SHA256SUMS', 'NOTICE.txt', 'NDK-NOTICE.txt'}
             if variant == 'auto':
-                expected |= {'auto.sh', 'autostart.sh', 'service.sh', 'auto-default'}
-                assert z.read('auto-default') == b''
+                expected |= {'auto.sh', 'autostart.sh', 'service.sh', 'disable'}
+                assert z.read('disable') == b''
                 assert b'auto.sh" resume' in z.read('service.sh')
             assert names == expected, names ^ expected
             assert z.read('skip_mount') == b''
@@ -28,7 +28,7 @@ def verify(module):
                 digest, name = line.split('  ', 1)
                 assert hashlib.sha256(z.read(name)).hexdigest() == digest, name
                 covered.add(name)
-            assert covered == names - {'SHA256SUMS'}
+            assert covered == names - {'SHA256SUMS', 'disable'}
             binary = z.read('bin/'+config['binary'])
             assert binary[:6] == b'\x7fELF\x02\x01' and binary[18:20] == b'\xb7\x00'
             binaries.append(binary)
@@ -38,4 +38,5 @@ def verify(module):
             packaged = dict(line.split('=', 1) for line in z.read('module.prop').decode().splitlines() if '=' in line)
             assert packaged['id'] == props['id']
             assert packaged['name'].endswith(f'({variant})')
-    print(f'{module.name}: auto contents, hashes, ARM64, no early-boot hooks: OK')
+    assert len(binaries) == 1
+    print(f'{module.name}: disabled auto contents, hashes, ARM64, no early-boot hooks: OK')
