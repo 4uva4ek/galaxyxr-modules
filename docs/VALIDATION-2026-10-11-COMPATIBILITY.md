@@ -1,5 +1,9 @@
 # Controller module compatibility
 
+Retirement update (2026-10-11): HAL Prediction +30 ms was removed at the user's
+request after they reported good operation without it. References below record
+historical tests, not an available or recommended module.
+
 Velocity Frame 0.3.0 corrects the copied relation before the existing OpenXR
 predictor. Linear input is world-space; angular input is a private stack copy in
 the input pose's local axes. Returned angular velocity remains world-space.

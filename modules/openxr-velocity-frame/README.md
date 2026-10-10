@@ -39,11 +39,6 @@ correction now runs before prediction, with world-space linear velocity and
 input-local angular velocity for the stock predictor. Returned angular velocity
 remains world-space. The shared producer buffer is never changed.
 
-HAL Prediction +30 ms 0.1.1 acts in a separate service/library and needs no code
-compatibility update. Its extra prediction and the app's extrapolation can add;
-combined subjective latency, overshoot and throwing still need user testing.
-Do not interpret acceptance of the three patches as proof of better tracking.
-
 The old 0.2.1 payload cannot be upgraded inside a live app. Disable both app
 modules and fully restart the app before updating. Unknown hooks are rejected.
 

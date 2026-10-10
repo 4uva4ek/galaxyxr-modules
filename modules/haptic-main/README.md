@@ -79,14 +79,12 @@ have not been validated.
 Build from the repository root: `python tools/build.py haptic-main --ndk PATH`.
 See the [validation record](../../docs/VALIDATION-2026-10-10.md) for results and limitations.
 
-## Tuning validation and interaction with HAL Prediction
+## Tuning validation
 
 Before building, run `python modules/haptic-main/tests/build_tuning_test.py --ndk PATH`
 to assemble tuning.S and check the committed tuning.h. The generated standalone
 `dist/haptic-main/test-tuning` runs 3603 actual ARM64 cases plus NaN and signed zero.
 It never opens another process or invokes controller services.
-
-HAL Prediction 0.1.1 permits the entire haptic JNI function independently of Haptic version. Keep future Haptic implementations within [0x122ac,0x12914), or explicitly update the ownership contract. Prediction 0.1.0 only recognizes legacy MAIN and is incompatible with tuned Haptic.
 
 Install the automatic candidate disabled after a manual on/off check; do not
 activate it automatically as part of deployment. Preserve the previous module.

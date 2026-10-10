@@ -2,14 +2,13 @@
 
 Current controls: [Action report and recovery](../../docs/ACTION-REPORT.md).
 
-Version **0.4.0** is compatible with OpenXR Velocity Frame **0.3.0** and
-HAL Prediction +30 ms **0.1.1**. Automatic package only, shipped disabled.
+Version **0.4.0** is compatible with OpenXR Velocity Frame **0.3.0**. Automatic package only, shipped disabled.
 Build Velocity Frame first to regenerate the exact shared native compatibility
 contract. Unknown/partial hooks are rejected; each module restores only its sites.
 
 The correction supplies the predictor with world linear and input-local angular
-velocity while returning world angular velocity to OpenXR. HAL +30 ms is a separate
-service patch; combined motion quality/overshoot is not yet user-validated.
+velocity while returning world angular velocity to OpenXR. Combined motion
+quality, overshoot and throwing still need validation.
 
 Enables the existing OpenXR runtime's controller extrapolation inside the running
 `com.valvesoftware.steamlinkvr` process. KernelSU Action reports state and recovery instructions without toggling. This
