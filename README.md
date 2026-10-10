@@ -8,12 +8,13 @@ rules are shared across the repository.
 | --- | --- | --- | --- |
 | [Haptics MAIN](modules/haptic-main/README.md) | MAIN motor, step 2 frequency, unchanged amplitude | 0.5.1 | [Regular](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/haptic-main/v0.5.1) |
 | [Velocity Frame](modules/openxr-velocity-frame/README.md) | Correct velocity coordinates before app-side prediction | 0.3.0 | [Regular](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/openxr-velocity-frame/v0.3.0) |
-| [Controller Extrapolation](modules/controller-extrapolation/README.md) | Enable OpenXR prediction in Steam Link | 0.4.0 | [Experimental](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/controller-extrapolation/v0.4.0) |
+| [Controller Extrapolation](modules/controller-extrapolation/README.md) | Enable OpenXR prediction in Steam Link | 0.4.0 | [Regular](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/controller-extrapolation/v0.4.0) |
 
 All new packages are automatic variants, shipped disabled. Enable separately after
 installation. Velocity Frame 0.3.0 and Extrapolation 0.4.0 support each other;
 upgrade both, stop the app, and clear old live patches first. Combined tracking quality and prediction overshoot still
-require testing; experimental modules are GitHub prereleases.
+require testing. Controller Extrapolation 0.4.0 is a regular release following
+user confirmation of good operation on 2026-10-11.
 
 **Action:** reports state and recovery commands; it does not toggle the patch.
 Apply through the

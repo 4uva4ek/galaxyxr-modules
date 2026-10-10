@@ -33,7 +33,8 @@ Haptics MAIN 0.5.1 likewise retains its previously tested native artifact: MAIN,
 step 2 frequency request and unchanged amplitude. Prior tests are historical;
 publication is not a new subjective haptic validation.
 
-Extrapolation and HAL +30 ms are experimental prereleases. Velocity Frame and
-Haptics MAIN are regular releases per the user's distribution decision. All new
+Distribution update (2026-10-11): following the user's confirmation of good
+operation, Controller Extrapolation 0.4.0 is now a regular release alongside
+Velocity Frame and Haptics MAIN. HAL +30 ms has been retired. All new
 archives are automatic only and contain a disable marker outside SHA256SUMS.
 No KernelSU UI or new error-reporting changes are included.

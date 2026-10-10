@@ -1,4 +1,6 @@
-# Controller extrapolation 0.4.0 ? Experimental
+# Controller extrapolation 0.4.0
+
+Regular release: the user confirmed good operation on 2026-10-11.
 
 Current controls: [Action report and recovery](../../docs/ACTION-REPORT.md).
 

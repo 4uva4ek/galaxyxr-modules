@@ -18,6 +18,6 @@ requires fresh analysis and precise compatibility checks; do not remove existing
 hash checks to accept an unknown build.
 Releases are published manually. A push does not automatically publish a release.
 
-Controller Extrapolation is an experimental GitHub prerelease. Velocity Frame and Haptics MAIN are regular releases. Every newly
+Controller Extrapolation, Velocity Frame and Haptics MAIN are regular releases. Every newly
 built automatic package must contain `disable`; exclude that mutable preference
 from SHA256SUMS. Do not publish manual packages.
