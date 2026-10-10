@@ -1,12 +1,11 @@
-# Manual and automatic packages
+# Automatic packages
 
-Each module ships manual and auto ZIPs with identical native patchers.
-Install one variant per module ID; replace directories cleanly when changing
-variants so old startup hooks cannot remain. The normal installer is blocked
+Each module ships an automatic ZIP. Replace module directories cleanly when
+upgrading so obsolete startup hooks cannot remain. The normal installer is blocked
 because the tested Samsung installer can modify metadata startup files.
 Use the reviewed deployment instructions in each module README.
 
-Action reports state and instructions in both variants; it never toggles a patch.
+Action reports state and instructions for each module; it never toggles a patch.
 Use `sh /data/adb/modules/MODULE_ID/action.sh on` to activate or retry explicitly.
 For auto this starts its guarded worker. Use `action.sh off` to stop and restore.
 The report prints complete commands for its own path.

@@ -17,3 +17,5 @@ User instruction recorded on 2026-10-10. Applies to all work in this workspace i
 - User update 2026-10-11: automatic checkbox clearing is no longer required; do not modify KernelSU solely for it. Keep the Action label. Action output must explicitly explain status reporting and include short recovery/restart instructions. Preserve failure containment and boot safety.
 
 - Latest user decision 2026-10-11 supersedes the earlier cancellation: update KernelSU userspace so checkbox changes apply/restore only modules opting in with gxrLiveControl=1; keep ordinary modules on the standard path and retain the Action button. Reports must be English, universal ENABLED/DISABLED labels, with explicit waiting/error reasons.
+
+- Distribution update, user request 2026-10-11: remove manual packages from the public repository and GitHub Releases. Public builds publish automatic packages only. Local manual testing before automatic deployment and separate authorization to enable remain required; this cleanup does not authorize headset changes.

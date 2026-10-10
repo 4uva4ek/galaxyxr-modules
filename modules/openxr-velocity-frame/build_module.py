@@ -1,4 +1,4 @@
-"""Build both manual and automatic ZIPs; never connect to a headset."""
+"""Build the automatic ZIP; never connect to a headset."""
 import argparse,hashlib,json,platform,zipfile
 from pathlib import Path
 from prepare import build,HERE
@@ -8,7 +8,7 @@ def package(ndk,runtime):
  out=HERE.parents[1]/'dist/openxr-velocity-frame'
  host={'Windows':'windows-x86_64','Linux':'linux-x86_64','Darwin':'darwin-x86_64'}[platform.system()]
  props=dict(l.split('=',1) for l in (HERE/'module/module.prop').read_text().splitlines() if '=' in l)
- for variant in ('manual','auto'):
+ for variant in ('auto',):
   names=['module.prop','action.sh','customize.sh']
   if variant=='auto':names+=['auto.sh','service.sh']
   files={n:(HERE/'module'/n).read_bytes() for n in names}

@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('module', choices=sorted(p.name for p in (ROOT/'modules').iterdir() if (p/'build.json').is_file()))
 parser.add_argument('--ndk', default=os.environ.get('ANDROID_NDK_HOME'))
-parser.add_argument('--variant', choices=['manual', 'auto', 'both'], default='both')
+parser.add_argument('--variant', choices=['auto'], default='auto')
 args = parser.parse_args()
 if not args.ndk:
     parser.error('Set ANDROID_NDK_HOME or pass --ndk PATH')
@@ -59,9 +59,7 @@ for variant in variants:
     if variant:
         package_props = dict(props)
         package_props['name'] += f' ({variant})'
-        package_props['description'] = ('Manual activation via Action; no startup scripts. Full reboot restores stock.'
-                                        if variant == 'manual' else
-                                        'Automatic activation via KernelSU service stage; stops on detected failure. Disable auto before reboot for rollback.')
+        package_props['description'] = ('Automatic activation via KernelSU service stage; stops on detected failure. Disable auto before reboot for rollback.')
         payload['module.prop'] = ''.join(f'{k}={v}\n' for k,v in package_props.items()).encode()
     assert not any(b'\r' in data for data in payload.values()), 'Source must use LF line endings'
     payload['bin/'+config['binary']] = blob

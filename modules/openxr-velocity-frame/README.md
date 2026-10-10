@@ -7,9 +7,8 @@ private OpenXR runtime mapping. It also accounts for the velocity of offset pose
 origins (`omega cross offset`). Controller poses and timestamps are unchanged;
 this module does not enable additional prediction.
 
-Version **0.2.1** has two packages, sharing ID `gxr_openxr_velocity_frame`:
+Version **0.2.1** ships an automatic package with ID `gxr_openxr_velocity_frame`:
 
-- **manual**: no startup script. Action reports status; use `action.sh on` to apply.
 - **auto**: KernelSU `service.sh` starts a watcher after Android boot completes.
   Action reports current patch status. The watcher discovers eligible apps,
   applies correction when their runtime loads, and verifies it every 30 seconds.
@@ -86,7 +85,7 @@ python modules/openxr-velocity-frame/verify.py --ndk /path/to/ndk
 python modules/openxr-velocity-frame/verify_package.py
 ```
 
-Both ZIPs and checksum files appear in `dist/openxr-velocity-frame/`. Building
+The automatic ZIP and checksum file appear in `dist/openxr-velocity-frame/`. Building
 never connects to the headset. No APK or Steam Link version is needed for building.
 
 The wrapper hooks the controller consumption call at runtime offset `0x1d9e18`.

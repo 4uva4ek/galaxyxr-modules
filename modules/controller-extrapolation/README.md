@@ -2,17 +2,17 @@
 
 Current controls: [Action report and recovery](../../docs/ACTION-REPORT.md).
 
-**Downloads:** [Manual ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.3.1/gxr-controller-extrapolation-0.3.1-manual.zip) · [Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.3.1/gxr-controller-extrapolation-0.3.1-auto.zip).
-Choose one variant; both use the same module ID. See the [release](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/controller-extrapolation/v0.3.1) for SHA-256 files.
+**Downloads:** [Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.3.1/gxr-controller-extrapolation-0.3.1-auto.zip).
+See the [release](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/controller-extrapolation/v0.3.1) for SHA-256 files.
 
 Enables the existing OpenXR runtime's controller extrapolation inside the running
 `com.valvesoftware.steamlinkvr` process. KernelSU Action reports state and recovery instructions without toggling. This
 does not add a HAL client, change the tracking algorithm or force a 60 ms horizon.
 The runtime extrapolates to the timestamp requested by the application.
 
-Choose `-manual.zip` for explicit `action.sh on` activation or `-auto.zip` for automatic activation. Autostart resumes through KernelSU after root
+The `-auto.zip` package provides automatic activation. Autostart resumes through KernelSU after root
 is available, waits for Steam Link, and disables itself on a detected failure.
-See [manual/auto mode selection and recovery](../../docs/AUTOSTART.md).
+See [activation and recovery](../../docs/AUTOSTART.md).
 
 There are no mounts, properties, or policy changes. The original runtime file is
 never written. Closing the app process or rebooting clears the current patch,

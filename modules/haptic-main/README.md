@@ -2,15 +2,15 @@
 
 Current controls: [Action report and recovery](../../docs/ACTION-REPORT.md).
 
-**Downloads:** [Manual ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.4.1/gxr-haptic-main-0.4.1-manual.zip) · [Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.4.1/gxr-haptic-main-0.4.1-auto.zip).
-Choose one variant; both use the same module ID. See the [release](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/haptic-main/v0.4.1) for SHA-256 files.
+**Downloads:** [Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.4.1/gxr-haptic-main-0.4.1-auto.zip).
+See the [release](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/haptic-main/v0.4.1) for SHA-256 files.
 
 A KernelSU module for Galaxy XR SM-I610 that routes standard OpenXR vibration
 from SUB near the trigger to MAIN in the grip. The user confirmed operation on
 both controllers in Steam Link 2.0.20 without HAL layers on October 10, 2026.
 
-**Action** reports state and recovery instructions without toggling. Choose manual for explicit `action.sh on`, or auto for startup activation. Autostart resumes after root is
-available and disables itself on a detected failure. See [manual/auto mode selection
+**Action** reports state and recovery instructions without toggling. Autostart resumes after root is
+available and disables itself on a detected failure. See [activation
 and recovery](../../docs/AUTOSTART.md).
 
 A full reboot or controller service restart clears the current memory patch.

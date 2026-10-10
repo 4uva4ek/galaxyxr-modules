@@ -1,4 +1,4 @@
-"""Check the manual and automatic release artifacts for one module."""
+"""Check the automatic release artifact for one module."""
 import hashlib
 import json
 import zipfile
@@ -9,7 +9,7 @@ def verify(module):
     config = json.loads((module/'build.json').read_text())
     props = dict(line.split('=', 1) for line in (module/'module/module.prop').read_text().splitlines() if '=' in line)
     binaries = []
-    for variant in ('manual', 'auto'):
+    for variant in ('auto',):
         archive = root/'dist'/module.name/f'{config["artifact"]}-{props["version"]}-{variant}.zip'
         assert archive.with_suffix('.zip.sha256').read_text().split()[0] == hashlib.sha256(archive.read_bytes()).hexdigest()
         with zipfile.ZipFile(archive) as z:
@@ -38,5 +38,4 @@ def verify(module):
             packaged = dict(line.split('=', 1) for line in z.read('module.prop').decode().splitlines() if '=' in line)
             assert packaged['id'] == props['id']
             assert packaged['name'].endswith(f'({variant})')
-    assert binaries[0] == binaries[1], 'Variants must use the same native patcher'
-    print(f'{module.name}: manual/auto contents, hashes, ARM64, same native patcher, no early-boot hooks: OK')
+    print(f'{module.name}: auto contents, hashes, ARM64, no early-boot hooks: OK')
