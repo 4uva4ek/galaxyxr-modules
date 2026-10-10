@@ -8,6 +8,7 @@ rules are shared across the repository.
 | --- | --- | --- | --- | --- |
 | [haptic-main](modules/haptic-main/README.md) | Route SUB haptics to MAIN in service memory | 0.3.0 | [Download manual](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.3.0/gxr-haptic-main-0.3.0-manual.zip) | [Download auto](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.3.0/gxr-haptic-main-0.3.0-auto.zip) |
 | [controller-extrapolation](modules/controller-extrapolation/README.md) | Enable stock OpenXR controller extrapolation in Steam Link memory | 0.2.0 | [Download manual](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.2.0/gxr-controller-extrapolation-0.2.0-manual.zip) | [Download auto](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.2.0/gxr-controller-extrapolation-0.2.0-auto.zip) |
+| [openxr-velocity-frame](modules/openxr-velocity-frame/README.md) | Correct controller velocity coordinates in third-party apps using the supported OpenXR runtime | 0.1.0 | [Download manual](https://github.com/4uva4ek/galaxyxr-modules/releases/download/openxr-velocity-frame/v0.1.0/gxr-openxr-velocity-frame-0.1.0-manual.zip) | [Download auto](https://github.com/4uva4ek/galaxyxr-modules/releases/download/openxr-velocity-frame/v0.1.0/gxr-openxr-velocity-frame-0.1.0-auto.zip) |
 
 **Manual:** enable with KernelSU's Action button. **Auto:** apply through the
 standard KernelSU `service.sh` stage and disable auto on a detected failure.
@@ -15,7 +16,7 @@ Install one variant per module; they share the same module ID. SHA-256 files are
 attached beside both ZIPs in each release.
 
 **None of the modules in this repository modify the contents of system partitions.**
-Both modules apply their changes only to private process memory; original APKs
+These modules apply their changes only to private process memory; original APKs
 and libraries on disk remain unchanged. They do not flash partitions, remount
 them for writing, or replace system files through mounts. A full reboot clears
 the in-memory changes. With opt-in autostart enabled, KernelSU can reapply them;
@@ -34,6 +35,7 @@ variant uses standard KernelSU startup and disables itself on a detected failure
 - [Install KernelSU GXR with DFRoot](https://github.com/4uva4ek/KernelSU-GXR/blob/galaxyxr/GALAXYXR.md#installation).
 - [Haptic MAIN module installation](modules/haptic-main/README.md#installation), including the tested installer's persistent-write caveat.
 - [Controller extrapolation deployment](modules/controller-extrapolation/README.md#build-and-deployment) (manual deployment only).
+- [OpenXR velocity correction](modules/openxr-velocity-frame/README.md#installation-and-rollback): both variants, third-party app discovery, exact firmware checks. Keep the separate extrapolation patch off with this release.
 
 Read the linked instructions and safety notes before installing.
 
@@ -42,6 +44,7 @@ Read the linked instructions and safety notes before installing.
 ```text
 modules/haptic-main/    source, module.prop, validation, and instructions
 modules/controller-extrapolation/  OpenXR extrapolation switcher
+modules/openxr-velocity-frame/     runtime velocity correction, manual and auto
 tools/                 shared build tools
 docs/                  release guidelines and validation records
 dist/                  local build artifacts, excluded from Git
