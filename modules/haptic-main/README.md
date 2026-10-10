@@ -1,13 +1,20 @@
-# Haptic MAIN 0.2.0
+# Haptic MAIN 0.3.0
+
+**Downloads:** [Manual ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.3.0/gxr-haptic-main-0.3.0-manual.zip) · [Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.3.0/gxr-haptic-main-0.3.0-auto.zip).
+Choose one variant; both use the same module ID. See the [release](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/haptic-main/v0.3.0) for SHA-256 files.
 
 A KernelSU module for Galaxy XR SM-I610 that routes standard OpenXR vibration
 from SUB near the trigger to MAIN in the grip. The user confirmed operation on
 both controllers in Steam Link 2.0.20 without HAL layers on October 10, 2026.
 
-**Action** toggles MAIN ↔ STOCK. There is no automatic startup or background process.
-A full reboot or controller service restart restores STOCK; press Action again
-to enable MAIN. Disabling the module in the manager does not undo an existing
-memory patch. Run `off` or reboot the headset before uninstalling.
+**Action** toggles MAIN ↔ STOCK manually and disables autostart. Choose `-manual.zip` for Action only or `-auto.zip` for automatic activation. Autostart resumes through KernelSU after root is
+available and disables itself on a detected failure. See [manual/auto mode selection
+and recovery](../../docs/AUTOSTART.md).
+
+A full reboot or controller service restart clears the current memory patch.
+With auto enabled, a later KernelSU startup can apply it again: disable auto before
+rebooting for rollback. Disabling the module does not undo an existing memory patch;
+run `action.sh off` or disable auto and reboot before uninstalling.
 
 ```sh
 su -c 'sh /data/adb/modules/gxr_haptic_main/action.sh status'
@@ -15,7 +22,7 @@ su -c 'sh /data/adb/modules/gxr_haptic_main/action.sh on'
 su -c 'sh /data/adb/modules/gxr_haptic_main/action.sh off'
 ```
 
-Log: `/dev/gxr_haptic_main/log` (tmpfs). If disabling fails, a full reboot restores
+Log: `/dev/gxr_haptic_main/log` (tmpfs). With auto disabled, a full reboot restores
 the original code. A reboot was not performed during validation; software rollback
 through Action was tested.
 
@@ -54,8 +61,8 @@ bytes used for this check.
 
 ## Installation
 
-The ZIP uses the KernelSU module format. Before using the standard installer,
-check its behavior in your KernelSU build. In the tested Samsung build,
+The ZIP uses the KernelSU module format but its standard installer aborts.
+Deploy reviewed files manually into a new module directory. In the tested Samsung build,
 `ksud module install` also rewrites `/metadata/.../modules.rc`, so we placed the
 files directly in a new `/data/adb/modules/gxr_haptic_main` directory without
 running the installer or changing boot files. Other KernelSU and firmware versions

@@ -1,15 +1,22 @@
-# Controller extrapolation 0.1.0 (manual)
+# Controller extrapolation 0.2.0
+
+**Downloads:** [Manual ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.2.0/gxr-controller-extrapolation-0.2.0-manual.zip) · [Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.2.0/gxr-controller-extrapolation-0.2.0-auto.zip).
+Choose one variant; both use the same module ID. See the [release](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/controller-extrapolation/v0.2.0) for SHA-256 files.
 
 Enables the existing OpenXR runtime's controller extrapolation inside the running
-`com.valvesoftware.steamlinkvr` process. KernelSU Action toggles the change. This
+`com.valvesoftware.steamlinkvr` process. KernelSU Action toggles the change manually and disables auto. This
 does not add a HAL client, change the tracking algorithm or force a 60 ms horizon.
 The runtime extrapolates to the timestamp requested by the application.
 
-There are no startup scripts, mounts, properties, policy changes or background
-workers. The original runtime file is never written. Closing the app **process**
-or rebooting restores stock. Opening the menu alone may not end the process.
-Disabling the module in the manager does not undo an existing memory patch:
-use `off` or terminate the app process before uninstalling.
+Choose `-manual.zip` for Action only or `-auto.zip` for automatic activation. Autostart resumes through KernelSU after root
+is available, waits for Steam Link, and disables itself on a detected failure.
+See [manual/auto mode selection and recovery](../../docs/AUTOSTART.md).
+
+There are no mounts, properties, or policy changes. The original runtime file is
+never written. Closing the app process or rebooting clears the current patch,
+but auto can apply it again. Disable auto before rebooting for rollback. Opening
+the menu alone may not end the process. Disabling the module does not undo an
+existing memory patch: use `action.sh off` or disable auto and terminate the app.
 
 ```sh
 su -c 'sh /data/adb/modules/gxr_controller_extrapolation/action.sh status'

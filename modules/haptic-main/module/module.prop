@@ -1,6 +1,6 @@
 id=gxr_haptic_main
-name=Galaxy XR Haptics MAIN (manual)
-version=0.2.0
-versionCode=2
+name=Galaxy XR Haptics MAIN
+version=0.3.0
+versionCode=3
 author=GalaxyXR
-description=Action toggles MAIN/STOCK in controller service memory. Tested on both controllers. No Frida, HAL client, daemon or boot activation. Reboot restores stock.
+description=Action toggles MAIN/STOCK in controller service memory. Tested on both controllers. Optional auto; disables auto on detected failure. Disable auto before reboot to restore stock.

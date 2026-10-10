@@ -1,4 +1,4 @@
-Galaxy XR Controller Extrapolation 0.1.0
+Galaxy XR Controller Extrapolation 0.2.0
 Built using Android NDK r28c and statically linked LLVM libc++.
 LLVM runtime license: Apache-2.0 WITH LLVM-exception; see NDK-NOTICE.txt.
 The expected instruction sequence is a compatibility fingerprint of the existing Samsung runtime.

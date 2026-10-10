@@ -6,11 +6,15 @@
 4. Run package checks and the required device checks. Distinguish build success,
    software activation/rollback, and user confirmation of the physical effect.
 5. Create the tag `NAME/vVERSION` on the verified commit.
-6. Create a GitHub Release for that tag and attach the ZIP and `.zip.sha256`
-   files from `dist/NAME/`.
+6. Create a GitHub Release for that tag and attach both `-manual.zip` and
+   `-auto.zip`, each with its `.zip.sha256` file, from `dist/NAME/`.
+   Keep the previous releases available. The two variants share one module ID
+   and must not be installed together.
 
 Do not commit build artifacts, APKs, dumps, signing keys, or device data.
-Do not enable automatic startup to simplify installation. Supporting new firmware
+Keep manual and automatic activation explicit in package names and documentation.
+Automatic variants use standard KernelSU hooks and must retain failure latching;
+do not alter root acquisition or system partitions. Supporting new firmware
 requires fresh analysis and precise compatibility checks; do not remove existing
 hash checks to accept an unknown build.
 Releases are published manually. A push does not automatically publish a release.

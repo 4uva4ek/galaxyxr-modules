@@ -4,21 +4,30 @@ Independent KernelSU modules for Samsung Galaxy XR in one repository.
 Each module has its own version and ZIP package. Build tools and device safety
 rules are shared across the repository.
 
-| Module | Purpose | Version |
-| --- | --- | --- |
-| [haptic-main](modules/haptic-main/README.md) | Manually route SUB haptics to MAIN by modifying service memory | 0.2.0 |
-| [controller-extrapolation](modules/controller-extrapolation/README.md) | Manually enable stock OpenXR controller extrapolation in Steam Link memory | 0.1.0 |
+| Module | Purpose | Version | Manual ZIP | Auto ZIP |
+| --- | --- | --- | --- | --- |
+| [haptic-main](modules/haptic-main/README.md) | Route SUB haptics to MAIN in service memory | 0.3.0 | [Download manual](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.3.0/gxr-haptic-main-0.3.0-manual.zip) | [Download auto](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.3.0/gxr-haptic-main-0.3.0-auto.zip) |
+| [controller-extrapolation](modules/controller-extrapolation/README.md) | Enable stock OpenXR controller extrapolation in Steam Link memory | 0.2.0 | [Download manual](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.2.0/gxr-controller-extrapolation-0.2.0-manual.zip) | [Download auto](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.2.0/gxr-controller-extrapolation-0.2.0-auto.zip) |
+
+**Manual:** enable with KernelSU's Action button. **Auto:** apply through the
+standard KernelSU `service.sh` stage and disable auto on a detected failure.
+Install one variant per module; they share the same module ID. SHA-256 files are
+attached beside both ZIPs in each release.
 
 **None of the modules in this repository modify the contents of system partitions.**
 Both modules apply their changes only to private process memory; original APKs
 and libraries on disk remain unchanged. They do not flash partitions, remount
 them for writing, or replace system files through mounts. A full reboot clears
-the in-memory changes, and neither module reapplies them automatically.
+the in-memory changes. With opt-in autostart enabled, KernelSU can reapply them;
+disable auto before rebooting to restore stock permanently.
 
-Module files remain under `/data/adb/modules/`; runtime logs and locks are stored
+Module files and optional autostart settings remain under `/data/adb/modules/`; runtime logs and locks are stored
 in `/dev` (tmpfs). This statement covers the modules themselves. The tested
 Samsung KernelSU installer can separately rewrite startup files under `/metadata/`;
 follow the manual deployment instructions linked below.
+
+Each module has separate `-manual.zip` and `-auto.zip` packages. The automatic
+variant uses standard KernelSU startup and disables itself on a detected failure. See [mode selection and recovery](docs/AUTOSTART.md).
 
 ## Installation instructions
 
@@ -32,7 +41,7 @@ Read the linked instructions and safety notes before installing.
 
 ```text
 modules/haptic-main/    source, module.prop, validation, and instructions
-modules/controller-extrapolation/  manual OpenXR extrapolation switcher
+modules/controller-extrapolation/  OpenXR extrapolation switcher
 tools/                 shared build tools
 docs/                  release guidelines and validation records
 dist/                  local build artifacts, excluded from Git
@@ -51,21 +60,24 @@ python tools/build.py controller-extrapolation --ndk /path/to/android-ndk
 python modules/controller-extrapolation/tests/verify_package.py
 ```
 
-Output: `dist/haptic-main/gxr-haptic-main-0.2.0.zip` and a SHA-256 checksum file.
-Extrapolation output: `dist/controller-extrapolation/gxr-controller-extrapolation-0.1.0.zip`
-and a SHA-256 checksum file.
+Output: `dist/haptic-main/gxr-haptic-main-0.3.0-{manual,auto}.zip` and a SHA-256 checksum file.
+Extrapolation output: `dist/controller-extrapolation/gxr-controller-extrapolation-0.2.0-{manual,auto}.zip`
+and a SHA-256 checksum file for each ZIP. Pass `--variant manual` or
+`--variant auto` to build just one variant.
 The build does not connect to the headset or install the module.
 
 ## Project rules
 
 Keeping the headset bootable takes priority over experimental features.
 Modifications must preserve original system files and have a clear rollback
-path. Both modules require manual activation and do not run at boot.
+path. Choose the manual or automatic package explicitly. The automatic variant
+uses the failure guards described in [AUTOSTART.md](docs/AUTOSTART.md).
 See [AGENTS.md](AGENTS.md) for the complete requirements.
 
 Samsung and Steam Link APKs, device dumps, signing keys, dependencies, and compiled
 files are excluded from Git. Module ZIPs are published separately in Releases.
-Versions and tags are independent for each module: `haptic-main/v0.2.0`
-and `controller-extrapolation/v0.1.0`.
+Versions and tags are independent for each module: `haptic-main/v0.3.0`
+and `controller-extrapolation/v0.2.0`.
 See the [release guidelines](docs/RELEASING.md) and
-[headset validation record](docs/VALIDATION-2026-10-10.md).
+[original headset validation record](docs/VALIDATION-2026-10-10.md) and
+[manual/auto validation record](docs/VALIDATION-2026-10-11-AUTOSTART.md).
