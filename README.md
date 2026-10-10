@@ -7,11 +7,13 @@ rules are shared across the repository.
 | Module | Purpose | Version |
 | --- | --- | --- |
 | [haptic-main](modules/haptic-main/README.md) | Manually route SUB haptics to MAIN by modifying service memory | 0.2.0 |
+| [controller-extrapolation](modules/controller-extrapolation/README.md) | Manually enable stock OpenXR controller extrapolation in Steam Link memory (experimental) | 0.1.0 |
 
 ## Installation instructions
 
 - [Install KernelSU GXR with DFRoot](https://github.com/4uva4ek/KernelSU-GXR/blob/galaxyxr/GALAXYXR.md#installation).
 - [Haptic MAIN module installation](modules/haptic-main/README.md#installation), including the tested installer's persistent-write caveat.
+- [Controller extrapolation deployment](modules/controller-extrapolation/README.md#build-and-deployment) (experimental, manual deployment only).
 
 Read the linked instructions and safety notes before installing.
 
@@ -19,6 +21,7 @@ Read the linked instructions and safety notes before installing.
 
 ```text
 modules/haptic-main/    source, module.prop, validation, and instructions
+modules/controller-extrapolation/  manual OpenXR extrapolation switcher
 tools/                 shared build tools
 docs/                  release guidelines and validation records
 dist/                  local build artifacts, excluded from Git
@@ -33,20 +36,25 @@ or pass its path with `--ndk`.
 ```sh
 python tools/build.py haptic-main --ndk /path/to/android-ndk
 python modules/haptic-main/tests/verify_package.py
+python tools/build.py controller-extrapolation --ndk /path/to/android-ndk
+python modules/controller-extrapolation/tests/verify_package.py
 ```
 
 Output: `dist/haptic-main/gxr-haptic-main-0.2.0.zip` and a SHA-256 checksum file.
+Extrapolation output: `dist/controller-extrapolation/gxr-controller-extrapolation-0.1.0.zip`
+and a SHA-256 checksum file.
 The build does not connect to the headset or install the module.
 
 ## Project rules
 
 Keeping the headset bootable takes priority over experimental features.
 Modifications must preserve original system files and have a clear rollback
-path. The current module requires manual activation and does not run at boot.
+path. Both modules require manual activation and do not run at boot.
 See [AGENTS.md](AGENTS.md) for the complete requirements.
 
 Samsung and Steam Link APKs, device dumps, signing keys, dependencies, and compiled
 files are excluded from Git. Module ZIPs are published separately in Releases.
-Versions and tags are independent for each module: `haptic-main/v0.2.0`.
+Versions and tags are independent for each module: `haptic-main/v0.2.0`
+and `controller-extrapolation/v0.1.0`.
 See the [release guidelines](docs/RELEASING.md) and
 [headset validation record](docs/VALIDATION-2026-10-10.md).

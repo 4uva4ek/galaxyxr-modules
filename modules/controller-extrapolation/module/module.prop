@@ -1,0 +1,6 @@
+id=gxr_controller_extrapolation
+name=Galaxy XR Controller Extrapolation (manual)
+version=0.1.0
+versionCode=1
+author=GalaxyXR
+description=Manually enable stock controller extrapolation in Steam Link process memory. Reboot or app process exit restores stock.
