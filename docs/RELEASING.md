@@ -1,14 +1,16 @@
-# Независимые релизы модулей
+# Independent module releases
 
-1. Изменить `version` и `versionCode` только в `module.prop` нужного модуля.
-2. Обновить его README и запись о совместимости/проверках.
-3. Собрать из чистой копии Git командой `python tools/build.py NAME --ndk PATH`.
-4. Выполнить проверки ZIP и требуемые проверки устройства. Различать сборку,
-   программное включение/откат и подтверждение реального эффекта пользователем.
-5. Создать тег `NAME/vVERSION` на проверенном коммите.
-6. В GitHub Release для этого тега приложить ZIP и `.zip.sha256` из `dist/NAME/`.
+1. Update `version` and `versionCode` in the selected module's `module.prop`.
+2. Update its README and compatibility/validation record.
+3. Build from a clean Git checkout using `python tools/build.py NAME --ndk PATH`.
+4. Run package checks and the required device checks. Distinguish build success,
+   software activation/rollback, and user confirmation of the physical effect.
+5. Create the tag `NAME/vVERSION` on the verified commit.
+6. Create a GitHub Release for that tag and attach the ZIP and `.zip.sha256`
+   files from `dist/NAME/`.
 
-Не коммитить артефакты сборки, APK, дампы, ключи подписи или данные устройства.
-Не включать автозапуск ради упрощения установки. Новая прошивка требует нового
-анализа и точных проверок совместимости, а не удаления старых проверок хешей.
-Публикация осуществляется вручную; push сам по себе не выпускает релиз.
+Do not commit build artifacts, APKs, dumps, signing keys, or device data.
+Do not enable automatic startup to simplify installation. Supporting new firmware
+requires fresh analysis and precise compatibility checks; do not remove existing
+hash checks to accept an unknown build.
+Releases are published manually. A push does not automatically publish a release.

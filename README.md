@@ -1,44 +1,45 @@
 # Galaxy XR Modules
 
-Независимые модули KernelSU для Samsung Galaxy XR в одном репозитории.
-Каждый модуль имеет собственную версию и ZIP; общие инструменты сборки и правила
-безопасности находятся в корне.
+Independent KernelSU modules for Samsung Galaxy XR in one repository.
+Each module has its own version and ZIP package. Build tools and device safety
+rules are shared across the repository.
 
-| Модуль | Назначение | Версия |
+| Module | Purpose | Version |
 | --- | --- | --- |
-| [haptic-main](modules/haptic-main/README.md) | Ручное переключение вибрации SUB → MAIN через память службы | 0.2.0 |
+| [haptic-main](modules/haptic-main/README.md) | Manually route SUB haptics to MAIN by modifying service memory | 0.2.0 |
 
-## Структура
+## Repository layout
 
 ```text
-modules/haptic-main/    исходники, module.prop, проверки и инструкция
-tools/                 общая сборка
-docs/                  правила релизов и результаты проверок
-dist/                  локальные артефакты, исключены из Git
+modules/haptic-main/    source, module.prop, validation, and instructions
+tools/                 shared build tools
+docs/                  release guidelines and validation records
+dist/                  local build artifacts, excluded from Git
 ```
 
-## Сборка
+## Building
 
-Нужны Python 3.10+ и Android NDK **28.2.13676358**. Сторонние Python/npm-пакеты
-не требуются. `ANDROID_NDK_HOME` должен указывать на установленный NDK,
-либо передайте путь через `--ndk`.
+Requires Python 3.10+ and Android NDK **28.2.13676358**. No third-party Python
+or npm packages are required. Set `ANDROID_NDK_HOME` to your NDK installation,
+or pass its path with `--ndk`.
 
 ```sh
 python tools/build.py haptic-main --ndk /path/to/android-ndk
 python modules/haptic-main/tests/verify_package.py
 ```
 
-Результат: `dist/haptic-main/gxr-haptic-main-0.2.0.zip` и файл SHA-256.
-Сборка не подключается к шлему и не устанавливает модуль.
+Output: `dist/haptic-main/gxr-haptic-main-0.2.0.zip` and a SHA-256 checksum file.
+The build does not connect to the headset or install the module.
 
-## Правила проекта
+## Project rules
 
-Стабильная загрузка шлема важнее экспериментальной функции. Модификации должны
-сохранять системные оригиналы и иметь понятный откат. Текущий модуль действует
-только после ручного включения и не активируется при загрузке.
-Полные требования находятся в [AGENTS.md](AGENTS.md).
+Keeping the headset bootable takes priority over experimental features.
+Modifications must preserve original system files and have a clear rollback
+path. The current module requires manual activation and does not run at boot.
+See [AGENTS.md](AGENTS.md) for the complete requirements.
 
-APK Samsung и Steam Link, дампы устройства, ключи подписи, зависимости и
-скомпилированные файлы не входят в Git. ZIP публикуются отдельно в Releases.
-Версии и теги независимы: `haptic-main/v0.2.0`.
-См. [правила релизов](docs/RELEASING.md) и [проверку на шлеме](docs/VALIDATION-2026-10-10.md).
+Samsung and Steam Link APKs, device dumps, signing keys, dependencies, and compiled
+files are excluded from Git. Module ZIPs are published separately in Releases.
+Versions and tags are independent for each module: `haptic-main/v0.2.0`.
+See the [release guidelines](docs/RELEASING.md) and
+[headset validation record](docs/VALIDATION-2026-10-10.md).
