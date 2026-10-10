@@ -1,4 +1,4 @@
-# Controller extrapolation 0.1.0 (manual, experimental)
+# Controller extrapolation 0.1.0 (manual)
 
 Enables the existing OpenXR runtime's controller extrapolation inside the running
 `com.valvesoftware.steamlinkvr` process. KernelSU Action toggles the change. This
@@ -72,8 +72,8 @@ a new module directory, without invoking `ksud module install`.
   signing; the signed output is checked separately. Certificate matches the input.
 - The removed layer also contained an adaptive pose jitter filter. That filter
   is now absent. The separate velocity-frame correction remains in the APK.
-- Update installation succeeded. Motion quality and actual pose update rate
-  are awaiting a user streaming test; code readback alone does not prove either.
+- Update installation succeeded. The user confirmed the module works during
+  streaming. Actual pose update rate has not been measured separately.
 - After the user opened streaming, Action enabled the patch in new PID 19623;
   `TracerPid=0`. No extrapolation or HAL-pose library was mapped; the separate
   velocity-frame library was mapped. Installed APK SHA-256 matched the verified

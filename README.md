@@ -7,13 +7,13 @@ rules are shared across the repository.
 | Module | Purpose | Version |
 | --- | --- | --- |
 | [haptic-main](modules/haptic-main/README.md) | Manually route SUB haptics to MAIN by modifying service memory | 0.2.0 |
-| [controller-extrapolation](modules/controller-extrapolation/README.md) | Manually enable stock OpenXR controller extrapolation in Steam Link memory (experimental) | 0.1.0 |
+| [controller-extrapolation](modules/controller-extrapolation/README.md) | Manually enable stock OpenXR controller extrapolation in Steam Link memory | 0.1.0 |
 
 ## Installation instructions
 
 - [Install KernelSU GXR with DFRoot](https://github.com/4uva4ek/KernelSU-GXR/blob/galaxyxr/GALAXYXR.md#installation).
 - [Haptic MAIN module installation](modules/haptic-main/README.md#installation), including the tested installer's persistent-write caveat.
-- [Controller extrapolation deployment](modules/controller-extrapolation/README.md#build-and-deployment) (experimental, manual deployment only).
+- [Controller extrapolation deployment](modules/controller-extrapolation/README.md#build-and-deployment) (manual deployment only).
 
 Read the linked instructions and safety notes before installing.
 
