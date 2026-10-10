@@ -8,6 +8,13 @@ rules are shared across the repository.
 | --- | --- | --- |
 | [haptic-main](modules/haptic-main/README.md) | Manually route SUB haptics to MAIN by modifying service memory | 0.2.0 |
 
+## Installation instructions
+
+- [Install KernelSU GXR with DFRoot](https://github.com/4uva4ek/KernelSU-GXR/blob/galaxyxr/GALAXYXR.md#installation).
+- [Haptic MAIN module installation](modules/haptic-main/README.md#installation), including the tested installer's persistent-write caveat.
+
+Read the linked instructions and safety notes before installing.
+
 ## Repository layout
 
 ```text
