@@ -1,0 +1,7 @@
+{
+  "artifact": "gxr-haptic-main",
+  "binary": "gxr-main",
+  "ndk": "28.2.13676358",
+  "api": 34,
+  "files": ["action.sh", "customize.sh", "module.prop", "skip_mount"]
+}

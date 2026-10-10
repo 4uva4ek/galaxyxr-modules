@@ -1,0 +1,6 @@
+Galaxy XR Haptics MAIN 0.2.0
+Built using Android NDK r28c and statically linked LLVM libc++.
+LLVM runtime license: Apache-2.0 WITH LLVM-exception; see NDK-NOTICE.txt.
+No Frida component is included in version 0.2.0.
+The pinned instruction sequence in native/expected.h is a compatibility
+fingerprint of Samsung's existing JNI function; no Samsung binary is shipped.
