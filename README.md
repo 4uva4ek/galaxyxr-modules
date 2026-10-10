@@ -9,6 +9,17 @@ rules are shared across the repository.
 | [haptic-main](modules/haptic-main/README.md) | Manually route SUB haptics to MAIN by modifying service memory | 0.2.0 |
 | [controller-extrapolation](modules/controller-extrapolation/README.md) | Manually enable stock OpenXR controller extrapolation in Steam Link memory | 0.1.0 |
 
+**None of the modules in this repository modify the contents of system partitions.**
+Both modules apply their changes only to private process memory; original APKs
+and libraries on disk remain unchanged. They do not flash partitions, remount
+them for writing, or replace system files through mounts. A full reboot clears
+the in-memory changes, and neither module reapplies them automatically.
+
+Module files remain under `/data/adb/modules/`; runtime logs and locks are stored
+in `/dev` (tmpfs). This statement covers the modules themselves. The tested
+Samsung KernelSU installer can separately rewrite startup files under `/metadata/`;
+follow the manual deployment instructions linked below.
+
 ## Installation instructions
 
 - [Install KernelSU GXR with DFRoot](https://github.com/4uva4ek/KernelSU-GXR/blob/galaxyxr/GALAXYXR.md#installation).
