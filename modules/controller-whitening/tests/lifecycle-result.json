@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-11",
+  "status": "PASS",
+  "script": "tests/test_lifecycle.py",
+  "tests": 11,
+  "scenarios": 20,
+  "elapsed_seconds": 8.534,
+  "execution": "Local Python312 plus Git Bash; dependency-mocked actual production shell state machine",
+  "boundaries": "No adb, headset, ptrace, network, or real process signals. OS process identity, properties, checksum/native responses, sleep and signal effects are controlled fixtures.",
+  "covered": [
+    "Clean owned stop restores stock and clears active lease",
+    "External active patch refused without adoption or restoration",
+    "Disabled Action reports external active patch explicitly",
+    "Disabled resume never starts or queries native target",
+    "Interrupted old-boot lease quarantines automatic resume",
+    "Service restart disables without retry",
+    "Runtime health error disables without retry",
+    "Native owner death disables without retry",
+    "Checksum failure prevents activation",
+    "Cancellation while waiting for boot prevents activation",
+    "Disable during launch immediately restores owned helper",
+    "Stopped owned helper receives TERM then CONT, never target signals",
+    "Stuck owner preserves quarantine and reports failure",
+    "Unverified restoration preserves quarantine and reports failure",
+    "Wrong executable identity receives no signal",
+    "Reused owner PID/start identity receives no signal",
+    "Default Action dispatches status only and explains saved-checkbox/soft-reboot behavior",
+    "Explicit Action on dispatches enable directly",
+    "Explicit Action off dispatches disable directly",
+    "Explicit Action status dispatches status directly"
+  ],
+  "limits": "Mocks validate shell decisions, ownership checks and failure handling. They do not replace native parent-death/guardian tests, Android shell validation, or user-visible tracking evaluation. Module was not activated by these tests.",
+  "version": "0.1.1",
+  "control": "Standard KernelSU 1.0 service stage; status-only Action; explicit on/off directly dispatch lifecycle",
+  "source_sha256": {
+    "module\\action.sh": "aa583d2e9d8d331d1628d21283762a2e8cad261323edc36150e5c1ab9708eb2f",
+    "module\\auto.sh": "d05eb2c067fd23d7223db39558ac2569f324df750d202fd0c1bae67d3ebb4857",
+    "tests\\test_lifecycle.py": "3da9a5c660efa82f170670163a5a50dfcb6c70cb3bc76361e703a3c91cd47144"
+  }
+}

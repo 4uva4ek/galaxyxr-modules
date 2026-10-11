@@ -16,7 +16,7 @@ mkdir -p "$STATE"
 if [ "$MODE" = toggle ] && [ -f "$MODDIR/auto.sh" ]; then
   if [ -f "$MODDIR/disable" ]; then MODE=on; else MODE=off; fi
 fi
-if [ "$MODE" = on ] && [ -f "$MODDIR/auto.sh" ]; then exec sh "$MODDIR/live-control.sh" enable; fi
+if [ "$MODE" = on ] && [ -f "$MODDIR/auto.sh" ]; then exec sh "$MODDIR/auto.sh" enable; fi
 if [ "$MODE" = off ] || [ "$MODE" = toggle ]; then
   [ ! -f "$MODDIR/auto.sh" ] || sh "$MODDIR/auto.sh" disable
 fi

@@ -15,7 +15,7 @@ if [ -f "$MODDIR/auto.sh" ]; then
      { [ -f "$REPORT_STATE/auto.enabled" ] && [ -d "$REPORT_STATE/auto.worker" ]; }; then
     echo 'Automatic worker: running markers present; see runtime status below.'
   else
-    echo 'Automatic worker: NOT RUNNING. Toggle the checkbox off and on to retry.'
+    echo 'Automatic worker: NOT RUNNING. Checking the module alone does not start a worker.'
   fi
 fi
 echo
@@ -29,15 +29,17 @@ echo 'ENABLED: the module patch is applied.'
 echo 'DISABLED: the module patch is not applied.'
 echo 'These states describe this module, not whether the entire feature works.'
 echo
-echo 'Start: turn the KernelSU checkbox ON. Stop: turn it OFF.'
-echo 'Retry after an error: resolve the cause, then turn the checkbox ON again.'
-echo 'If already checked but inactive, toggle it OFF and ON.'
+echo 'The KernelSU checkbox saves the startup preference; it does not call a module start/stop hook.'
+echo 'A checked module starts at the next KernelSU service stage. On GXR 1.0 this follows the documented soft reboot after root.'
+echo 'A running worker observes an unchecked module and attempts restoration. Press Action to verify.'
+echo 'After an error, leave disabled, resolve the cause, then use the explicit recovery command below.'
 echo 'For waiting targets, launch the application; the automatic worker applies the patch.'
-echo 'Optional root-terminal start command:'
+echo 'Explicit root-terminal start or retry (also enables the saved preference):'
 printf 'sh %s/action.sh on\n' "$MODDIR"
 echo 'For the automatic variant, this also starts its background worker.'
-echo 'Live checkbox control requires KernelSU GXR with gxrLiveControl support.'
 echo 'Stop and restore original code:'
 printf 'sh %s/action.sh off\n' "$MODDIR"
 echo 'Press Action again to verify the result. Resolve compatibility/conflict errors before retrying.'
+echo 'If restoration fails, leave disabled and restart the target app or fully reboot the headset.'
+echo 'A checked module can apply again after startup; disable it before using reboot as rollback.'
 exit "$REPORT_CODE"

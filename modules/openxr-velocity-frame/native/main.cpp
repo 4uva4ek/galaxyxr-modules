@@ -1,6 +1,9 @@
 // App-only ptrace patch. Never opens a device file for writing or touches system services.
 #include <sys/ptrace.h>
 #include <sys/wait.h>
+#include <sys/uio.h>
+#include <elf.h>
+#include <asm/ptrace.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
@@ -25,6 +28,7 @@ struct Profile {
     std::vector<unsigned char> payload;
 };
 #include "profiles.generated.h"
+#include "compatibility.h"
 static void require(bool ok,const char* msg) { if(!ok) throw std::runtime_error(msg); }
 static std::string proc(pid_t pid,const char* f) { return "/proc/"+std::to_string(pid)+"/"+f; }
 static std::string read(const std::string& path) {
@@ -112,6 +116,27 @@ struct Frozen {
     }
 };
 struct State {bool hooked,resident;uint32_t enabled;};
+// A four-instruction transaction must not split an in-flight consumePose.
+// Conservatively inspect live stack words as well as PC/LR (including PAC).
+// This may refuse a safe operation, but never treats an unreadable stack as idle.
+static void requireQuiescent(pid_t pid,Memory& mem,const Frozen& frozen,const Map& m,const Profile& p) {
+    auto inside=[&](uint64_t value){value&=0x0000ffffffffffffULL;
+        return (value>=m.base+p.function&&value<m.base+p.function+p.length)||
+               (value>=m.base+p.cave&&value<m.base+p.end);};
+    const auto maps=read(proc(pid,"maps"));
+    for(const auto& t:frozen.threads) {
+        user_pt_regs regs{};iovec io{&regs,sizeof(regs)};
+        require(ptrace(PTRACE_GETREGSET,t.id,reinterpret_cast<void*>(NT_PRSTATUS),&io)==0&&io.iov_len==sizeof(regs),"Cannot verify stopped thread registers; no change");
+        require(!inside(regs.pc)&&!inside(regs.regs[30]),"consumePose is in flight; retry after tracking is idle");
+        std::istringstream lines(maps);std::string line;uintptr_t end=0;
+        while(std::getline(lines,line)){unsigned long lo,hi;char perm[5]{};
+            if(sscanf(line.c_str(),"%lx-%lx %4s",&lo,&hi,perm)==3&&perm[0]=='r'&&lo<=regs.sp&&regs.sp<hi){end=hi;break;}}
+        require(end&&end-regs.sp<=8*1024*1024,"Cannot bound live stack; no change");
+        auto stack=mem.bytes(regs.sp,end-regs.sp);
+        for(size_t i=0;i+8<=stack.size();i+=8){uint64_t word;memcpy(&word,stack.data()+i,8);
+            require(!inside(word),"consumePose return address is live; retry after tracking is idle");}
+    }
+}
 struct App {std::string package;unsigned long uid;};
 static std::vector<App> thirdPartyApps(){
     int fds[2];require(pipe2(fds,O_CLOEXEC)==0,"Package pipe failed");pid_t child=fork();
@@ -154,15 +179,20 @@ static void noLegacyHook(pid_t pid,Memory& mem) {
 }
 static State validate(Memory& mem,const Map& m,const Profile& p,const std::string& disk) {
     require(m.base+p.end<=m.end,"RX mapping too short");
-    auto consumer=mem.bytes(m.base+0x1b359c,0x4bc);
-    require(!memcmp(consumer.data(),disk.data()+0x1b359c,consumer.size()),"consumePose modified; disable separate extrapolation first");
     auto function=mem.bytes(m.base+p.function,p.length);int patched=0;
+    require(gxr_consumer_state(function.data())>=0,"Unknown consumePose change or partial correction");
     for(size_t i=0;i<p.sites.size();++i) {
         uint32_t word;memcpy(&word,function.data()+p.sites[i]-p.function,4);
         require(word==p.original[i]||word==p.patched[i],"Unknown callsite");patched+=word==p.patched[i];
         memcpy(function.data()+p.sites[i]-p.function,&p.original[i],4);
     }
     require(!patched||patched==static_cast<int>(p.sites.size()),"Partial hook; restart Steam Link");
+    uint32_t gate;memcpy(&gate,function.data()+0x1b3860-p.function,4);
+    require(gate==0x3400038a||gate==0xd503201f,"Unknown extrapolation gate");
+    const uint32_t stockGate=0x3400038a;
+    memcpy(function.data()+0x1b3860-p.function,&stockGate,4);
+    uint32_t oldCall;mem.get(m.base+0x1d9e18,&oldCall,4);
+    require(oldCall==0x94025406,"Legacy velocity hook present; restart app before updating");
     require(!memcmp(function.data(),disk.data()+p.function,p.length),"Live function differs from pinned file");
     auto cave=mem.bytes(m.base+p.cave,p.end-p.cave);
     bool zero=std::all_of(cave.begin(),cave.end(),[](unsigned char c){return c==0;});uint32_t enabled=0;
@@ -217,6 +247,7 @@ int main(int argc,char**argv) {
         bool on=mode=="on";
         if(on)noLegacyHook(pid,mem);
         if(on!=before.hooked) {
+            requireQuiescent(pid,mem,frozen,m,p);
             // Payload remains after off: stopped threads may hold a return address into it.
             // Rollback restores reachability and activation, never erases reachable code.
             bool complete=before.resident;

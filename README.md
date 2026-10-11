@@ -1,91 +1,69 @@
 # Galaxy XR Modules
 
-Independent KernelSU modules for Samsung Galaxy XR in one repository.
-Each module has its own version and ZIP package. Build tools and device safety
-rules are shared across the repository.
+Independent KernelSU modules for Samsung Galaxy XR. Each has its own version and
+automatic ZIP, shipped disabled. Build tools and device safety rules are shared.
 
-| Module | Purpose | Version | Manual ZIP | Auto ZIP |
-| --- | --- | --- | --- | --- |
-| [haptic-main](modules/haptic-main/README.md) | Route SUB haptics to MAIN in service memory | 0.4.1 | [Download manual](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.4.1/gxr-haptic-main-0.4.1-manual.zip) | [Download auto](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.4.1/gxr-haptic-main-0.4.1-auto.zip) |
-| [controller-extrapolation](modules/controller-extrapolation/README.md) | Enable stock OpenXR controller extrapolation in Steam Link memory | 0.3.1 | [Download manual](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.3.1/gxr-controller-extrapolation-0.3.1-manual.zip) | [Download auto](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.3.1/gxr-controller-extrapolation-0.3.1-auto.zip) |
-| [openxr-velocity-frame](modules/openxr-velocity-frame/README.md) | Correct controller velocity coordinates in third-party apps using the supported OpenXR runtime | 0.2.1 | [Download manual](https://github.com/4uva4ek/galaxyxr-modules/releases/download/openxr-velocity-frame/v0.2.1/gxr-openxr-velocity-frame-0.2.1-manual.zip) | [Download auto](https://github.com/4uva4ek/galaxyxr-modules/releases/download/openxr-velocity-frame/v0.2.1/gxr-openxr-velocity-frame-0.2.1-auto.zip) |
+| Module | Purpose | Version | Automatic package |
+| --- | --- | --- | --- |
+| [Haptic MAIN](modules/haptic-main/README.md) | Route standard haptics to the grip motor | 0.5.2 | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.5.2/gxr-haptic-main-0.5.2-auto.zip) |
+| [Controller Extrapolation](modules/controller-extrapolation/README.md) | Enable stock OpenXR extrapolation in Steam Link memory | 0.4.1 | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.4.1/gxr-controller-extrapolation-0.4.1-auto.zip) |
+| [OpenXR Velocity Frame](modules/openxr-velocity-frame/README.md) | Correct controller velocity coordinates in eligible third-party apps | 0.3.1 | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/openxr-velocity-frame/v0.3.1/gxr-openxr-velocity-frame-0.3.1-auto.zip) |
+| [Controller Whitening](modules/controller-whitening/README.md) | Correct process covariance whitening in the controller service | 0.1.1 | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-whitening/v0.1.1/gxr-controller-whitening-0.1.1-auto.zip) |
+| [Controller Timestamp Precision](modules/controller-timestamp-precision/README.md) | Preserve integer request timestamps in the controller HAL | 0.1.1 | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-timestamp-precision/v0.1.1/gxr-controller-timestamp-precision-0.1.1-auto.zip) |
 
-**Action:** reports state and recovery commands; it does not toggle the patch.
-**Manual:** start with `action.sh on`. **Auto:** apply through the
-standard KernelSU `service.sh` stage and disable auto on a detected failure.
-Install one variant per module; they share the same module ID. SHA-256 files are
-attached beside both ZIPs in each release.
+SHA-256 files accompany release ZIPs. Retired controller-velocity-frame and
+openxr-prediction-40 experiments are retained locally and are not distributed here.
 
-**None of the modules in this repository modify the contents of system partitions.**
-These modules apply their changes only to private process memory; original APKs
-and libraries on disk remain unchanged. They do not flash partitions, remount
-them for writing, or replace system files through mounts. A full reboot clears
-the in-memory changes. With opt-in autostart enabled, KernelSU can reapply them;
-disable auto before rebooting to restore stock permanently.
+Action reports runtime state and recovery commands. It never toggles a patch.
+The KernelSU checkbox saves the startup preference. Enabled modules start through
+the standard `service.sh` stage; in the documented GXR 1.0 temporary-root flow,
+this follows the soft reboot after root acquisition. Checking an idle module does
+not start it immediately. See [startup and recovery](docs/AUTOSTART.md) and
+[Action reports](docs/ACTION-REPORT.md).
 
-Module files and optional autostart settings remain under `/data/adb/modules/`; runtime logs and locks are stored
-in `/dev` (tmpfs). This statement covers the modules themselves. The tested
-Samsung KernelSU installer can separately rewrite startup files under `/metadata/`;
-follow the manual deployment instructions linked below.
+The modules modify private process memory only. Original APKs and libraries remain
+unchanged; the modules do not flash partitions, mount replacements or change root
+startup integration. Full reboot clears memory patches, but enabled modules can
+apply again at a later service stage. Disable before using reboot as rollback.
+Persistent module preferences and failure records live under `/data/adb/modules/`;
+runtime logs and locks use `/dev` tmpfs.
 
-Each module has separate `-manual.zip` and `-auto.zip` packages. The automatic
-variant uses standard KernelSU startup and disables itself on a detected failure. See [mode selection and recovery](docs/AUTOSTART.md).
+## Installation
 
-## Installation instructions
+Follow [KernelSU GXR with DFRoot](https://github.com/4uva4ek/KernelSU-GXR/blob/galaxyxr/GALAXYXR.md#installation)
+for root setup, then the selected module's deployment instructions. The tested
+Samsung KernelSU installer can separately rewrite startup metadata; these ZIPs
+deliberately block that installer and document reviewed direct deployment.
 
-- [Install KernelSU GXR with DFRoot](https://github.com/4uva4ek/KernelSU-GXR/blob/galaxyxr/GALAXYXR.md#installation).
-- [Haptic MAIN module installation](modules/haptic-main/README.md#installation), including the tested installer's persistent-write caveat.
-- [Controller extrapolation deployment](modules/controller-extrapolation/README.md#build-and-deployment) (manual deployment only).
-- [OpenXR velocity correction](modules/openxr-velocity-frame/README.md#installation-and-rollback): both variants, third-party app discovery, exact firmware checks. Keep the separate extrapolation patch off with this release.
-
-Read the linked instructions and safety notes before installing.
-
-## Repository layout
-
-```text
-modules/haptic-main/    source, module.prop, validation, and instructions
-modules/controller-extrapolation/  OpenXR extrapolation switcher
-modules/openxr-velocity-frame/     runtime velocity correction, manual and auto
-tools/                 shared build tools
-docs/                  release guidelines and validation records
-dist/                  local build artifacts, excluded from Git
-```
+Install or update disabled. Disable and restore an existing module before replacing
+its directory. Activation requires a separate decision after verification; an
+installation or positive test does not enable a replacement automatically.
 
 ## Building
 
-Requires Python 3.10+ and Android NDK **28.2.13676358**. No third-party Python
-or npm packages are required. Set `ANDROID_NDK_HOME` to your NDK installation,
-or pass its path with `--ndk`.
+Python 3.10+ and Android NDK **28.2.13676358** are required. Build commands never
+connect to the headset or install a module.
 
 ```sh
 python tools/build.py haptic-main --ndk /path/to/android-ndk
 python modules/haptic-main/tests/verify_package.py
+# Generate the shared compatibility contract from your own pinned runtime first:
+python modules/openxr-velocity-frame/prepare.py --ndk /path/to/android-ndk --runtime /path/to/libopenxr_android.so
 python tools/build.py controller-extrapolation --ndk /path/to/android-ndk
 python modules/controller-extrapolation/tests/verify_package.py
 ```
 
-Output: `dist/haptic-main/gxr-haptic-main-0.4.1-{manual,auto}.zip` and a SHA-256 checksum file.
-Extrapolation output: `dist/controller-extrapolation/gxr-controller-extrapolation-0.3.1-{manual,auto}.zip`
-and a SHA-256 checksum file for each ZIP. Pass `--variant manual` or
-`--variant auto` to build just one variant.
-The build does not connect to the headset or install the module.
+Only `-auto.zip` packages and `.zip.sha256` files are produced under `dist/MODULE/`.
+OpenXR Velocity Frame and the controller service modules have dedicated build and
+validation commands in their READMEs. Proprietary libraries, APKs, device dumps,
+keys and compiled artifacts are excluded from Git.
+The generated `compatibility.generated.h` is also excluded: both app modules use
+the exact contract generated from your runtime by the preparation step above.
 
 ## Project rules
 
-Keeping the headset bootable takes priority over experimental features.
-Modifications must preserve original system files and have a clear rollback
-path. Choose the manual or automatic package explicitly. The automatic variant
-uses the failure guards described in [AUTOSTART.md](docs/AUTOSTART.md).
-See [AGENTS.md](AGENTS.md) for the complete requirements.
-
-See [Action reports](docs/ACTION-REPORT.md) and [checkbox limitations](docs/LIVE-CONTROL.md).
-Immediate checkbox activation requires [KernelSU GXR live-control](https://github.com/4uva4ek/KernelSU-GXR/releases).
-Modules without the opt-in flag retain standard behavior; Action remains a status report.
-
-Samsung and Steam Link APKs, device dumps, signing keys, dependencies, and compiled
-files are excluded from Git. Module ZIPs are published separately in Releases.
-Versions and tags are independent for each module: `haptic-main/v0.4.1`
-and `controller-extrapolation/v0.3.1`.
-See the [release guidelines](docs/RELEASING.md) and
-[original headset validation record](docs/VALIDATION-2026-10-10.md) and
-[manual/auto validation record](docs/VALIDATION-2026-10-11-AUTOSTART.md).
+Keeping the headset bootable takes priority. Preserve original files, precise
+compatibility guards, failure quarantine and verified restoration. See
+[AGENTS.md](AGENTS.md), [release guidelines](docs/RELEASING.md), and the module
+validation records. Historical records describe their original versions, not the
+current deployment state or publishing policy.

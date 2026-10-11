@@ -1,24 +1,37 @@
-# Controller extrapolation 0.3.1
+# Controller extrapolation 0.4.1
+
+Regular release: the user confirmed good operation on 2026-10-11.
 
 Current controls: [Action report and recovery](../../docs/ACTION-REPORT.md).
 
-**Downloads:** [Manual ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.3.1/gxr-controller-extrapolation-0.3.1-manual.zip) · [Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.3.1/gxr-controller-extrapolation-0.3.1-auto.zip).
-Choose one variant; both use the same module ID. See the [release](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/controller-extrapolation/v0.3.1) for SHA-256 files.
+Version **0.4.1** is compatible with OpenXR Velocity Frame **0.3.1** (the same native
+contract as 0.4.0/0.3.0). Automatic package only, shipped disabled.
+Build Velocity Frame first to regenerate the exact shared native compatibility
+contract. Unknown/partial hooks are rejected; each module restores only its sites.
+
+The correction supplies the predictor with world linear and input-local angular
+velocity while returning world angular velocity to OpenXR. Combined motion
+quality, overshoot and throwing still need validation.
 
 Enables the existing OpenXR runtime's controller extrapolation inside the running
 `com.valvesoftware.steamlinkvr` process. KernelSU Action reports state and recovery instructions without toggling. This
 does not add a HAL client, change the tracking algorithm or force a 60 ms horizon.
 The runtime extrapolates to the timestamp requested by the application.
 
-Choose `-manual.zip` for explicit `action.sh on` activation or `-auto.zip` for automatic activation. Autostart resumes through KernelSU after root
-is available, waits for Steam Link, and disables itself on a detected failure.
-See [manual/auto mode selection and recovery](../../docs/AUTOSTART.md).
+Automatic activation requires a separate user request. The KernelSU checkbox is
+the sole saved preference; activation follows the next standard service stage,
+not the checkbox click. On GXR 1.0, follow its documented soft reboot after root.
+If the worker cannot stop, `off` still attempts guarded native
+restoration and reports the worker timeout separately. A shared operation lock
+serializes this module with Velocity Frame.
 
 There are no mounts, properties, or policy changes. The original runtime file is
 never written. Closing the app process or rebooting clears the current patch,
 but auto can apply it again. Disable auto before rebooting for rollback. Opening
-the menu alone may not end the process. Disabling the module does not undo an
-existing memory patch: use `action.sh off` or disable auto and terminate the app.
+the menu alone may not end the process. A running worker observes the disabled
+checkbox and attempts restoration; `action.sh off` provides an explicit stop and
+restore command. Verify the runtime result; if
+restoration fails, leave disabled and terminate the app.
 
 ```sh
 su -c 'sh /data/adb/modules/gxr_controller_extrapolation/action.sh status'
@@ -60,7 +73,14 @@ The native binary is an implementation detail; use Action for the complete guard
 
 ## Build and deployment
 
+Provide your own pinned `libopenxr_android.so` matching the hash above. Prepare
+OpenXR Velocity Frame first, including when building only extrapolation: it
+generates the exact shared compatibility header. That generated vendor-code
+fingerprint is deliberately excluded from Git. Do not substitute another firmware
+or bypass a failed hash check.
+
 ```sh
+python modules/openxr-velocity-frame/prepare.py --ndk /path/to/ndk/28.2.13676358 --runtime /path/to/libopenxr_android.so
 python tools/build.py controller-extrapolation --ndk /path/to/ndk/28.2.13676358
 python modules/controller-extrapolation/tests/verify_package.py
 ```
@@ -68,6 +88,9 @@ python modules/controller-extrapolation/tests/verify_package.py
 The standard ZIP installer deliberately aborts. The Samsung KernelSU installer
 previously rewrote metadata startup files. Deploy reviewed files manually into
 a new module directory, without invoking `ksud module install`.
+Install or update disabled, restoring an enabled previous module before replacement.
+Version 0.4.1 changes packaging and startup/report instructions; its native
+extrapolation and compatibility guards remain those of 0.4.0.
 
 ## Validation on 2026-10-10
 

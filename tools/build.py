@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('module', choices=sorted(p.name for p in (ROOT/'modules').iterdir() if (p/'build.json').is_file()))
 parser.add_argument('--ndk', default=os.environ.get('ANDROID_NDK_HOME'))
-parser.add_argument('--variant', choices=['manual', 'auto', 'both'], default='both')
+parser.add_argument('--variant', choices=['auto'], default='auto')
 args = parser.parse_args()
 if not args.ndk:
     parser.error('Set ANDROID_NDK_HOME or pass --ndk PATH')
@@ -43,11 +43,9 @@ strip = toolchain/'bin'/('llvm-strip.exe' if os.name == 'nt' else 'llvm-strip')
 subprocess.run([str(strip), '--strip-unneeded', str(binary)], check=True)
 blob = binary.read_bytes()
 assert blob[:6] == b'\x7fELF\x02\x01' and blob[18:20] == b'\xb7\x00'
-variants = config.get('variants', [None])
-if args.variant != 'both':
-    if args.variant not in variants:
-        parser.error(f'{args.module} does not support {args.variant} packaging')
-    variants = [args.variant]
+if config.get('variants') != ['auto']:
+    parser.error(f'{args.module} must declare only disabled automatic packaging')
+variants = ['auto']
 for variant in variants:
     payload = {name:(source/'module'/name).read_bytes() for name in config['files']}
     for name in config.get('shared_files', []):
@@ -55,19 +53,16 @@ for variant in variants:
     if variant == 'auto':
         payload.update({name:(source/'module'/name).read_bytes() for name in config['auto_files']})
         payload.update({name:(ROOT/'tools'/name).read_bytes() for name in config['auto_shared_files']})
-        payload['auto-default'] = b''
+        payload['disable'] = b''
     if variant:
         package_props = dict(props)
         package_props['name'] += f' ({variant})'
-        package_props['description'] = ('Manual activation via Action; no startup scripts. Full reboot restores stock.'
-                                        if variant == 'manual' else
-                                        'Automatic activation via KernelSU service stage; stops on detected failure. Disable auto before reboot for rollback.')
         payload['module.prop'] = ''.join(f'{k}={v}\n' for k,v in package_props.items()).encode()
     assert not any(b'\r' in data for data in payload.values()), 'Source must use LF line endings'
     payload['bin/'+config['binary']] = blob
     payload['NOTICE.txt'] = (source/'NATIVE-NOTICE.txt').read_bytes()
     payload['NDK-NOTICE.txt'] = (toolchain/'NOTICE').read_bytes()
-    payload['SHA256SUMS'] = ''.join(f'{hashlib.sha256(b).hexdigest()}  {n}\n' for n,b in sorted(payload.items())).encode()
+    payload['SHA256SUMS'] = ''.join(f'{hashlib.sha256(b).hexdigest()}  {n}\n' for n,b in sorted(payload.items()) if n != 'disable').encode()
     suffix = f'-{variant}' if variant else ''
     archive = output/f'{config["artifact"]}-{props["version"]}{suffix}.zip'
     with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as z:

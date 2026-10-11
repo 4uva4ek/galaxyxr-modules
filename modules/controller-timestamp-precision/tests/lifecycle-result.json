@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-11",
+  "status": "PASS",
+  "script": "tests/test_lifecycle.py",
+  "tests": 11,
+  "scenarios": 20,
+  "elapsed_seconds": 9.058,
+  "module_id": "gxr_controller_timestamp_precision",
+  "native_binary": "gxr-timestamp",
+  "native_active_status": "TIMESTAMP_PRECISE_ACTIVE",
+  "execution": "Host Python312 and Git Bash against actual production shell branches with controlled OS/native dependencies",
+  "isolation": "Wrong-executable identity scenario explicitly supplies the whitening module's native executable and verifies that it receives no signal.",
+  "covered": [
+    "Owned clean disable and lease removal",
+    "External timestamp patch refusal without adoption or restoration",
+    "Disabled report identifies external timestamp patch",
+    "Disabled automatic resume never queries or launches",
+    "Interrupted old-boot lease quarantines automatic resume",
+    "Service restart, health failure and owner death disable without retry",
+    "Checksum failure and boot cancellation prevent activation",
+    "Disable during launch immediately restores owned helper",
+    "Stopped owned helper receives TERM then CONT, never target signals",
+    "Stuck owner, failed restoration, whitening executable identity and reused owner retain quarantine",
+    "Default Action dispatches status only and explains saved-checkbox/soft-reboot behavior",
+    "Explicit Action on dispatches enable directly",
+    "Explicit Action off dispatches disable directly",
+    "Explicit Action status dispatches status directly"
+  ],
+  "limits": "Local mocks only: no headset, adb, ptrace, network or real signals. Does not replace native guardian/parent-death fixture checks or physical tracking tests. Module not activated.",
+  "version": "0.1.1",
+  "control": "Standard KernelSU 1.0 service stage; status-only Action; explicit on/off directly dispatch lifecycle",
+  "source_sha256": {
+    "module\\action.sh": "aa583d2e9d8d331d1628d21283762a2e8cad261323edc36150e5c1ab9708eb2f",
+    "module\\auto.sh": "fd0d22cce7ff629241bf5f35c25ab2f7c6f8a53d20760f1dc7b191b95ffe8860",
+    "tests\\test_lifecycle.py": "c6c292476f1a1c9560ccc96b5afe2f0cc7ac420fd7538928a1208427daca1915"
+  }
+}

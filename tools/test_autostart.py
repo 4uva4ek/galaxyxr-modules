@@ -13,7 +13,7 @@ if not SHELL and os.name == 'nt':
 
 
 class Autostart(unittest.TestCase):
-    def run_worker(self, scenario, system=0):
+    def run_worker(self, scenario, system=0, status="MAIN pid=123"):
         with tempfile.TemporaryDirectory() as temp:
             work = Path(temp)
             (work/'state/auto.worker').mkdir(parents=True)
@@ -53,6 +53,7 @@ sleep() {
 set -- _run
 '''.replace('SYSTEM_VALUE', str(system)).replace('ACTION_RESULT',
                     'return 1' if scenario == 'failure' else 'return 0')
+            script = script.replace('MAIN pid=123', status)
             steps = {
                 'busy': ':',
                 'once': ':',
@@ -86,6 +87,12 @@ if [ "$tick" = 3 ]; then echo 123 > pid; fi''',
     def test_success_clears_pending_after_observation(self):
         result, calls = self.run_worker('healthy')
         self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(calls), 1)
+
+    def test_haptic_tuning_status_survives_health_check(self):
+        result, calls = self.run_worker('healthy', system=1,
+            status='MAIN pid=123 site=123400 profile=step2-amplitude-stock')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(len(calls), 1)
 
     def test_resume_respects_checkbox_and_blocks_unfinished_attempt(self):
@@ -219,7 +226,7 @@ native() { echo "$2" > called; }
 '''
                     script += f"set -- '{mode}' '{identity}'\n"
                     script += (ROOT/'modules'/module/'module/action.sh').read_text().replace(
-                        f'/dev/{state}', 'state').replace('/proc/', 'proc/').replace(
+                        f'/dev/{state}', 'state').replace('/dev/gxr_openxr_transaction', 'global-lock').replace('/proc/', 'proc/').replace(
                         f'"$MODDIR/bin/{binary}"', 'native')
                     (work/'test.sh').write_text(script, newline='\n')
                     result = subprocess.run([SHELL, './test.sh'], cwd=work, capture_output=True, text=True, timeout=10)

@@ -16,15 +16,23 @@ mkdir -p "$STATE"
 if [ "$MODE" = toggle ] && [ -f "$MODDIR/auto.sh" ]; then
   if [ -f "$MODDIR/disable" ]; then MODE=on; else MODE=off; fi
 fi
-if [ "$MODE" = on ] && [ -f "$MODDIR/auto.sh" ]; then exec sh "$MODDIR/live-control.sh" enable; fi
+if [ "$MODE" = on ] && [ -f "$MODDIR/auto.sh" ]; then exec sh "$MODDIR/auto.sh" enable; fi
+STOP_FAILED=0
 if [ "$MODE" = off ] || [ "$MODE" = toggle ]; then
-  [ ! -f "$MODDIR/auto.sh" ] || sh "$MODDIR/auto.sh" disable
+  if [ -f "$MODDIR/auto.sh" ] && ! sh "$MODDIR/auto.sh" disable; then
+    STOP_FAILED=1
+    echo 'ERROR: worker stop was not confirmed; attempting guarded live restoration anyway.'
+  fi
 fi
 [ "$MODE" != _auto-off ] || MODE=off
 [ "$MODE" != off ] || : > "$MODDIR/disable"
 if [ ! -f "$MODDIR/auto.sh" ] && { [ "$MODE" = on ] || [ "$MODE" = toggle ]; }; then rm -f "$MODDIR/disable"; fi
-mkdir "$STATE/lock" 2>/dev/null || { echo 'Another action is active'; exit 2; }
-trap 'code=$?; rmdir "$STATE/lock"; if [ "$code" -ne 0 ] && [ "$MODE" != status ]; then : > "$MODDIR/disable"; fi; exit "$code"' EXIT
+# Both modules modify consumePose; serialize their native operations.
+GLOBAL_LOCK=/dev/gxr_openxr_transaction
+[ ! -L "$GLOBAL_LOCK" ] || fail 'Unsafe shared lock path'
+mkdir "$GLOBAL_LOCK" 2>/dev/null || { echo 'WAITING: another OpenXR module operation is active'; exit 2; }
+mkdir "$STATE/lock" 2>/dev/null || { rmdir "$GLOBAL_LOCK"; echo 'Another action is active'; exit 2; }
+trap 'code=$?; rmdir "$STATE/lock"; rmdir "$GLOBAL_LOCK"; if [ "$code" -ne 0 ] && [ "$MODE" != status ]; then : > "$MODDIR/disable"; fi; exit "$code"' EXIT
 AUTO_ID=
 if [ "$MODE" = _auto-on ]; then
   [ ! -f "$MODDIR/disable" ] && [ -f "$STATE/auto.enabled" ] && [ -d "$STATE/auto.worker" ] || fail 'Autostart stopped'
@@ -54,3 +62,4 @@ else
   cat "$STATE/log"
   fail 'Switch failed; no policy changes or service restart attempted.'
 fi
+[ "$STOP_FAILED" = 0 ] || fail 'Live restoration completed, but worker exit is unconfirmed. Leave disabled; restart the app. Reboot if the worker remains stuck.'

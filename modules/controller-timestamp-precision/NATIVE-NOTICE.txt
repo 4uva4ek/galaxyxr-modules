@@ -1,0 +1,10 @@
+Galaxy XR Controller Timestamp Precision 0.1.1
+Built using Android NDK r28c and statically linked LLVM libc++.
+LLVM runtime license: Apache-2.0 WITH LLVM-exception; see NDK-NOTICE.txt.
+
+The package contains the project helper and dedicated lifecycle scripts. It
+does not distribute Samsung libraries, firmware, calibration or device identity
+data. Small pinned instruction sequences identify and adapt one guarded call
+site in an already loaded, independently installed vendor HAL library.
+The adapter retains the original method's prologue and exact request timestamp.
+No Frida, Shizuku or runtime-loaded third-party instrumentation is included.

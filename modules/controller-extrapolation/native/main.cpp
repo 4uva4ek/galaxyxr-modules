@@ -19,6 +19,7 @@
 #include <stdexcept>
 #include <chrono>
 #include "expected.h"
+#include "../../openxr-velocity-frame/native/compatibility.h"
 
 static constexpr char PACKAGE[] = "com.valvesoftware.steamlinkvr";
 static constexpr char LIBRARY[] = "/system/lib64/libopenxr_android.so";
@@ -53,11 +54,13 @@ struct Memory {
 };
 static uint32_t validate(Memory& mem, uintptr_t base) {
     std::vector<unsigned char> bytes(sizeof(EXPECTED)); mem.get(base + FUNCTION, bytes.data(), bytes.size());
-    uint32_t instruction; memcpy(&instruction, bytes.data() + SITE - FUNCTION, 4);
-    require(instruction == STOCK || instruction == EXTRAPOLATION, "Unknown instruction; refusing modification");
-    memcpy(bytes.data() + SITE - FUNCTION, &STOCK, 4);
-    require(!memcmp(bytes.data(), EXPECTED, bytes.size()), "Function differs from pinned stock code");
-    return instruction;
+    const int state=gxr_consumer_state(bytes.data());
+    require(state>=0,"Unknown consumePose change or partial velocity correction");
+    if(state&1) {
+        std::vector<unsigned char> cave(0x520);mem.get(base+0x272ae0,cave.data(),cave.size());
+        require(gxr_payload_valid(cave.data(),true),"Velocity correction payload is not the supported preprediction version");
+    }
+    return state&2?EXTRAPOLATION:STOCK;
 }
 struct Frozen {
     struct Thread { pid_t id; bool stopped; int signal; };

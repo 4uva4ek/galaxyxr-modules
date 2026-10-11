@@ -1,0 +1,9 @@
+Galaxy XR Controller Whitening 0.1.1
+Built using Android NDK r28c and statically linked LLVM libc++.
+LLVM runtime license: Apache-2.0 WITH LLVM-exception; see NDK-NOTICE.txt.
+
+The package contains the project helper and module lifecycle scripts. It does
+not contain Samsung libraries, firmware, calibration or device identity data.
+The small expected/replacement instruction sequences identify and change a
+guarded call site in an already loaded, independently installed vendor library.
+No Frida, Shizuku or runtime-loaded third-party instrumentation is included.

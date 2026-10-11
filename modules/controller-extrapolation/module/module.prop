@@ -1,7 +1,6 @@
 id=gxr_controller_extrapolation
-name=Galaxy XR Controller Extrapolation - Live control
-version=0.3.1
-versionCode=4
+name=Galaxy XR Controller Extrapolation
+version=0.4.1
+versionCode=6
 author=GalaxyXR
-description=Enable stock controller extrapolation in Steam Link process memory. Manual or auto. Disable auto before reboot to restore stock.
-gxrLiveControl=1
+description=Enable stock controller extrapolation in Steam Link process memory. Automatic package, installed disabled. Action reports runtime state.

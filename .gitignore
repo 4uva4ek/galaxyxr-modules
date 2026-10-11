@@ -10,3 +10,13 @@ __pycache__/
 node_modules/
 **/module/bin/
 **/module/SHA256SUMS
+# Generated from a user-supplied pinned runtime; do not publish vendor code.
+/modules/openxr-velocity-frame/native/compatibility.generated.h
+# Local deployment tools and device-session receipts are not public sources.
+/modules/controller-whitening/deploy_disabled.py
+/modules/controller-whitening/deployment.json
+/modules/controller-timestamp-precision/deploy_disabled.py
+/modules/controller-timestamp-precision/deployment.json
+# Retired experiments remain local; current replacements are published separately.
+/modules/controller-velocity-frame/
+/modules/openxr-prediction-40/

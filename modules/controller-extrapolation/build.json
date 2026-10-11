@@ -10,7 +10,6 @@
     "skip_mount"
   ],
   "variants": [
-    "manual",
     "auto"
   ],
   "auto_files": [
@@ -21,7 +20,6 @@
     "autostart.sh"
   ],
   "shared_files": [
-    "live-control.sh",
     "action-report.sh"
   ]
 }

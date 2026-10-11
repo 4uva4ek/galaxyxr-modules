@@ -17,15 +17,19 @@ if [ -f "$MODDIR/auto.sh" ]; then
   if [ "$MODE" = toggle ]; then
     if [ -f "$MODDIR/disable" ]; then MODE=on; else MODE=off; fi
   fi
-  [ "$MODE" != on ] || exec sh "$MODDIR/live-control.sh" enable
+  [ "$MODE" != on ] || exec sh "$MODDIR/auto.sh" enable
 elif [ "$MODE" = on ] || [ "$MODE" = toggle ]; then
   rm -f "$MODDIR/disable"
 fi
 if [ "$MODE" = off ] || [ "$MODE" = toggle ]; then
   [ ! -f "$MODDIR/auto.sh" ] || sh "$MODDIR/auto.sh" disable
 fi
-mkdir "$STATE/lock" 2>/dev/null || { echo 'Another action is active'; exit 2; }
-trap 'code=$?; rmdir "$STATE/lock"; if [ "$code" -ne 0 ] && [ "$MODE" != status ]; then : > "$MODDIR/disable"; fi; exit "$code"' EXIT
+# Both modules modify consumePose; serialize their native operations.
+GLOBAL_LOCK=/dev/gxr_openxr_transaction
+[ ! -L "$GLOBAL_LOCK" ] || fail 'Unsafe shared lock path'
+mkdir "$GLOBAL_LOCK" 2>/dev/null || { echo 'WAITING: another OpenXR module operation is active'; exit 2; }
+mkdir "$STATE/lock" 2>/dev/null || { rmdir "$GLOBAL_LOCK"; echo 'Another action is active'; exit 2; }
+trap 'code=$?; rmdir "$STATE/lock"; rmdir "$GLOBAL_LOCK"; if [ "$code" -ne 0 ] && [ "$MODE" != status ]; then : > "$MODDIR/disable"; fi; exit "$code"' EXIT
 (cd "$MODDIR" && sha256sum -c SHA256SUMS) > "$STATE/checksums.log" || fail 'Module checksum failure'
 "$MODDIR/bin/gxr-openxr-velocity" list > "$STATE/targets"
 FILTER=
@@ -38,7 +42,6 @@ fi
 [ "$MODE" != off ] || : > "$MODDIR/disable"
 if [ "$MODE" = on ]; then
   [ ! -f "$MODDIR/disable" ] && [ ! -f "$MODDIR/remove" ] || fail 'Module disabled'
-  [ ! -f /data/adb/modules/gxr_controller_extrapolation/autostart/enabled ] || fail 'Disable extrapolation autostart first'
 fi
 count=0
 failed=0
@@ -54,7 +57,6 @@ while read -r TARGET STARTED PACKAGE; do
   [ "$OP" != off ] || : > "$MODDIR/disable"
   if [ "$OP" = on ]; then
     [ ! -f "$MODDIR/disable" ] && [ ! -f "$MODDIR/remove" ] || fail 'Module disabled'
-    [ ! -f /data/adb/modules/gxr_controller_extrapolation/autostart/enabled ] || fail 'Disable extrapolation autostart first'
   fi
   echo "APP $PACKAGE pid=$TARGET"
   if "$MODDIR/bin/gxr-openxr-velocity" "$TARGET" "$OP" > "$STATE/log" 2>&1; then cat "$STATE/log"; else

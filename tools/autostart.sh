@@ -39,7 +39,7 @@ case "${1:-status}" in
     fi
     : > "$STATE/auto.enabled"
     nohup sh "$MODDIR/auto.sh" _run > "$STATE/auto.log" 2>&1 < /dev/null &
-    echo 'Autostart enabled. KernelSU will resume it after root becomes available.'
+    echo 'Automatic worker started. Future startup requires the KernelSU service stage.'
     ;;
   disable)
     : > "$MODDIR/disable"

@@ -1,0 +1,10 @@
+{
+  "source": "src/tracking-re/timestamp-precision-patch/native",
+  "files": {
+    "main.cpp": "f94b73b4ccd789f15e671b2a2a505535974392085402d8e3a5cc6c7934e5692f",
+    "control.inc": "9b6f67b21b9af85f257e00ebad080810f81583c1346e2356fc6468cc4674cf68",
+    "freeze.inc": "217e1f3d28563656d93018afaa5c1e08f6de5f35364a585d9fd87172eb735e65",
+    "supervision.h": "f49fe9b54c284bfaa292e78399e4d94cb37cabeddd41464f4e49c71b6de320d4",
+    "patch.h": "d8159ab86d0d231079243726c749460fe5b1cf2fa4ccfd4f43e8ec44971012ca"
+  }
+}
