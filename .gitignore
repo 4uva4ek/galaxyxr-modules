@@ -20,3 +20,6 @@ node_modules/
 # Retired experiments remain local; current replacements are published separately.
 /modules/controller-velocity-frame/
 /modules/openxr-prediction-40/
+
+# Local framebuffer package verification receipt.
+/modules/framebuffer10/tests/module-tests.json

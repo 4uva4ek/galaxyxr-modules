@@ -10,7 +10,7 @@ with zipfile.ZipFile(path) as z:
  assert z.testzip() is None
  names=set(z.namelist());assert len(names)==len(z.namelist())
  assert all(not n.startswith('/') and '..' not in n.split('/') for n in names)
- assert {'service.sh','auto.sh','disable','skip_mount'}<=names
+ assert {'service.sh','auto.sh','emulated-soft-reboot.sh','disable','skip_mount'}<=names
  assert not {'post-fs-data.sh','system.prop','auto-default','live-control.sh','gxr-root-ready.sh'}&names
  assert b'gxrLiveControl' not in z.read('module.prop')
  assert b'live control' not in z.read('module.prop').lower()

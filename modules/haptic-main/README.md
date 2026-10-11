@@ -1,8 +1,14 @@
-# Haptic MAIN 0.5.2
+# Haptic MAIN 0.5.5
+
+After `sys.boot_completed=1`, activation waits up to 20 seconds for the
+controller service and JNI mapping, applying immediately when ready. Announced
+soft restarts allow a verified worker handoff; unexpected failures still stop
+retries. Cold-boot interruption guards expire without changing the checkbox.
+See [behavior and validation](../../docs/COLD-BOOT-GUARDS-2026-10-11.md).
 
 Current controls: [Action report and recovery](../../docs/ACTION-REPORT.md).
 
-**Regular release:** [Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.5.2/gxr-haptic-main-0.5.2-auto.zip).
+**Regular release:** [Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.5.5/gxr-haptic-main-0.5.5-auto.zip).
 Only the automatic variant is published, shipped disabled. SHA-256 is attached to the release.
 
 A KernelSU module for Galaxy XR SM-I610 that routes standard OpenXR vibration
@@ -90,10 +96,19 @@ to assemble tuning.S and check the committed tuning.h. The generated standalone
 `dist/haptic-main/test-tuning` runs 3603 actual ARM64 cases plus NaN and signed zero.
 It never opens another process or invokes controller services.
 
-Install the automatic candidate disabled after a manual on/off check; do not
+Install the automatic package disabled after a manual on/off check; do not
 activate it automatically as part of deployment. Preserve the previous module.
 
 Version 0.5.1 removes the gain and restores the `MAIN pid=` status prefix required by the 30-second worker health check. Version 0.5.0 incorrectly placed tuning details between MAIN and pid, causing a false failure and safe restoration.
 
-Version 0.5.2 uses only standard KernelSU service startup and status-only Action.
-The native routing/tuning and failure containment are unchanged from 0.5.1.
+Version 0.5.5 includes the lifecycle work introduced in 0.5.3, cold-boot
+guard reset from 0.5.4, and service-readiness waiting. Haptics was verified active
+after the coordinated soft-restart tests; see the
+[current release evidence](../../docs/RELEASE-2026-10-11.md).
+The standard `emulated-soft-reboot.sh` stage only notifies an existing worker.
+The worker waits for Android, then permits replacement of the old process during
+that announced restart. Surviving processes retain their patch and health checks.
+Unannounced service exits and interrupted activations still block automatic retry.
+An old pending marker is not silently cleared; replacement must be installed
+disabled and recovery/activation separately requested. Native routing and tuning
+are unchanged. See [restart validation](../../docs/MODULE-RESTART-2026-10-11.md).

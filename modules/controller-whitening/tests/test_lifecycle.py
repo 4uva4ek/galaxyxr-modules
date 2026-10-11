@@ -73,6 +73,8 @@ class Lifecycle(unittest.TestCase):
     def run_case(self, scenario, mode='_run', lease=None, disabled=False):
         with tempfile.TemporaryDirectory(dir=ROOT/'tests') as temp:
             p = Path(temp)
+            # Cold-reset boundary is covered with all six real entries in test_cold_boot_reset.py.
+            (p/'cold-boot-reset.sh').write_text('exit 0\n', newline='\n')
             for name in ['bin', 'state', 'ram', 'proc/123', 'proc/456', 'proc/sys/kernel/random']:
                 (p/name).mkdir(parents=True, exist_ok=True)
             (p/'proc/mounts').write_text('tmpfs /dev tmpfs rw 0 0\n')
@@ -94,6 +96,8 @@ class Lifecycle(unittest.TestCase):
                 'health_failure': '[ "$tick" -ne 2 ] || touch "$MODDIR/health-error"',
                 'native_died': '''if [ "$tick" = 2 ]; then rm -f "$MODDIR/owner.alive"; echo 'STOCK pid=123 start=99' > "$MODDIR/runtime"; fi''',
                 'boot_cancel': '[ "$tick" -ne 2 ] || touch "$MODDIR/disable"',
+                'planned_restart': '[ "$tick" -ne 2 ] || touch "$STATE/restart-request"',
+                'planned_restart_health_race': '[ "$tick" -ne 2 ] || { touch "$STATE/restart-request" "$MODDIR/health-error"; }',
                 'disable_during_launch': ':',
             }
             if scenario == 'external':
@@ -153,6 +157,15 @@ write_lease() {
         self.assertTrue(s['runtime'].startswith('STOCK'))
         self.assertIn('-TERM ', s['signals'])
 
+    def test_planned_restart_restores_without_disabling_or_quarantine(self):
+        for scenario in ['planned_restart', 'planned_restart_health_race']:
+            r, s = self.run_case(scenario)
+            self.assertEqual(r.returncode, 0, r.stdout+r.stderr)
+            self.assertTrue(s['hold'])
+            self.assertFalse(s['disabled'] or s['lease'] or s['failure'])
+            self.assertTrue(s['runtime'].startswith('STOCK'))
+            self.assertIn('-TERM ', s['signals'])
+
     def test_external_active_is_never_adopted_or_stopped(self):
         r, s = self.run_case('external')
         self.assertNotEqual(r.returncode, 0)
@@ -174,12 +187,12 @@ write_lease() {
         self.assertEqual(s['calls'], '')
         self.assertFalse(s['hold'])
 
-    def test_reboot_interrupted_lease_quarantines_without_reapply(self):
-        r, s = self.run_case('normal', mode='resume', lease='boot-old 123 99 777 77 888 42')
+    def test_same_boot_interrupted_lease_quarantines_without_reapply(self):
+        r, s = self.run_case('normal', mode='resume', lease='boot-new 123 99 777 77 888 42')
         self.assertNotEqual(r.returncode, 0)
         self.assertTrue(s['disabled'])
         self.assertFalse(s['hold'])
-        self.assertEqual(s['signals'], '')
+        self.assertEqual(s['signals'], '-TERM 777\n')
         self.assertIn('quarantined', s['failure'])
 
     def test_service_restart_health_error_owner_death_disable_without_retry(self):
@@ -228,6 +241,8 @@ write_lease() {
     def test_action_reports_only_and_explicit_commands_route_directly(self):
         with tempfile.TemporaryDirectory(dir=ROOT/'tests') as temp:
             p = Path(temp)
+            # Cold-reset boundary is covered with all six real entries in test_cold_boot_reset.py.
+            (p/'cold-boot-reset.sh').write_text('exit 0\n', newline='\n')
             (p/'action.sh').write_text((ROOT/'module/action.sh').read_text(), newline='\n')
             (p/'auto.sh').write_text('#!/bin/sh\nprintf "%s\\n" "$1" >> "${0%/*}/calls"\necho "DISABLED - fixture"\n', newline='\n')
             for args, expected in [([], 'status'), (['on'], 'enable'), (['off'], 'disable'), (['status'], 'status')]:

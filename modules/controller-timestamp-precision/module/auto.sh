@@ -1,6 +1,6 @@
 #!/system/bin/sh
 # Dedicated system-service lifecycle. KernelSU disable/remove is the preference.
-# A persistent lease is crash evidence, never an independent activation opt-in.
+# A persistent lease is same-kernel-boot crash evidence, not an activation opt-in.
 set -u
 MODDIR=$(CDPATH= cd -P "${0%/*}" && pwd) || exit 1
 STATE=/dev/gxr_controller_timestamp_precision
@@ -147,6 +147,9 @@ if ! setup; then
  echo 'DISABLED - Error: safe lifecycle setup failed'
  exit 1
 fi
+case "${1:-status}" in
+ enable|resume) sh "$MODDIR/cold-boot-reset.sh" "$MODDIR" "$STATE" || exit $? ;;
+esac
 case "$MODE" in
  status) report ;;
  disable)
@@ -177,7 +180,7 @@ case "$MODE" in
    report
    exit $?
   fi
-  # A service/daemon restart never retries a previously interrupted active
+  # Within one kernel boot, a service/daemon restart never retries an interrupted active
   # lease. A later explicit action.sh on can recover verified stock first.
   if [ -f "$LEASE" ]; then
    if [ "$MODE" = resume ]; then

@@ -14,10 +14,10 @@ props = dict(
     if "=" in line
 )
 assert config["variants"] == ["auto"], "Only automatic packages are permitted"
-assert config["shared_files"] == [] and config["auto_shared_files"] == []
+assert config["shared_files"] == [] and config["auto_shared_files"] == ["cold-boot-reset.sh"]
 scripts = {
     "action.sh", "customize.sh", "uninstall.sh",
-    "auto.sh", "service.sh",
+    "auto.sh", "service.sh", "emulated-soft-reboot.sh",
 }
 module_files = set(config["files"]) | set(config["auto_files"])
 assert module_files == scripts | {"module.prop", "skip_mount"}
@@ -31,10 +31,11 @@ archive = ROOT / "dist" / MODULE.name / (
 expected_digest = archive.with_suffix(".zip.sha256").read_text(encoding="ascii").split()[0]
 assert expected_digest == hashlib.sha256(archive.read_bytes()).hexdigest()
 binary_name = "bin/" + config["binary"]
-expected_names = module_files | {
+expected_names = module_files | set(config["auto_shared_files"]) | {
     binary_name, "disable", "SHA256SUMS", "NOTICE.txt", "NDK-NOTICE.txt",
 }
 with zipfile.ZipFile(archive) as package:
+    assert package.read("cold-boot-reset.sh") == (ROOT / "tools/cold-boot-reset.sh").read_bytes()
     assert package.testzip() is None
     names = package.namelist()
     assert len(names) == len(set(names)), "Duplicate ZIP paths"

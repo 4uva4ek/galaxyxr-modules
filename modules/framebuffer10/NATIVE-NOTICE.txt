@@ -1,0 +1,1 @@
+Project-authored native framebuffer controller. Local package also contains a modified copy of the user's pinned Samsung runtime (I610UEU2AZF3), with four embedded shader slots corrected. Vendor ownership is unchanged. This local artifact is not prepared for public redistribution. NDK runtime notices supplied separately.

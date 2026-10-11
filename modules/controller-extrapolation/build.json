@@ -17,7 +17,8 @@
     "service.sh"
   ],
   "auto_shared_files": [
-    "autostart.sh"
+    "autostart.sh",
+    "cold-boot-reset.sh"
   ],
   "shared_files": [
     "action-report.sh"

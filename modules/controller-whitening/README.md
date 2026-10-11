@@ -1,6 +1,13 @@
-# Controller Whitening 0.1.1
+# Controller Whitening 0.1.3
 
-[Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-whitening/v0.1.1/gxr-controller-whitening-0.1.1-auto.zip)
+Version 0.1.3 restores the old owner before a planned Android restart and starts
+a fresh owner at the next service stage. Pointer diagnostics include the failing
+address/value and target identity; calibration guards remain intact. Two
+consecutive active-to-active soft restarts passed. Cold-boot guards expire
+without changing the checkbox.
+See [current release evidence](../../docs/RELEASE-2026-10-11.md).
+
+[Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-whitening/v0.1.3/gxr-controller-whitening-0.1.3-auto.zip)
 with a SHA-256 checksum in the same release. The package ships disabled.
 
 Corrects a covariance whitening operation in the Galaxy XR controller tracking
@@ -130,7 +137,7 @@ python tools/build.py controller-whitening --ndk /path/to/android-ndk
 python modules/controller-whitening/tests/verify_package.py
 ```
 
-Output: `dist/controller-whitening/gxr-controller-whitening-0.1.1-auto.zip` and
+Output: `dist/controller-whitening/gxr-controller-whitening-0.1.3-auto.zip` and
 its SHA-256 file. Only the automatic variant is built or distributed. The ZIP
 contains `disable`; building and verifying it never connects to the headset.
 Samsung binaries and device calibration are not included.

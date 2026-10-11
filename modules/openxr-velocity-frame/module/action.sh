@@ -29,9 +29,17 @@ GLOBAL_LOCK=/dev/gxr_openxr_transaction
 [ ! -L "$GLOBAL_LOCK" ] || fail 'Unsafe shared lock path'
 mkdir "$GLOBAL_LOCK" 2>/dev/null || { echo 'WAITING: another OpenXR module operation is active'; exit 2; }
 mkdir "$STATE/lock" 2>/dev/null || { rmdir "$GLOBAL_LOCK"; echo 'Another action is active'; exit 2; }
-trap 'code=$?; rmdir "$STATE/lock"; rmdir "$GLOBAL_LOCK"; if [ "$code" -ne 0 ] && [ "$MODE" != status ]; then : > "$MODDIR/disable"; fi; exit "$code"' EXIT
+trap 'code=$?; rmdir "$STATE/lock"; rmdir "$GLOBAL_LOCK"; if [ "$code" -ne 0 ] && [ "$code" -ne 3 ] && [ "$MODE" != status ]; then : > "$MODDIR/disable"; fi; exit "$code"' EXIT
 (cd "$MODDIR" && sha256sum -c SHA256SUMS) > "$STATE/checksums.log" || fail 'Module checksum failure'
-"$MODDIR/bin/gxr-openxr-velocity" list > "$STATE/targets"
+if [ "$MODE" = _auto-on ] && [ "$(getprop sys.boot_completed)" != 1 ]; then
+  echo 'WAITING: Android is restarting; no writes'; exit 3
+fi
+result=0
+"$MODDIR/bin/gxr-openxr-velocity" list > "$STATE/targets" || result=$?
+if [ "$result" != 0 ]; then
+  if [ "$result" = 3 ] && { [ "$MODE" = _auto-on ] || [ "$MODE" = status ]; }; then exit 3; fi
+  fail 'Cannot discover apps for this operation; no verified restoration'
+fi
 FILTER=
 if [ "$MODE" = _auto-on ]; then
   [ -f "$STATE/run" ] && [ -d "$STATE/worker" ] || fail 'Worker stopped'
@@ -57,10 +65,22 @@ while read -r TARGET STARTED PACKAGE; do
   [ "$OP" != off ] || : > "$MODDIR/disable"
   if [ "$OP" = on ]; then
     [ ! -f "$MODDIR/disable" ] && [ ! -f "$MODDIR/remove" ] || fail 'Module disabled'
+    [ "$(getprop sys.boot_completed)" = 1 ] || { echo 'WAITING: Android is restarting; no writes'; exit 3; }
   fi
   echo "APP $PACKAGE pid=$TARGET"
+  NEW_RESTORE=0
+  if [ "$OP" = on ] && [ ! -f "$STATE/restore-needed" ]; then
+    : > "$STATE/restore-needed"; NEW_RESTORE=1
+  fi
   if "$MODDIR/bin/gxr-openxr-velocity" "$TARGET" "$OP" > "$STATE/log" 2>&1; then cat "$STATE/log"; else
+    result=$?
     cat "$STATE/log"
+    # The native helper reserves 3 for failed package discovery, before it
+    # opens target memory. Automatic activation addresses exactly one app.
+    if [ "$result" = 3 ] && [ "$OP" = on ] && [ -n "$FILTER" ]; then
+      [ "$NEW_RESTORE" = 0 ] || rm -f "$STATE/restore-needed"
+      exit 3
+    fi
     # Restore every eligible app even if one mapping no longer validates.
     [ "$OP" = off ] || exit 1
     failed=1

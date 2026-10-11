@@ -14,8 +14,15 @@
 5. Create the tag `NAME/vVERSION` on the verified commit.
 6. Create a GitHub Release for that tag and attach only `-auto.zip` and its
    `.zip.sha256` file from `dist/NAME/`. Verify the archive contains an empty
-   `disable` marker and only the standard `service.sh` startup entry.
+   `disable` marker and the documented startup entries. Ordinary modules use `service.sh`;
+   optional planned-restart notification hooks are permitted. Coordinated
+   participants require the complete four-hook contract documented in
+   `COORDINATED-RESTART-2026-10-11.md`. Do not add an early-boot activation path.
    Do not publish manual packages or restore their obsolete download links.
+
+Framebuffer10 is currently source-only. Its ignored local compositor payload
+and ZIP contain proprietary vendor code and must not be uploaded. An automatic
+ZIP is not automatically eligible for public redistribution.
 
 Do not commit build artifacts, APKs, dumps, signing keys, or device data.
 Automatic packages install disabled. Updating an enabled installation requires

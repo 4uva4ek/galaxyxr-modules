@@ -19,6 +19,7 @@ def verify(module):
                         'bin/'+config['binary'], 'SHA256SUMS', 'NOTICE.txt', 'NDK-NOTICE.txt'}
             if variant == 'auto':
                 expected |= {'auto.sh', 'autostart.sh', 'service.sh', 'disable'}
+                expected |= set(config.get('auto_shared_files', []))
                 assert z.read('disable') == b''
                 assert b'auto.sh" resume' in z.read('service.sh')
             assert names == expected, names ^ expected

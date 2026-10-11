@@ -73,6 +73,8 @@ class Lifecycle(unittest.TestCase):
     def run_case(self, scenario, mode='_run', lease=None, disabled=False):
         with tempfile.TemporaryDirectory(dir=ROOT/'tests') as temp:
             p = Path(temp)
+            # Cold-reset boundary is covered with all six real entries in test_cold_boot_reset.py.
+            (p/'cold-boot-reset.sh').write_text('exit 0\n', newline='\n')
             for name in ['bin', 'state', 'ram', 'proc/123', 'proc/456', 'proc/sys/kernel/random']:
                 (p/name).mkdir(parents=True, exist_ok=True)
             (p/'proc/mounts').write_text('tmpfs /dev tmpfs rw 0 0\n')
@@ -174,12 +176,12 @@ write_lease() {
         self.assertEqual(s['calls'], '')
         self.assertFalse(s['hold'])
 
-    def test_reboot_interrupted_lease_quarantines_without_reapply(self):
-        r, s = self.run_case('normal', mode='resume', lease='boot-old 123 99 777 77 888 42')
+    def test_same_boot_interrupted_lease_quarantines_without_reapply(self):
+        r, s = self.run_case('normal', mode='resume', lease='boot-new 123 99 777 77 888 42')
         self.assertNotEqual(r.returncode, 0)
         self.assertTrue(s['disabled'])
         self.assertFalse(s['hold'])
-        self.assertEqual(s['signals'], '')
+        self.assertEqual(s['signals'], '-TERM 777\n')
         self.assertIn('quarantined', s['failure'])
 
     def test_service_restart_health_error_owner_death_disable_without_retry(self):
@@ -228,6 +230,8 @@ write_lease() {
     def test_action_reports_only_and_explicit_commands_route_directly(self):
         with tempfile.TemporaryDirectory(dir=ROOT/'tests') as temp:
             p = Path(temp)
+            # Cold-reset boundary is covered with all six real entries in test_cold_boot_reset.py.
+            (p/'cold-boot-reset.sh').write_text('exit 0\n', newline='\n')
             (p/'action.sh').write_text((ROOT/'module/action.sh').read_text(), newline='\n')
             (p/'auto.sh').write_text('#!/bin/sh\nprintf "%s\\n" "$1" >> "${0%/*}/calls"\necho "DISABLED - fixture"\n', newline='\n')
             for args, expected in [([], 'status'), (['on'], 'enable'), (['off'], 'disable'), (['status'], 'status')]:

@@ -17,6 +17,8 @@
     "auto.sh",
     "service.sh"
   ],
-  "auto_shared_files": [],
+  "auto_shared_files": [
+    "cold-boot-reset.sh"
+  ],
   "shared_files": []
 }

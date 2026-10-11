@@ -1,6 +1,8 @@
 # Shared KernelSU-checkbox-controlled autostart. Source from the module's auto.sh.
 set -eu
 CONFIG=$MODDIR/autostart
+SOFT_RESTART_AWARE=${SOFT_RESTART_AWARE:-0}
+TARGET_READY_TIMEOUT=${TARGET_READY_TIMEOUT:-0}
 fail() {
   echo "$*"
   : > "$MODDIR/disable"
@@ -17,6 +19,9 @@ awk '$2 == "/dev" && $3 == "tmpfs" { ok=1 } END { exit !ok }' /proc/mounts || fa
 umask 077
 mkdir -p "$STATE"
 [ ! -L "$CONFIG" ] || { echo 'Unsafe config path'; exit 1; }
+case "${1:-status}" in
+ enable|resume) sh "$MODDIR/cold-boot-reset.sh" "$MODDIR" "$STATE" || exit $? ;;
+esac
 case "${1:-status}" in
   enable)
     sh "$MODDIR/auto.sh" disable
@@ -78,9 +83,27 @@ case "${1:-status}" in
       sleep 2
     done
     (cd "$MODDIR" && sha256sum -c SHA256SUMS) > "$STATE/auto-checksums.log" || fail 'Module checksum failure'
-    last= candidate= ready_at=0 attempts=0 checked_at=0
+    last= candidate= ready_at=0 attempts=0 checked_at=0 ready_wait_since=
     while [ ! -f "$MODDIR/disable" ] && [ -f "$STATE/auto.enabled" ]; do
       [ ! -f "$MODDIR/disable" ] && [ ! -f "$MODDIR/remove" ] || fail 'Module disabled or marked for removal'
+      planned=0
+      if [ "$SOFT_RESTART_AWARE" = 1 ]; then
+        count=0
+        while [ "$(getprop sys.boot_completed)" != 1 ]; do
+          ready_wait_since=
+          [ ! -f "$MODDIR/disable" ] && [ -f "$STATE/auto.enabled" ] || exit 0
+          [ "$count" != 0 ] || echo 'WAITING: Android is restarting; no activation attempted'
+          count=$((count + 1))
+          [ "$count" -le 150 ] || fail 'Android restart did not complete within five minutes'
+          sleep 2
+        done
+        if [ -f "$STATE/soft-restart" ]; then
+          ready_wait_since=
+          planned=1
+          rm -f "$STATE/soft-restart"
+          echo 'KernelSU soft restart completed; checking target identity'
+        fi
+      fi
       pid=$(pidof "$PACKAGE" || true)
       identity=
       case "$pid" in
@@ -92,35 +115,58 @@ case "${1:-status}" in
       esac
       now=$(cut -d . -f 1 /proc/uptime)
       if [ -n "$last" ] && [ "$identity" != "$last" ]; then
-        if [ "$SYSTEM_SERVICE" = 1 ] || [ $((now - ready_at)) -lt 30 ]; then
+        if [ "$SOFT_RESTART_AWARE" = 1 ] && [ "$(getprop sys.boot_completed)" != 1 ]; then sleep 2; continue; fi
+        if [ "$planned" = 0 ] && { [ "$SYSTEM_SERVICE" = 1 ] || [ $((now - ready_at)) -lt 30 ]; }; then
           fail 'Target exited/restarted after patch; autostart disabled. Re-enable explicitly after investigation.'
         fi
+        # The old private mapping is gone. Only the standard pre-restart
+        # notice exempts an early/system-service exit from failure containment.
+        rm -f "$CONFIG/pending"
         last=
+        candidate= attempts=0
+      fi
+      # Haptics: wait at most 20 seconds for this boot's controller service
+      # and JNI mapping. Apply immediately when ready; no fixed delay.
+      if [ "$TARGET_READY_TIMEOUT" -gt 0 ] && [ -z "$last" ]; then
+        if [ -z "$ready_wait_since" ]; then
+          ready_wait_since=$now
+          echo "DISABLED - Waiting: controller service and JNI library, up to $TARGET_READY_TIMEOUT seconds after Android boot completion."
+        fi
+        if [ $((now - ready_wait_since)) -ge "$TARGET_READY_TIMEOUT" ]; then
+          fail 'Controller service/JNI readiness timed out after 20 seconds; auto disabled'
+        fi
       fi
       if [ -n "$identity" ] && [ "$identity" != "$last" ]; then
         if [ "$candidate" != "$identity" ]; then candidate=$identity; attempts=0; fi
         # An app can sit at its connection screen without loading OpenXR.
         # That is a normal waiting state, not a failed patch attempt.
         if [ "$attempts" -lt 2 ]; then attempts=$((attempts + 1)); fi
+        [ "$TARGET_READY_TIMEOUT" -eq 0 ] || attempts=2
         if [ "$attempts" -ge 2 ] && grep -Fq "$LIBRARY" "/proc/$pid/maps" 2>/dev/null; then
           : > "$CONFIG/pending"
           sync
           if sh "$MODDIR/action.sh" _auto-on "$identity"; then :; else
             result=$?
-            if [ "$result" = 2 ]; then sleep 2; continue; fi
+            if [ "$result" = 2 ] || { [ "$SOFT_RESTART_AWARE" = 1 ] && [ "$result" = 3 ]; }; then
+              rm -f "$CONFIG/pending"
+              sleep 2; continue
+            fi
             fail 'Guarded activation failed; auto stopped'
           fi
           last=$identity
           ready_at=$now
           checked_at=$now
+          ready_wait_since=
         fi
       fi
       if [ -n "$last" ] && [ "$identity" = "$last" ] && [ $((now - checked_at)) -ge 30 ]; then
         if sh "$MODDIR/action.sh" status > "$STATE/auto-status.log"; then :; else
           result=$?
           if [ "$result" = 2 ]; then sleep 2; continue; fi
+          if [ "$SOFT_RESTART_AWARE" = 1 ] && [ "$(getprop sys.boot_completed)" != 1 ]; then sleep 2; continue; fi
           fail 'Runtime verification failed; auto disabled'
         fi
+        if [ "$SOFT_RESTART_AWARE" = 1 ] && [ "$(getprop sys.boot_completed)" != 1 ]; then sleep 2; continue; fi
         grep -Eq '^(MAIN|EXTRAPOLATION) pid=' "$STATE/auto-status.log" || fail 'Patch no longer active; auto disabled'
         # A reboot/kill during activation or this observation window leaves the
         # persistent marker behind, blocking the next automatic attempt.

@@ -1,6 +1,6 @@
 #!/system/bin/sh
 # Dedicated system-service lifecycle. KernelSU disable/remove is the preference.
-# A persistent lease is crash evidence, never an independent activation opt-in.
+# A persistent lease is same-kernel-boot crash evidence, not an activation opt-in.
 set -u
 MODDIR=$(CDPATH= cd -P "${0%/*}" && pwd) || exit 1
 STATE=/dev/gxr_controller_whitening
@@ -30,6 +30,7 @@ worker_alive() {
  same_process "$WP" "$WS"
 }
 allowed() { [ ! -f "$MODDIR/disable" ] && [ ! -f "$MODDIR/remove" ]; }
+restart_requested() { [ -f "$STATE/restart-request" ]; }
 fail() {
  printf 'DISABLED - Error: %s\n' "$*"
  : > "$MODDIR/disable"
@@ -147,8 +148,24 @@ if ! setup; then
  echo 'DISABLED - Error: safe lifecycle setup failed'
  exit 1
 fi
+case "${1:-status}" in
+ enable|resume) sh "$MODDIR/cold-boot-reset.sh" "$MODDIR" "$STATE" || exit $? ;;
+esac
 case "$MODE" in
  status) report ;;
+ prepare-restart)
+  # Explicit KernelSU notification precedes Android stop. Preserve preference;
+  # let the existing owner restore, then wait for verified worker completion.
+  : > "$STATE/restart-request"
+  count=0
+  while worker_alive; do
+   count=$((count+1))
+   [ "$count" -le 12 ] || { fail 'Planned restart: worker restoration timed out'; exit 1; }
+   sleep 1
+  done
+  stop_owned || exit 1
+  echo 'DISABLED - Planned restart: owned patch restored; preference preserved.'
+  ;;
  disable)
   : > "$MODDIR/disable"
   sync
@@ -177,7 +194,7 @@ case "$MODE" in
    report
    exit $?
   fi
-  # A service/daemon restart never retries a previously interrupted active
+  # Within one kernel boot, a service/daemon restart never retries an interrupted active
   # lease. A later explicit action.sh on can recover verified stock first.
   if [ -f "$LEASE" ]; then
    if [ "$MODE" = resume ]; then
@@ -190,6 +207,7 @@ case "$MODE" in
   fi
   [ "$MODE" != enable ] || rm -f "$MODDIR/disable" "$SAVE/failure"
   allowed || exit 0
+  rm -f "$STATE/restart-request"
   if [ -d "$STATE/worker" ]; then
    rm -f "$STATE/worker/pid"
    rmdir "$STATE/worker" || { fail 'Unsafe stale worker directory'; exit 1; }
@@ -218,6 +236,7 @@ case "$MODE" in
   count=0
   while [ "$(getprop sys.boot_completed)" != 1 ]; do
    allowed || exit 0
+   restart_requested && exit 0
    count=$((count+1)); [ "$count" -le 150 ] || { fail 'Android boot did not complete in five minutes'; exit 1; }
    sleep 2
   done
@@ -225,10 +244,12 @@ case "$MODE" in
   count=0
   while ! target; do
    allowed || exit 0
+   restart_requested && exit 0
    count=$((count+1)); [ "$count" -le 60 ] || { fail 'Controller service is absent or ambiguous after boot'; exit 1; }
    sleep 1
   done
   EXPECTED_TARGET=$TP:$TS
+  restart_requested && exit 0
   before=$(query "$TP" preflight 2>&1) || { printf '%s\n' "$before"; fail 'Guarded preflight failed'; exit 1; }
   printf '%s\n' "$before" | grep -q '^STOCK ' || { fail 'External whitening patch is active; stop the standalone experiment before enabling'; exit 1; }
   mkdir "$STATE/launch" || { fail 'Concurrent launch transaction'; exit 1; }
@@ -247,10 +268,20 @@ case "$MODE" in
   sleep 1
   ticks=0
   while allowed; do
+   if restart_requested; then
+    echo 'DISABLED - Planned restart: restoring before Android stop.'
+    exit 0
+   fi
    native_alive "$OWNER" "$OWNER_START" || { fail 'Native owner exited; automatic retry is blocked'; exit 1; }
    target && [ "$TP:$TS" = "$EXPECTED_TARGET" ] || { fail 'Controller service exited or restarted; automatic retry is blocked'; exit 1; }
    if [ "$ticks" = 0 ]; then
-    current=$(query "$TP" preflight 2>&1) || { printf '%s\n' "$current"; fail 'Runtime health or calibration verification failed'; exit 1; }
+    current=$(query "$TP" preflight 2>&1) || {
+     printf 'HEALTH_ERROR uptime=%s boot_completed=%s target=%s:%s\n%s\n' "$(cat /proc/uptime)" "$(getprop sys.boot_completed)" "$TP" "$TS" "$current"
+     # A request can arrive during the read-only query. Restoration in EXIT
+     # remains mandatory; never keep an unverified patch active.
+     restart_requested && exit 0
+     fail 'Runtime health or calibration verification failed'; exit 1
+    }
     printf '%s\n' "$current" | grep -q '^WHITENING_ACTIVE ' || { fail 'Patch is no longer active; automatic retry is blocked'; exit 1; }
    fi
    ticks=$(((ticks+1)%15))

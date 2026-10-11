@@ -7,7 +7,14 @@ private OpenXR runtime mapping. It also accounts for the velocity of offset pose
 origins (`omega cross offset`). Controller poses and timestamps are unchanged;
 this module does not enable additional prediction.
 
-Version **0.3.1** publishes an automatic package only, installed disabled.
+Version **0.3.3** is an automatic-only release, packaged disabled.
+[Download the automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/openxr-velocity-frame/v0.3.3/gxr-openxr-velocity-frame-0.3.3-auto.zip).
+During an announced Android restart, temporary Package Manager unavailability
+is a bounded waiting state. Native discovery uses a distinct result for this
+condition and rechecks process identity before writing. Cold-boot guards expire
+without changing the checkbox. The worker survived the recent soft-restart tests
+and waited for an OpenXR target; those cycles did not test an app patch. See
+[release evidence](../../docs/RELEASE-2026-10-11.md).
 The KernelSU checkbox remains the sole saved activation preference. Startup uses
 the next standard service stage; checking an idle module does not launch it
 immediately. On GXR 1.0, follow its documented soft reboot after root. The worker discovers eligible
@@ -36,7 +43,7 @@ runtime output. Throws have not been separately confirmed.
 
 Disable the old `gxr_controller_velocity_frame` module and restore its current
 app-memory patch first. The helper rejects its known live hooks and old APK
-correction layers. Version 0.3.1 supports Controller Extrapolation **0.4.1**
+correction layers. Version 0.3.3 supports Controller Extrapolation **0.4.2**
 (the same native contract as 0.3.0/0.4.0):
 correction now runs before prediction, with world-space linear velocity and
 input-local angular velocity for the stock predictor. Returned angular velocity
@@ -75,8 +82,15 @@ retry. An app exit during the first 30 seconds or a verification error disables 
 watcher; explicit re-enablement is required after investigation. This is conservative
 and can also trigger when the user intentionally closes an app during that window.
 The watcher depends on KernelSU dispatching its service stage after root is available.
-Version 0.3.1 removes the Manager checkbox extension while preserving the native
-correction, compatible extrapolation states and worker failure containment.
+Version 0.3.2 handles the standard KernelSU pre-restart notification without
+changing the checkbox. The existing worker waits for Android; disappeared app
+processes from that announced restart do not trip the early-exit guard. Unexpected
+early exits still do. A still-living patched process that loses eligibility is not
+silently forgotten. PackageManager discovery uses a three-second query deadline
+and a separate pre-write WAITING result; at most 30 unsuccessful discovery/operation
+cycles are allowed before disabling. Failed writes and compatibility errors are
+never retried automatically. Native correction math and compatibility are unchanged.
+See [restart validation](../../docs/MODULE-RESTART-2026-10-11.md).
 
 Runtime state/logs are in `/dev/gxr_openxr_velocity_frame`; only module files,
 the disable preference and activation-pending marker persist in `/data`.

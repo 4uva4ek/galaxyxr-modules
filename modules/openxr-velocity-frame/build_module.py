@@ -12,7 +12,9 @@ def package(ndk,runtime):
   names=['module.prop','action.sh','customize.sh']
   if variant=='auto':names+=['auto.sh','service.sh']
   files={n:(HERE/'module'/n).read_bytes() for n in names}
+  files['cold-boot-reset.sh']=(HERE.parents[1]/'tools/cold-boot-reset.sh').read_bytes()
   files['action-report.sh']=(HERE.parents[1]/'tools/action-report.sh').read_bytes()
+  files['emulated-soft-reboot.sh']=(HERE.parents[1]/'tools/emulated-soft-reboot.sh').read_bytes()
   p=dict(props);p['name']+=f' ({variant})'
   files['module.prop']=''.join(f'{k}={v}\n' for k,v in p.items()).encode()
   files['skip_mount']=b''

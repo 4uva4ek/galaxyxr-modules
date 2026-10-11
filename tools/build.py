@@ -59,6 +59,12 @@ for variant in variants:
         package_props['name'] += f' ({variant})'
         payload['module.prop'] = ''.join(f'{k}={v}\n' for k,v in package_props.items()).encode()
     assert not any(b'\r' in data for data in payload.values()), 'Source must use LF line endings'
+    # Optional local payloads are pinned separately and excluded from text checks.
+    for name, expected in config.get('binary_files', {}).items():
+        data = (source/'module'/name).read_bytes()
+        if hashlib.sha256(data).hexdigest() != expected:
+            raise ValueError(f'Pinned binary payload mismatch: {name}')
+        payload[name] = data
     payload['bin/'+config['binary']] = blob
     payload['NOTICE.txt'] = (source/'NATIVE-NOTICE.txt').read_bytes()
     payload['NDK-NOTICE.txt'] = (toolchain/'NOTICE').read_bytes()

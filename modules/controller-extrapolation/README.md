@@ -1,10 +1,16 @@
-# Controller extrapolation 0.4.1
+# Controller extrapolation 0.4.2
 
-Regular release: the user confirmed good operation on 2026-10-11.
+Version 0.4.2 adds cold-boot guard expiry and shared lifecycle reporting without
+changing the native extrapolation patch. ON and OFF preferences are preserved.
+This module remained OFF during the recent coordinated soft-restart tests.
+See [current release evidence](../../docs/RELEASE-2026-10-11.md).
+
+The previous native implementation was user-confirmed on 2026-10-11;
+0.4.2 changes lifecycle handling only.
 
 Current controls: [Action report and recovery](../../docs/ACTION-REPORT.md).
 
-Version **0.4.1** is compatible with OpenXR Velocity Frame **0.3.1** (the same native
+Version **0.4.2** is compatible with OpenXR Velocity Frame **0.3.3** (the same native
 contract as 0.4.0/0.3.0). Automatic package only, shipped disabled.
 Build Velocity Frame first to regenerate the exact shared native compatibility
 contract. Unknown/partial hooks are rejected; each module restores only its sites.

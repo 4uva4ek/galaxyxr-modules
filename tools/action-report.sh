@@ -16,6 +16,10 @@ if [ -f "$MODDIR/auto.sh" ]; then
     echo 'Automatic worker: running markers present; see runtime status below.'
   else
     echo 'Automatic worker: NOT RUNNING. Checking the module alone does not start a worker.'
+    if [ -f "$REPORT_STATE/auto.log" ]; then
+      echo 'Last worker messages (may be from an earlier run):'
+      tail -n 6 "$REPORT_STATE/auto.log"
+    fi
   fi
 fi
 echo
@@ -32,7 +36,8 @@ echo
 echo 'The KernelSU checkbox saves the startup preference; it does not call a module start/stop hook.'
 echo 'A checked module starts at the next KernelSU service stage. On GXR 1.0 this follows the documented soft reboot after root.'
 echo 'A running worker observes an unchecked module and attempts restoration. Press Action to verify.'
-echo 'After an error, leave disabled, resolve the cause, then use the explicit recovery command below.'
+echo 'Cold kernel boot clears previous-boot interruption guards at startup; checkbox preference is unchanged. Soft reboot keeps guards.'
+echo 'After a same-boot error, resolve the cause before the explicit recovery command below.'
 echo 'For waiting targets, launch the application; the automatic worker applies the patch.'
 echo 'Explicit root-terminal start or retry (also enables the saved preference):'
 printf 'sh %s/action.sh on\n' "$MODDIR"

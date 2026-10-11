@@ -1,6 +1,12 @@
-# Controller Timestamp Precision 0.1.1
+# Controller Timestamp Precision 0.1.2
 
-[Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-timestamp-precision/v0.1.1/gxr-controller-timestamp-precision-0.1.1-auto.zip)
+Version 0.1.2 expires previous-boot interruption guards after a confirmed change
+of kernel boot ID, preserving both ON and OFF preferences. Same-boot failures
+remain guarded. This version was packaged and checked locally; it remained OFF
+during the recent coordinated soft-restart tests.
+See [current release evidence](../../docs/RELEASE-2026-10-11.md).
+
+[Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-timestamp-precision/v0.1.2/gxr-controller-timestamp-precision-0.1.2-auto.zip)
 with a SHA-256 checksum in the same release. The package ships disabled.
 
 Version 0.1.1 uses the standard KernelSU service stage. Press Action to check
@@ -127,7 +133,7 @@ python modules/controller-timestamp-precision/tests/verify_package.py
 python modules/controller-timestamp-precision/tests/test_lifecycle.py
 ```
 
-Only `dist/controller-timestamp-precision/gxr-controller-timestamp-precision-0.1.1-auto.zip`
+Only `dist/controller-timestamp-precision/gxr-controller-timestamp-precision-0.1.2-auto.zip`
 is built. It includes an empty `disable` marker. The standard installer is
 deliberately blocked by `customize.sh`: the tested Samsung installation path
 can rewrite metadata startup files. Use reviewed direct deployment instead.

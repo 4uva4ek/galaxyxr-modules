@@ -7,6 +7,10 @@ awk '$2 == "/dev" && $3 == "tmpfs" {ok=1} END {exit !ok}' /proc/mounts
 [ ! -L "$STATE" ] || exit 1
 umask 077
 mkdir -p "$STATE"
+fail() { echo "ERROR: $*"; printf '%s\n' "$*" > "$STATE/failed"; : > "$MODDIR/disable"; exit 1; }
+case "${1:-status}" in
+ enable|resume) sh "$MODDIR/cold-boot-reset.sh" "$MODDIR" "$STATE" || exit $? ;;
+esac
 case "${1:-status}" in
  enable)
   [ ! -f "$MODDIR/remove" ] || exit 1
@@ -40,7 +44,16 @@ case "${1:-status}" in
     trap - EXIT
     rm -f "$STATE/run"
     [ "$code" = 0 ] || : > "$MODDIR/disable"
-    sh "$MODDIR/action.sh" _auto-off >> "$STATE/auto.log" 2>&1 || echo 'Restore failed; close patched apps to clear private patches'
+    # Discovery failed before any target was patched: there is nothing to
+    # restore. Keep records for every attempted write, including failed ones.
+    if [ -f "$STATE/restore-needed" ]; then
+      if sh "$MODDIR/action.sh" _auto-off >> "$STATE/auto.log" 2>&1; then
+        rm -f "$STATE/restore-needed"
+      else
+        echo 'Restore failed; close patched apps or fully reboot with module disabled'
+        : > "$MODDIR/disable"; code=1
+      fi
+    fi
     for record in "$STATE/worker/"*; do [ ! -f "$record" ] || rm -f "$record"; done
     rmdir "$STATE/worker"
     exit "$code"
@@ -53,19 +66,50 @@ case "${1:-status}" in
     count=$((count+1)); [ "$count" -le 150 ] || exit 1
     sleep 2
   done
+  unavailable=0
   while [ -f "$STATE/run" ]; do
     [ ! -f "$MODDIR/disable" ] && [ ! -f "$MODDIR/remove" ] || exit 0
-    "$MODDIR/bin/gxr-openxr-velocity" list > "$STATE/auto-targets"
+    count=0
+    while [ "$(getprop sys.boot_completed)" != 1 ]; do
+      [ -f "$STATE/run" ] && [ ! -f "$MODDIR/disable" ] || exit 0
+      [ "$count" != 0 ] || echo 'WAITING: Android is restarting; no activation attempted'
+      count=$((count+1)); [ "$count" -le 150 ] || fail 'Android restart exceeded five minutes'
+      sleep 2
+    done
+    planned=0
+    # Retain the notice until discovery succeeds, including PackageManager's
+    # recovery interval after boot_completed becomes 1.
+    [ ! -f "$STATE/soft-restart" ] || planned=1
+    result=0
+    "$MODDIR/bin/gxr-openxr-velocity" list > "$STATE/auto-targets" || result=$?
+    if [ "$result" = 3 ]; then
+      unavailable=$((unavailable+1))
+      [ "$unavailable" -le 30 ] || fail 'PackageManager unavailable for 30 discovery attempts; no new writes attempted'
+      echo 'WAITING: PackageManager unavailable; retaining activation preference'
+      sleep 2; continue
+    fi
+    [ "$result" = 0 ] || fail 'Target discovery failed'
+    if [ "$(getprop sys.boot_completed)" != 1 ]; then sleep 2; continue; fi
+    transient=0
     now=$(cut -d . -f 1 /proc/uptime)
     for record in "$STATE/worker/"*; do
       [ -f "$record" ] || continue
       pid=${record##*/}
       read -r started ready checked < "$record"
       if ! grep -q "^$pid $started " "$STATE/auto-targets"; then
-        [ $((now-ready)) -ge 30 ] || { echo 'App exited during health check; auto disabled'; exit 1; }
+        if [ "$(getprop sys.boot_completed)" != 1 ]; then sleep 2; continue 2; fi
+        # A verified process disappearing from discovery is not sufficient:
+        # require that its exact PID/start identity really no longer exists.
+        current=$(sed 's/.*) //' "/proc/$pid/stat" 2>/dev/null | awk '{print $20}')
+        [ "$current" != "$started" ] || fail 'Patched process still alive but no longer eligible; inspect before retry'
+        [ "$planned" = 1 ] || [ $((now-ready)) -ge 30 ] || fail 'App exited during health check; auto disabled'
         rm -f "$record"
       fi
     done
+    any_record=0
+    for record in "$STATE/worker/"*; do [ ! -f "$record" ] || any_record=1; done
+    [ "$any_record" = 1 ] || rm -f "$STATE/restore-needed"
+    rm -f "$STATE/soft-restart"
     while read -r pid started package; do
       record=$STATE/worker/$pid
       if [ ! -f "$record" ]; then
@@ -73,7 +117,8 @@ case "${1:-status}" in
         sync
         if sh "$MODDIR/action.sh" _auto-on "$pid:$started"; then :; else
           result=$?
-          [ "$result" = 2 ] && continue
+          if [ "$result" = 3 ]; then transient=1; continue; fi
+          if [ "$result" = 2 ]; then continue; fi
           exit "$result"
         fi
         printf '%s %s %s\n' "$started" "$now" "$now" > "$record"
@@ -86,6 +131,9 @@ case "${1:-status}" in
           result=0
           "$MODDIR/bin/gxr-openxr-velocity" "$pid" status > "$STATE/auto-status.log" || result=$?
           rmdir "$STATE/lock"
+          # A read-only check can race the framework stop after discovery.
+          if [ "$(getprop sys.boot_completed)" != 1 ]; then sleep 2; continue 2; fi
+          if [ "$result" = 3 ]; then transient=1; continue; fi
           [ "$result" = 0 ] || exit "$result"
           grep -q '^CORRECTED pid=' "$STATE/auto-status.log"
           printf '%s %s %s\n' "$started" "$ready" "$now" > "$record"
@@ -100,6 +148,12 @@ case "${1:-status}" in
       [ "$checked" -gt "$ready" ] || healthy=0
     done
     [ "$healthy" = 0 ] || rm -f "$MODDIR/auto.pending"
+    if [ "$transient" = 1 ]; then
+      unavailable=$((unavailable+1))
+      [ "$unavailable" -le 30 ] || fail 'PackageManager unavailable for 30 operation attempts'
+    else
+      unavailable=0
+    fi
     sleep 2
   done
   ;;

@@ -16,6 +16,8 @@ class Autostart(unittest.TestCase):
     def run_worker(self, scenario, system=0, status="MAIN pid=123"):
         with tempfile.TemporaryDirectory() as temp:
             work = Path(temp)
+            # Cold-reset boundary is covered with all six real entries in test_cold_boot_reset.py.
+            (work/'cold-boot-reset.sh').write_text('exit 0\n', newline='\n')
             (work/'state/auto.worker').mkdir(parents=True)
             (work/'state/auto.enabled').touch()
             (work/'autostart').mkdir()
@@ -99,6 +101,8 @@ if [ "$tick" = 3 ]; then echo 123 > pid; fi''',
         for enabled, pending in [(False, False), (True, True), (True, False)]:
             with self.subTest(enabled=enabled, pending=pending), tempfile.TemporaryDirectory() as temp:
                 work = Path(temp)
+                # Cold-reset boundary is covered with all six real entries in test_cold_boot_reset.py.
+                (work/'cold-boot-reset.sh').write_text('exit 0\n', newline='\n')
                 (work/'proc').mkdir()
                 (work/'proc/mounts').write_text('tmpfs /dev tmpfs rw 0 0\n')
                 (work/'autostart').mkdir()
@@ -128,6 +132,8 @@ set -- resume
     def test_auto_package_initializes_once_and_respects_disable(self):
         with tempfile.TemporaryDirectory() as temp:
             work = Path(temp)
+            # Cold-reset boundary is covered with all six real entries in test_cold_boot_reset.py.
+            (work/'cold-boot-reset.sh').write_text('exit 0\n', newline='\n')
             (work/'proc').mkdir()
             (work/'proc/mounts').write_text('tmpfs /dev tmpfs rw 0 0\n')
             (work/'auto-default').touch()
@@ -202,6 +208,8 @@ set -- resume
                                                       ('_auto-on', True, '123:99', True)]:
                 with self.subTest(module=module, mode=mode, enabled=enabled, identity=identity), tempfile.TemporaryDirectory() as temp:
                     work = Path(temp)
+                    # Cold-reset boundary is covered with all six real entries in test_cold_boot_reset.py.
+                    (work/'cold-boot-reset.sh').write_text('exit 0\n', newline='\n')
                     (work/'state/auto.worker').mkdir(parents=True)
                     (work/'autostart').mkdir()
                     (work/'auto.sh').touch()
@@ -211,8 +219,10 @@ set -- resume
                     (work/'proc/123').mkdir(parents=True)
                     (work/'proc/mounts').write_text('tmpfs /dev tmpfs rw 0 0\n')
                     (work/'proc/123/stat').write_text('123 (app) ' + '0 '*19 + '99\n')
+                    (work/'proc/123/maps').write_text('/system/lib64/libsecxrcontrollerservice_jni.xrcontroller.samsung.so\n')
                     script = '''id() { echo 0; }
 pidof() { echo 123; }
+getprop() { echo 1; }
 sh() { echo disabled > manual; rm -f state/auto.enabled autostart/enabled; }
 sha256sum() {
   case "$1" in

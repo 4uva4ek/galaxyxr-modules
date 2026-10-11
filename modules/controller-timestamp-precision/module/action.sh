@@ -6,6 +6,7 @@ case "${1:-report}" in
  status) exec sh "$MODDIR/auto.sh" status ;;
  report)
   echo 'Module status report'
+  echo 'Cold kernel boot clears previous-boot interruption guards at startup; checkbox preference is unchanged. Soft reboot keeps guards.'
   echo 'Action checks status. It does not enable, stop or restart the module.'
   if [ -f "$MODDIR/disable" ]; then echo 'KernelSU checkbox: OFF'; else echo 'KernelSU checkbox: ON; runtime is checked separately'; fi
   sh "$MODDIR/auto.sh" status
@@ -17,7 +18,7 @@ case "${1:-report}" in
   echo 'Enabled modules start at the standard KernelSU service stage; use the normal root soft-reboot flow.'
   echo 'An existing worker observes disable; Action verifies the actual runtime state.'
   echo 'After an error or interrupted lease, resolve the cause, then use the explicit root-terminal on command to retry.'
-  echo 'Interrupted sessions are quarantined; service or worker restart never silently reapplies.'
+  echo 'Within the same kernel boot, interrupted sessions remain quarantined across service or worker restarts.'
   echo 'If restoration is unverified, leave disabled and fully reboot the headset.'
   echo 'A reboot while enabled is not a general rollback: a clean enabled module can start after Android boot completes.'
   printf 'Root-terminal recovery: sh %s/action.sh off\n' "$MODDIR"

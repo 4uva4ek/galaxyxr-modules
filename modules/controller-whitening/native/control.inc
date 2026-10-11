@@ -27,7 +27,15 @@ static void calibrationOff(Memory& mem,const Map& m) {
  unsigned char initialized=0,enabled=1;
  mem.get(m.base+0x7719c8,&initialized,1);require(initialized&1,"Context is not initialized");
  mem.get(m.base+0x771af0+0x378,&enabled,1);require(!enabled,"Calibration mode is enabled; refusing activation");
- auto pointer=[&](uintptr_t address){uint64_t value=0;mem.get(address,&value,8);value&=0x00ffffffffffffffULL;require(value>4096,"Invalid System pointer");return value;};
+ auto pointer=[&](uintptr_t address){
+  uint64_t value=0;mem.get(address,&value,8);value&=0x00ffffffffffffffULL;
+  if(value<=4096){
+   fprintf(stderr,"CALIBRATION_GUARD system_pointer address=0x%llx value=0x%llx target=%d\n",
+    (unsigned long long)address,(unsigned long long)value,mem.pid);
+   throw std::runtime_error("Invalid System pointer: runtime object unavailable; calibration safety cannot be verified");
+  }
+  return value;
+ };
  uint64_t system=pointer(pointer(m.base+0x755dd0)),range[2]{};
  mem.get(system+0xe0,range,sizeof(range));require(range[0]==range[1],"Calibration worker vector is not empty");
 }
@@ -187,7 +195,7 @@ int main(int argc,char** argv) {
   require(WIFEXITED(status)&&WEXITSTATUS(status)==0,"Guardian failed");
   puts("DONE: stock instructions restored and read back. No startup or original-file changes.");return 0;
  } catch(const std::exception& e) {
-  fprintf(stderr,"ERROR: %s (%s)\n",e.what(),strerror(errno));
+  fprintf(stderr,"ERROR: %s\n",e.what());
   bool restored=!attempted||restore(pid,stamp);
   if(pipefd[1]>=0){if(restored){char done='S';(void)!::write(pipefd[1],&done,1);}close(pipefd[1]);}
   if(pipefd[0]>=0)close(pipefd[0]);

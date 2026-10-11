@@ -29,6 +29,7 @@ struct Profile {
 };
 #include "profiles.generated.h"
 #include "compatibility.h"
+#include "package_query.h"
 static void require(bool ok,const char* msg) { if(!ok) throw std::runtime_error(msg); }
 static std::string proc(pid_t pid,const char* f) { return "/proc/"+std::to_string(pid)+"/"+f; }
 static std::string read(const std::string& path) {
@@ -139,23 +140,12 @@ static void requireQuiescent(pid_t pid,Memory& mem,const Frozen& frozen,const Ma
 }
 struct App {std::string package;unsigned long uid;};
 static std::vector<App> thirdPartyApps(){
-    int fds[2];require(pipe2(fds,O_CLOEXEC)==0,"Package pipe failed");pid_t child=fork();
-    require(child>=0,"Package fork failed");
-    if(child==0){
-        // Binder shellCommand forwards all three descriptors to system_server.
-        // Root-only watcher files are not valid stdin/stderr for that service.
-        int nullfd=open("/dev/null",O_RDWR);if(nullfd<0)_exit(126);
-        dup2(nullfd,STDIN_FILENO);dup2(nullfd,STDERR_FILENO);close(nullfd);
-        dup2(fds[1],STDOUT_FILENO);close(fds[0]);close(fds[1]);
-        execl("/system/bin/cmd","cmd","package","list","packages","-3","-U",static_cast<char*>(nullptr));_exit(127);}
-    close(fds[1]);std::string output;char b[4096];ssize_t n;
-    while((n=::read(fds[0],b,sizeof(b)))>0)output.append(b,n);
-    close(fds[0]);int status=0;require(waitpid(child,&status,0)==child&&WIFEXITED(status)&&WEXITSTATUS(status)==0,"Cannot verify third-party packages");
+    const auto output=queryPackages();
     std::vector<App> apps;std::istringstream lines(output);std::string line;
     while(std::getline(lines,line)){auto split=line.find(" uid:");if(line.rfind("package:",0)||split==std::string::npos)continue;
         auto name=line.substr(8,split-8);unsigned long uid=strtoul(line.c_str()+split+5,nullptr,10);
         if(uid>=10000&&!name.empty())apps.push_back({name,uid});}
-    require(!apps.empty(),"No third-party packages found");return apps;
+    require(output.empty()||!apps.empty(),"Unrecognized third-party package response");return apps;
 }
 static bool thirdParty(pid_t pid,const std::string& name,const std::vector<App>& apps){
     auto status=read(proc(pid,"status"));auto pos=status.find("Uid:");if(pos==std::string::npos)return false;
@@ -269,5 +259,6 @@ int main(int argc,char**argv) {
         }
         printf("%s pid=%d profile=%s threads=%zu verified private memory only\n",on?"CORRECTED":"STOCK",pid,p.name,frozen.threads.size());
         return 0;
-    }catch(const std::exception& e){fprintf(stderr,"ERROR: %s (%s)\n",e.what(),strerror(errno));return 1;}
+    }catch(const PackageUnavailable& e){fprintf(stderr,"WAITING: %s\n",e.what());return 3;}
+    catch(const std::exception& e){fprintf(stderr,"ERROR: %s\n",e.what());return 1;}
 }

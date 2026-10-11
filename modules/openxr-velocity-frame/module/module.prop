@@ -1,6 +1,6 @@
 id=gxr_openxr_velocity_frame
 name=Galaxy XR OpenXR Velocity Frame
-version=0.3.1
-versionCode=301
+version=0.3.3
+versionCode=303
 author=4uva4ek
 description=Correct controller velocity coordinates in third-party apps using the supported OpenXR runtime. No system processes or added prediction.
