@@ -1,7 +1,5 @@
 # Galaxy XR Modules
 
-Author: **4uva4ek**. See [source layout for existing and new modules](docs/MODULE-LAYOUT.md).
-
 Independent KernelSU modules for Samsung Galaxy XR. Each has its own version.
 
 **HAL Cache Bypass 0.1.0 — experimental:** makes the controller HAL recompute a
