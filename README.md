@@ -1,6 +1,11 @@
 # Galaxy XR Modules
 
 Independent KernelSU modules for Samsung Galaxy XR. Each has its own version.
+
+**HAL Cache Bypass 0.1.0 — experimental:** makes the controller HAL recompute a
+pose instead of returning the normal cached prediction.
+[Description](#hal-cache-bypass) · [Release and ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/hal-cache-bypass/v0.1.0).
+
 Stable KernelSU update feeds live in [`updates/`](updates/); see the
 [update and release workflow](docs/UPDATES.md). The update-aware GXR Manager can
 check OFF modules and install reviewed replacements disabled. Older installers
@@ -41,22 +46,45 @@ The table below lists public packages.
 | [OpenXR Velocity Frame](modules/openxr-velocity-frame/README.md) | Correct controller velocity coordinates in eligible third-party apps | 0.3.5 | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/openxr-velocity-frame/v0.3.5/gxr-openxr-velocity-frame-0.3.5-auto.zip) |
 | [Controller Whitening](modules/controller-whitening/README.md) | Correct process covariance whitening in the controller service | 0.1.4 | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-whitening/v0.1.4/gxr-controller-whitening-0.1.4-auto.zip) |
 | [Controller Timestamp Precision](modules/controller-timestamp-precision/README.md) | Preserve integer request timestamps in the controller HAL | 0.1.3 | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-timestamp-precision/v0.1.3/gxr-controller-timestamp-precision-0.1.3-auto.zip) |
+| [HAL Cache Bypass](#hal-cache-bypass) | Recompute controller poses instead of reusing the normal HAL predictor cache | 0.1.0 experimental | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/hal-cache-bypass/v0.1.0/gxr-hal-cache-bypass-0.1.0-auto.zip) — reviewed direct deployment only |
 
 [Framebuffer10 0.3.1 source and local-build requirements](modules/framebuffer10/README.md)
 are also available. Its proprietary compositor payload and local ZIP are not distributed.
-
-[HAL Cache Bypass 0.1.0](modules/hal-cache-bypass/README.md) is available as an
-[experimental prerelease](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/hal-cache-bypass/v0.1.0).
-It bypasses the normal cached-pose reuse branch in the controller HAL. The ZIP
-ships disabled. The current GXR Manager installer does not support this module
-ID, so it is excluded from the Sources catalogue and stable update feeds;
-reviewed direct deployment is required. See its [validation and limits](docs/HAL-CACHE-BYPASS-2026-10-12.md).
 
 SHA-256 files accompany release ZIPs. Retired controller-velocity-frame and
 openxr-prediction-40 experiments are retained locally and are not distributed here.
 
 See [2026-10-12 release validation and limits](docs/RELEASE-2026-10-12.md) for the
 current packages and their differences from the previous public versions.
+
+## HAL Cache Bypass
+
+**What it does:** bypasses the normal cached-pose reuse branch in Samsung's
+controller HAL. The native predictor recomputes the pose instead of returning
+that cached result. This is an independent module: it adds no timestamp offset,
+pose correction or application hook and does not require HAL360 or NativeCopy.
+
+**How it works:** changes one instruction in the controller service's private
+RAM, with exact library-hash and process-identity checks. Original system files
+remain unchanged. Activation requires verified KernelSU late-load mode and a
+completed coordinated soft restart. Action reports live status and recovery.
+
+**Status:** experimental 0.1.0. Special predictor paths, smoothing and filters
+remain. It does not guarantee removal of all tracking jitter or establish
+correct native throwing.
+
+**Installation:** the automatic ZIP ships disabled. The current GXR Manager
+installer does not support this module ID, and standard ZIP installation is
+deliberately blocked. Reviewed direct deployment is required; it is not yet in
+the Sources catalogue or stable update feeds. Disable for persistent rollback:
+power removal clears the current RAM patch, but a later authorized soft restart
+can reapply an enabled module.
+
+[Full module README](modules/hal-cache-bypass/README.md) ·
+[Download release](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/hal-cache-bypass/v0.1.0) ·
+[Validation and limits](docs/HAL-CACHE-BYPASS-2026-10-12.md)
+
+## Shared module controls
 
 Action reports runtime state and recovery commands. It never toggles a patch.
 The KernelSU checkbox saves the startup preference. Enabled modules start through
