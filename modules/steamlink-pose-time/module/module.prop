@@ -1,0 +1,7 @@
+id=gxr_steamlink_pose_time
+name=Galaxy XR Steam Link Pose Time
+version=0.1.2
+versionCode=102
+author=4uva4ek
+description=Forwards the full consumed controller pose epoch in Steam Link packets. Requires Velocity Frame and Steam Link 2.0.20. App-private RAM only; ships disabled. Action reports live status and recovery.
+updateJson=https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/steamlink-pose-time.json

@@ -1,0 +1,7 @@
+id=gxr_MODULE_ID
+name=Galaxy XR DISPLAY_NAME
+version=0.1.0
+versionCode=1
+author=4uva4ek
+description=DESCRIBE_SCOPE_AND_LIMITS. Ships disabled; Action reports status and recovery.
+updateJson=https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/NAME.json
