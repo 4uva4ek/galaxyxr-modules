@@ -11,6 +11,8 @@ static constexpr char STATE[]="/dev/gxr_steamlink_pose_time/target";
 static constexpr char ROOTSTATE[]="/dev/gxr_steamlink_pose_time";
 static constexpr char MODULE[]="/data/adb/modules/gxr_steamlink_pose_time";
 struct Waiting:std::runtime_error{using std::runtime_error::runtime_error;};
+static constexpr char UNKNOWN_CODE[]="Velocity Frame consumer code unknown or changing; waiting";
+static constexpr T UNKNOWN_LIMIT=30000000000LL; // same app process; longer means a foreign hook or incompatible Velocity Frame
 #include "process_helpers.h"
 static constexpr char PACKAGE[]="com.valvesoftware.steamlinkvr";
 struct Target{pid_t pid;std::string start;uintptr_t runtime,scene,address;};
@@ -45,9 +47,15 @@ static void verify(Target& t,Memory& mem){
  t.runtime=m.base;t.scene=scene(t.pid,mem);
  require(equal(mem,t.scene+0x1070cc,STATE_CODE,sizeof(STATE_CODE)),"Controller writer changed");
  require(equal(mem,t.scene+0x155bf4,CLOCK_CODE,sizeof(CLOCK_CODE)),"Vendor clock changed");
+ // Velocity Frame writes its correction without this module's lock, so a partial write
+ // can be observed here. Unknown code is a transient wait (bounded by the worker), and a
+ // known state must hold across a second read before it counts.
  int mode=gxr_consumer_state(mem.bytes(t.runtime+0x1b359c,sizeof(GXR_CONSUMER)).data());
  if(mode==0)throw Waiting("Waiting for Velocity Frame activation");
- require(mode==1,"Need known Velocity Frame and stock extrapolation gate");
+ if(mode<0)throw Waiting(UNKNOWN_CODE);
+ require(mode==1,"Need stock extrapolation gate; disable Controller Extrapolation");
+ usleep(20000);
+ if(gxr_consumer_state(mem.bytes(t.runtime+0x1b359c,sizeof(GXR_CONSUMER)).data())!=1)throw Waiting(UNKNOWN_CODE);
  require(gxr_payload_valid(mem.bytes(t.runtime+0x272ae0,0x520).data(),true),"Velocity Frame payload changed");
 }
 static Target saved(){Target t{};std::istringstream s(read(STATE));s>>t.pid>>t.start>>t.runtime>>t.scene>>t.address;require(t.pid>1&&decimalIdentity(t.start)&&t.address>=0x10000,"Bad recovery identity");return t;}
@@ -135,7 +143,7 @@ static int worker(){
  require(lease>=0&&flock(lease,LOCK_EX|LOCK_NB)==0,"Worker already running");
  signal(SIGINT,stop);signal(SIGTERM,stop);signal(SIGHUP,stop);
  const std::string pending=std::string(MODULE)+"/auto.pending";
- Target active{};T checked=0;std::string previous;
+ Target active{};T checked=0;std::string previous,unknownKey;T unknownSince=0;
  putFile(std::string(ROOTSTATE)+"/pid",std::to_string(getpid())+" "+starttime(getpid())+"\n");
  try{
   // A previous worker's app hook must be recovered before beginning a new session.
@@ -162,6 +170,13 @@ static int worker(){
      // Waiting is only possible before the first write in apply().
      if(access(STATE,F_OK)!=0)unlink(pending.c_str());
      if(previous!=e.what()){printf("DISABLED - Waiting: %s\n",e.what());fflush(stdout);previous=e.what();}
+     // Unknown consumer code is transient during Velocity Frame activation; a persistent
+     // unknown state in the same app process is a real conflict and still fails closed.
+     if(e.what()==std::string(UNKNOWN_CODE)&&candidate.pid){
+      const std::string key=std::to_string(candidate.pid)+" "+candidate.start;
+      if(key!=unknownKey){unknownKey=key;unknownSince=monotonic();}
+      else require(monotonic()-unknownSince<UNKNOWN_LIMIT,"Velocity Frame consumer code stayed unknown for 30 s; foreign hook or incompatible Velocity Frame");
+     }else unknownKey.clear();
     }catch(const ProcessGone&){
      // Confirm old process death before clearing any incomplete-apply evidence.
      if(access(STATE,F_OK)==0){Target old=saved();require(!targetAlive(old),"Target identity changed during activation");unlink(STATE);}

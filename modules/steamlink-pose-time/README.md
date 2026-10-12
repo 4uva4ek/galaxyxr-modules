@@ -75,9 +75,12 @@ Automatic enabled app-relaunch/soft-reboot behavior has not been device-validate
 the installed-disabled path, status and native ABI were checked. See the
 [release validation](../../docs/POSE-TIME-2026-10-13.md).
 
-Version 0.1.3 changes only the payload's handling of identical pose bytes under
-two slot labels (latest receipt wins, counter `relabelled`); lifecycle scripts
-and the Manager contract are those of 0.1.2.
+Version 0.1.3 changes the payload's handling of identical pose bytes under two
+slot labels (latest receipt wins, counter `relabelled`) and makes the worker's
+Velocity Frame check tolerant of a partial or changing correction write: unknown
+consumer code is a bounded wait (30 s per app process, confirmed by a second
+read), not a same-boot failure. Lifecycle scripts and the Manager contract are
+those of 0.1.2.
 Version 0.1.2 added Manager `action.sh off/status` restoration reporting and a
 portable build command, without changing the native correction payload.
 The Action button itself remains report-only. An unpublished local 0.1.1
