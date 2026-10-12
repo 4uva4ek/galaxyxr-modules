@@ -27,6 +27,12 @@ this publication. It is a prerelease outside the stable catalogue and feeds.
   `235b3258ec05ec4bb8b13bc1c995519e544ccc41226eba70002a159f0c78f56e`.
   The previously installed and tested ZIP SHA-256 is
   `26fb4368341f934382530c09b85a11f66300f90bd10ce57ef8a8654d908b6ec6`.
+- Clean-snapshot release ZIP SHA-256:
+  `ae7625d91a2a52cf48659a0f62bb7652d9204e9101592007a104cec9f25b19c8`.
+  Its only differences from the retained ZIP are LF normalization of `NOTICE.txt`
+  and the corresponding checksum entry. The executable and all lifecycle scripts
+  are byte-identical to the tested package. Archive identity, safe paths, disabled
+  markers and complete payload checksums pass the shared release validator.
 - Prior on-headset owned-child selftest passed instruction patching, execution,
   preservation, restoration and thread detach without service operations.
 - Retained deployment evidence confirms the previous patch was disabled and
