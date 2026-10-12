@@ -1,0 +1,8 @@
+DEPRECATED — 2026-10-13
+Author: 4uva4ek
+User decision: Framebuffer10 is deprecated. Source is kept for reference only; no continued development, packaging, publication or deployment.
+What it was: continuous 10-bit SDR output with corrected camera shader encoding for the pinned Galaxy XR I610UEU2AZF3 firmware, started through the KernelSU GXR coordinated-restart API. It never enabled full HDR.
+Recorded state: a timed live test confirmed correct colors with a verified 120 s rollback; the continuous module lifecycle was later exercised only through disabled installs and soft-restart hook tests. Remaining limits: HDR-to-SDR mapping stays, separate-draw UNORM alpha blending is not fully corrected.
+Why it stays source-only: the local package embeds a modified copy of the user's pinned Samsung runtime (four shader slots). That artifact is vendor code and must not be redistributed; it is ignored by Git and absent from every release and feed.
+Device: gxr_framebuffer10 is not installed (/data/adb/modules and modules_update checked 2026-10-13). Nothing to disable or restore.
+Do not build, install or enable this module without a new explicit request. If the idea is revisited, start from the retained compositor-library bind, startup-override and guardian/rollback techniques, with a fresh safety review.

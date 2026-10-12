@@ -22,7 +22,7 @@ docs/                Deployment, compatibility and validation records
 ```
 
 Compiled automatic ZIPs live in GitHub Releases, not in the source tree.
-Public automatic ZIPs ship disabled; Framebuffer10 is source-only. Build tools and device safety rules are shared.
+Public automatic ZIPs ship disabled; Framebuffer10 is deprecated and source-only. Build tools and device safety rules are shared.
 
 Framebuffer10 0.3.1 uses KernelSU GXR 1.0.3's
 [coordinated restart stages](docs/COORDINATED-RESTART-2026-10-11.md) to prepare
@@ -50,7 +50,7 @@ Frame; this is not a universal OpenXR timing fix.
 [Download automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/steamlink-pose-time/v0.1.2/gxr-steamlink-pose-time-0.1.2-auto.zip).
 See its documented validation limits before enabling.
 
-[Framebuffer10 0.3.1 source and local-build requirements](modules/framebuffer10/README.md)
+[Framebuffer10 0.3.1 (deprecated) source and local-build requirements](modules/framebuffer10/README.md)
 are also available. Its proprietary compositor payload and local ZIP are not distributed.
 
 SHA-256 files accompany release ZIPs. Retired controller-velocity-frame and

@@ -20,7 +20,7 @@
    `COORDINATED-RESTART-2026-10-11.md`. Do not add an early-boot activation path.
    Do not publish manual packages or restore their obsolete download links.
 
-Framebuffer10 is currently source-only. Its ignored local compositor payload
+Framebuffer10 is deprecated and source-only. Its ignored local compositor payload
 and ZIP contain proprietary vendor code and must not be uploaded. An automatic
 ZIP is not automatically eligible for public redistribution.
 
