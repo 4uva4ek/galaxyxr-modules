@@ -1,6 +1,6 @@
 # Steam Link Pose Time
 
-Author: **4uva4ek**. Version **0.1.2**. Requires the update-aware KernelSU GXR Manager (1.0.6 or later).
+Author: **4uva4ek**. Version **0.1.3**. Requires the update-aware KernelSU GXR Manager (1.0.6 or later).
 
 Preserves the epoch of the controller pose actually consumed by Steam Link.
 The app's standard signed microsecond field at pose block `+0x54` carries the
@@ -62,14 +62,23 @@ A 30-second recording contained 10,800 packets with no logger drops. Supported
 fresh-slot grid error p95 was ~1.1 microseconds; median PC poseTimeOffset was
 ~+39.4ms. These are transport measurements, not physical latency calibration.
 
-Rare guarded pass-through packets retain stock timing (29 in the recording),
-close to most of the largest API backsteps. This known limitation remains in the
-exact tested payload. Native throwing and rendered-frame prediction are unmeasured.
+In that recording 44 of 10 796 packets per hand still carried stock timing; 41 of
+them repeated pose bytes that an earlier packet had already sent with an epoch,
+i.e. the producer republished an identical pose under a newer slot label and the
+0.1.2 payload treated the two labels as ambiguous. Those packets caused four of
+the five largest API backsteps (28–42 mm at ~1.5 m/s). 0.1.3 resolves such
+matches to the sample with the latest receipt, which is the `GetControllerState`
+call that built the packet; packets without any matching sample still pass
+through. The 0.1.3 payload has not yet been re-measured live. Native throwing
+and rendered-frame prediction are unmeasured.
 Automatic enabled app-relaunch/soft-reboot behavior has not been device-validated;
 the installed-disabled path, status and native ABI were checked. See the
 [release validation](../../docs/POSE-TIME-2026-10-13.md).
 
-Version 0.1.2 adds Manager `action.sh off/status` restoration reporting and a
+Version 0.1.3 changes only the payload's handling of identical pose bytes under
+two slot labels (latest receipt wins, counter `relabelled`); lifecycle scripts
+and the Manager contract are those of 0.1.2.
+Version 0.1.2 added Manager `action.sh off/status` restoration reporting and a
 portable build command, without changing the native correction payload.
 The Action button itself remains report-only. An unpublished local 0.1.1
 installation needs reviewed direct replacement because its old Action lacks

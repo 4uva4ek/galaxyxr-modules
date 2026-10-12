@@ -6,7 +6,14 @@ Author: **4uva4ek**.
 
 No pending public changes.
 
-## 0.1.2 ? 2026-10-13
+## 0.1.3 — 2026-10-13
+
+- Resolve identical pose bytes republished under a newer slot label by the sample with the latest receipt (the `GetControllerState` call that built the packet) instead of passing the packet through with stock timing.
+- Measured cause in `capture-20261013-011222`: 44 of 10 796 packets per hand carried stock timing, 41 of them identical to an earlier matched pose; they produced four of the five largest API backsteps (28–42 mm at ~1.5 m/s). Packets without any matching sample still pass through.
+- Status counter `relabelled` replaces `ambiguous`; control structure, guards, geometry, velocities, lifecycle scripts and the Manager off/status contract are unchanged.
+- Live motion re-check of the 0.1.3 payload is pending. Installation and publication do not authorize enablement or reboot.
+
+## 0.1.2 — 2026-10-13
 
 - First public automatic-only package; installs disabled.
 - Forward the full consumed controller slot epoch through the native vrlink time field, with no mean subtraction or timer.

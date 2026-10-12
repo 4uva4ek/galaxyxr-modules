@@ -1,4 +1,5 @@
 // Observation-only source hooks; only wire per-pose time fields may change.
+// 0.1.3: identical pose bytes under two labels resolve to the latest receipt instead of passing through.
 #include "contract.h"
 extern "C" __attribute__((section(".control"),visibility("hidden"))) Control gxr_control;
 Control gxr_control={};
@@ -60,12 +61,16 @@ uintptr_t hook_submit(void* self,void* packet,bool a,bool b){
   const T header=(t0+t1)/2-T(elapsed)*1000;
   if(t0<=0||t1<t0||t1-t0>100000||elapsed<0||elapsed>20000){++c.invalid;unlock();return reinterpret_cast<Submit>(c.submit)(self,packet,a,b);}
   for(U h=0;h<2;++h){
-   auto* p=bytes+(h?0x118:0xc0);Hand& dest=c.hand[h];T stamp=0;bool ambiguous=false;
+   auto* p=bytes+(h?0x118:0xc0);Hand& dest=c.hand[h];T stamp=0,receipt=-1;bool relabelled=false;
    if(*reinterpret_cast<int32_t*>(p+0x54)!=0||p[0x36]!=2){++dest.unmatched;continue;}
+   // The producer can republish identical pose bytes under a newer slot label. The packet
+   // is built from the newest GetControllerState for this hand, so the matching sample with
+   // the latest receipt is the call that produced it; older identical samples only count.
    for(auto& s:dest.samples)if(s.stamp&&t1-s.receipt>=0&&t1-s.receipt<100000000&&same(s.pose,p)){
-    if(stamp&&stamp!=s.stamp)ambiguous=true;stamp=s.stamp;
+    if(stamp&&stamp!=s.stamp)relabelled=true;
+    if(s.receipt>receipt){receipt=s.receipt;stamp=s.stamp;}
    }
-   if(!stamp){++dest.unmatched;continue;}if(ambiguous){++dest.ambiguous;continue;}++dest.matched;
+   if(!stamp){++dest.unmatched;continue;}if(relabelled)++dest.ambiguous;++dest.matched;
    const T age=header-stamp;
    if(age< -100000000||age>100000000){++c.invalid;continue;}
    // Full source epoch: no learned mean or latency tuning. Header clock converted above.

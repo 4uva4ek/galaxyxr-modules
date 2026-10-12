@@ -55,7 +55,7 @@ static void status(Target t){
  verifyIdentity(t.pid,t.start);Memory mem(t.pid);Control c{};mem.get(t.address+DATA,&c,sizeof(c));require(c.magic==MAGIC,"Payload identity mismatch");
  bool hooked=true;auto a=sites(t),v=replacements(t);for(unsigned i=0;i<3;++i){uintptr_t x;mem.get(a[i],&x,8);hooked&=x==v[i];}
  printf("PID=%d start=%s hooks=%d enabled=%u packets=%llu scopes=%llu consume=%llu invalid=%llu conflicts=%llu faults=%llu\n",t.pid,t.start.c_str(),hooked,c.enabled,(unsigned long long)c.packets,(unsigned long long)c.scopes,(unsigned long long)c.calls,(unsigned long long)c.invalid,(unsigned long long)c.conflicts,(unsigned long long)c.faults);
- for(unsigned i=0;i<2;++i){auto& h=c.hand[i];printf("hand=%u epoch=full samples=%u ready=%u anchor_ns=%lld matched=%llu unmatched=%llu ambiguous=%llu applied=%llu changed=%u last_offset_us=%d source_ns=%lld\n",i,h.count,h.calibrated,(long long)h.anchor,(unsigned long long)h.matched,(unsigned long long)h.unmatched,(unsigned long long)h.ambiguous,(unsigned long long)h.applied,h.changed,h.lastOffset,(long long)h.lastStamp);}
+ for(unsigned i=0;i<2;++i){auto& h=c.hand[i];printf("hand=%u epoch=full samples=%u ready=%u anchor_ns=%lld matched=%llu unmatched=%llu relabelled=%llu applied=%llu changed=%u last_offset_us=%d source_ns=%lld\n",i,h.count,h.calibrated,(long long)h.anchor,(unsigned long long)h.matched,(unsigned long long)h.unmatched,(unsigned long long)h.ambiguous,(unsigned long long)h.applied,h.changed,h.lastOffset,(long long)h.lastStamp);}
 }
 static void restore(){
  OperationLock operation;Target t=saved();verifyIdentity(t.pid,t.start);Memory mem(t.pid);Frozen frozen;frozen.freeze(t.pid);verifyIdentity(t.pid,t.start);
