@@ -1,4 +1,8 @@
-# Framebuffer10 0.3.1 (experimental, source-only)
+# Framebuffer10 0.3.1 (deprecated, source-only)
+
+**Deprecated on 2026-10-13** by user decision; see [DEPRECATED.txt](DEPRECATED.txt).
+The source is reference material only: no further development, packaging,
+publication or headset deployment. The module is not installed on the headset.
 
 Enables continuous 10-bit SDR output with corrected camera shader encoding on
 the pinned Galaxy XR I610UEU2AZF3 firmware. This does not enable full HDR.
