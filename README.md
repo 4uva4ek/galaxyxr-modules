@@ -110,6 +110,6 @@ the exact contract generated from your runtime by the preparation step above.
 
 Keeping the headset bootable takes priority. Preserve original files, precise
 compatibility guards, failure quarantine and verified restoration. See
-[AGENTS.md](AGENTS.md), [release guidelines](docs/RELEASING.md), and the module
+the [release guidelines](docs/RELEASING.md) and the module
 validation records. Historical records describe their original versions, not the
 current deployment state or publishing policy.
