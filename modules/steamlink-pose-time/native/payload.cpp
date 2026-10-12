@@ -73,10 +73,12 @@ uintptr_t hook_submit(void* self,void* packet,bool a,bool b){
    if(!stamp){++dest.unmatched;continue;}if(relabelled)++dest.ambiguous;++dest.matched;
    const T age=header-stamp;
    if(age< -100000000||age>100000000){++c.invalid;continue;}
-   // Full source epoch: no learned mean or latency tuning. Header clock converted above.
-   // Existing source-age guard bounds offset to +/-100ms; no experiment duration limit.
+   // Wire epoch = slot label minus the configured compensation (0 = raw label,
+   // 28.82 ms = measured original label lead). No learned mean. Header clock converted
+   // above; the source-age guard bounds the label to +/-100 ms of the header.
    dest.calibrated=1;
-   T offset=-age/1000;
+   T lead=c.lead;if(lead<0||lead>MAX_LEAD_NS)lead=DEFAULT_LEAD_NS;
+   T offset=-(age+lead)/1000;
    *reinterpret_cast<int32_t*>(p+0x54)=static_cast<int32_t>(offset);
    dest.lastStamp=stamp;dest.lastOffset=static_cast<int32_t>(offset);++dest.applied;
    if(offset)++dest.changed;

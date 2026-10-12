@@ -15,6 +15,9 @@ if [ "$MODE" = report ]; then
  echo 'Full reboot clears app RAM; an enabled module can reapply.'
  echo 'Requires Velocity Frame and the supported Steam Link 2.0.20 main package.'
 fi
+if [ "$MODE" = report ]; then
+ "$MODDIR/bin/gxr-steamlink-pose-time" lead get 2>/dev/null | sed -n 's/^LEAD_MS=/Compensation (ms, 0-30; 28.82 = original label lead): /p'
+fi
 if [ -f "$MODDIR/disable" ] || [ -f "$MODDIR/remove" ]; then
  echo 'DISABLED - KernelSU preference OFF or removal requested.'
 else

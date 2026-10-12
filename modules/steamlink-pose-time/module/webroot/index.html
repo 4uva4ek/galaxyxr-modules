@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Steam Link Pose Time</title>
+<style>
+ body{font-family:sans-serif;background:#111;color:#eee;margin:16px}
+ h2{margin:0 0 12px}
+ .card{background:#1d1d1d;border-radius:10px;padding:12px;margin-bottom:12px}
+ button{background:#2b6ef2;color:#fff;border:0;border-radius:6px;padding:8px 14px;margin:4px 4px 4px 0;font-size:15px}
+ button.alt{background:#444}
+ input{background:#000;color:#eee;border:1px solid #444;border-radius:6px;padding:6px;font-size:18px;width:100%;box-sizing:border-box}
+ pre{white-space:pre-wrap;font-size:13px;margin:0}
+ label{display:block;margin:8px 0 4px;color:#aaa;font-size:13px}
+ .hint{color:#aaa;font-size:13px;line-height:1.45;margin-top:8px}
+ .hint b{color:#eee}
+ #msg{color:#f7b955;font-size:13px;min-height:1.2em;margin-top:6px}
+</style>
+</head>
+<body>
+<h2>Steam Link Pose Time</h2>
+
+<div class="card">
+ <label>Compensation, ms (subtracted from the slot label before it goes to the PC)</label>
+ <input id="lead" type="number" min="0" max="30" step="0.01" inputmode="decimal">
+ <div class="hint">
+  Limits: <b>0.00 – 30.00 ms</b>. Default: <b>15 ms</b>.<br>
+  <b>28.82 ms</b> = original label delay: the runtime labels every controller slot 28.82 ms ahead of the pose it carries (measured 2026-10-12). This value sends the true content epoch.<br>
+  <b>0 ms</b> = raw slot label, the 0.1.3 behaviour (steadier, but the PC extrapolates ~29 ms less and the controllers lag).<br>
+  Smaller value = shorter PC horizon, steadier but later. Larger value = longer horizon, fresher but more jerk on acceleration.
+ </div>
+ <button id="save">Save</button>
+ <button id="p15" class="alt">15 (default)</button>
+ <button id="p2882" class="alt">28.82 (original)</button>
+ <button id="p0" class="alt">0 (raw label)</button>
+ <div id="msg"></div>
+ <div class="hint">Applied live within about 2 seconds while the module is enabled and attached to Steam Link; otherwise used at the next activation. Saving does not enable the module.</div>
+</div>
+
+<div class="card"><pre id="status">loading...</pre></div>
+
+<script>
+const M='/data/adb/modules/gxr_steamlink_pose_time';
+const BIN=M+'/bin/gxr-steamlink-pose-time';
+let n=0;
+function exec(cmd){return new Promise(r=>{const cb='cb_'+(n++)+'_'+Date.now();
+ window[cb]=(code,out,err)=>{delete window[cb];r({code,out,err});};
+ try{ksu.exec(cmd,'{}',cb);}catch(e){r({code:-1,out:'',err:String(e)});}});}
+function kv(txt){const o={};String(txt||'').split('\n').forEach(l=>{const m=l.match(/^([A-Z_]+)=(.*)$/);if(m)o[m[1]]=m[2];});return o;}
+const lead=document.getElementById('lead'),msg=document.getElementById('msg');
+async function refresh(){
+ const g=kv((await exec(BIN+' lead get')).out);
+ if(g.LEAD_MS!==undefined&&document.activeElement!==lead)lead.value=Number(g.LEAD_MS).toFixed(2);
+ const s=await exec('sh '+M+'/action.sh');
+ document.getElementById('status').textContent=(s.out||'')+(s.err||'');
+}
+async function save(ms){
+ const v=Number(ms);
+ if(!isFinite(v)||v<0||v>30){msg.textContent='Enter a value between 0 and 30 ms.';return;}
+ const us=Math.round(v*1000);
+ const r=await exec(BIN+' lead set '+us);
+ msg.textContent=r.code===0?'Saved '+(us/1000).toFixed(2)+' ms.':(r.err||r.out||'Save failed');
+ setTimeout(refresh,500);
+}
+document.getElementById('save').onclick=()=>save(lead.value);
+document.getElementById('p15').onclick=()=>{lead.value='15.00';save(15);};
+document.getElementById('p2882').onclick=()=>{lead.value='28.82';save(28.82);};
+document.getElementById('p0').onclick=()=>{lead.value='0.00';save(0);};
+lead.addEventListener('keydown',e=>{if(e.key==='Enter')save(lead.value);});
+refresh();setInterval(refresh,5000);
+</script>
+</body>
+</html>

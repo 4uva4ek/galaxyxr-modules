@@ -31,6 +31,7 @@ run(cc+[f'--ld-path={tool("ld.lld")}','-static-libstdc++','-Wl,-z,max-page-size=
 
 files={p.name:p.read_bytes() for p in (HERE/'module').iterdir() if p.is_file()}
 files['bin/gxr-steamlink-pose-time']=(R/'gxr-steamlink-pose-time').read_bytes()
+files['webroot/index.html']=(HERE/'module/webroot/index.html').read_bytes()
 files['cold-boot-reset.sh']=(ROOT/'tools/cold-boot-reset.sh').read_bytes()
 files['NOTICE.txt']=b'Author 4uva4ek. App RAM pose-time forwarding; Android NDK static libc++ notice follows. Vendor code signatures retained solely for compatibility verification. No vendor library replacement.\n'
 files['NDK-NOTICE.txt']=(TC/'NOTICE').read_bytes()
@@ -44,5 +45,5 @@ with zipfile.ZipFile(archive,'w',zipfile.ZIP_DEFLATED) as z:
   info=zipfile.ZipInfo(n,(2026,10,13,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;info.create_system=3
   info.external_attr=(0o100755 if n.endswith('.sh') or n.startswith('bin/') else 0o100644)<<16;z.writestr(info,v)
 sha=hashlib.sha256(archive.read_bytes()).hexdigest();archive.with_suffix('.zip.sha256').write_text(sha+'  '+archive.name+'\n')
-report={'archive':str(archive),'sha256':sha,'helper_sha256':hashlib.sha256(files['bin/gxr-steamlink-pose-time']).hexdigest(),'payload_sha256':hashlib.sha256(payload).hexdigest(),'payload_bytes':len(payload),'default':'DISABLED','scope':'Steam Link app RAM only; no HAL or original file changes','manual_validation':'Same payload as authorized RAM experiment, real packet timing validated; lifecycle validation separate'}
+report={'archive':str(archive),'sha256':sha,'helper_sha256':hashlib.sha256(files['bin/gxr-steamlink-pose-time']).hexdigest(),'payload_sha256':hashlib.sha256(payload).hexdigest(),'payload_bytes':len(payload),'default':'DISABLED','scope':'Steam Link app RAM only; no HAL or original file changes','manual_validation':'0.1.7 public release of the live-update-fixed payload (slot label minus runtime compensation, default 15 ms, 0..30 ms, 28.82 ms = measured original lead); user confirmed the module works on the headset; per-value wire offsets other than the raw label not independently measured'}
 (R/'build.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))

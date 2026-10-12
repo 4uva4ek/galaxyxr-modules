@@ -1,14 +1,36 @@
 # Steam Link Pose Time
 
-Author: **4uva4ek**. Version **0.1.3**. Requires the update-aware KernelSU GXR Manager (1.0.6 or later).
+Author: **4uva4ek**. Version **0.1.7**. Requires the update-aware KernelSU GXR Manager (1.0.6 or later).
 
 Preserves the epoch of the controller pose actually consumed by Steam Link.
 The app's standard signed microsecond field at pose block `+0x54` carries the
 relative epoch to vrlink. Position, orientation, velocity, tracking state, HMD
 and the shared packet header remain unchanged. The correction is
-`(consumed_slot_epoch - packet_header_epoch) / 1000` microseconds after clock
-conversion, with no learned mean, warmup or chosen millisecond compensation.
-This is the full-epoch RAM version approved by the user on 2026-10-13.
+`(consumed_slot_label - compensation - packet_header_epoch) / 1000` microseconds
+after clock conversion, with no learned mean or warmup. The compensation is a
+runtime setting, **0–30 ms, default 15 ms**, changed from the module's KernelSU
+WebUI. **28.82 ms is the original label delay**: the measured constant lead of the
+runtime's slot label over the HAL target whose pose the slot carries (2026-10-12
+captures), so 28.82 forwards the true content epoch. **0** forwards the raw slot
+label, the behaviour of 0.1.1–0.1.3 that the user found steady but lagging.
+Smaller values shorten SteamVR's extrapolation horizon (steadier, later); larger
+values lengthen it (fresher, more acceleration jerk).
+
+## WebUI and compensation storage
+
+`webroot/index.html` is opened from the module's WebUI button in KernelSU Manager
+(GXR 1.0.6 shows it for an enabled module). It calls only this module's helper
+(`bin/gxr-steamlink-pose-time lead get|set <microseconds>`) and `action.sh`.
+The helper validates the value (integer 0..30000 µs) and writes
+`compensation.conf` atomically in the module directory; nothing else writes it.
+The worker re-reads the file every 2 s and, when it changed, stores the value in
+the app-private control block under a brief freeze of the target (the same
+mechanism as activation, because the write uses `PTRACE_POKETEXT`), so a change
+applies within about 2 s while attached, without a reboot, and is used at the
+next activation otherwise. A failed live update is non-fatal and retried. The payload clamps an
+out-of-range value to the default; the health check rejects it. Saving does not
+enable the module. Reviewed deployment preserves `compensation.conf` like
+`guard-boot-id`; removing the module removes the setting.
 
 Requires the supported **Steam Link 2.0.20 main package** and **Velocity Frame**.
 Other versions and renamed copies are excluded. Controller Extrapolation and
@@ -75,6 +97,17 @@ Automatic enabled app-relaunch/soft-reboot behavior has not been device-validate
 the installed-disabled path, status and native ABI were checked. See the
 [release validation](../../docs/POSE-TIME-2026-10-13.md).
 
+Version 0.1.5 turns the fixed 28.82 ms of 0.1.4 into the runtime compensation
+above (default 15 ms) and adds the WebUI, `lead` helper command, `compensation.conf`,
+the `lead_us` status field and a four-case selftest; matching, guards, lifecycle
+scripts and the Manager contract are those of 0.1.3. Only the raw-label wire
+offset has been measured live so far.
+Version 0.1.4 changed only the wire epoch (content epoch, `epoch=content` in status)
+and the native selftest expectation; matching, guards, lifecycle scripts and the
+Manager contract are those of 0.1.3. With the raw label the PC saw a median
+poseTimeOffset of ~+39.4 ms against ~+15.2 ms stock, so SteamVR extrapolated
+~24 ms less than stock: steadier motion, visible lag. The content epoch is
+expected near +10.6 ms; whether the horizon-related jerk returns is unmeasured.
 Version 0.1.3 changes the payload's handling of identical pose bytes under two
 slot labels (latest receipt wins, counter `relabelled`) and makes the worker's
 Velocity Frame check tolerant of a partial or changing correction write: unknown
