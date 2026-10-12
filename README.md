@@ -45,6 +45,13 @@ The table below lists public packages.
 [Framebuffer10 0.3.1 source and local-build requirements](modules/framebuffer10/README.md)
 are also available. Its proprietary compositor payload and local ZIP are not distributed.
 
+[HAL Cache Bypass 0.1.0](modules/hal-cache-bypass/README.md) is available as an
+[experimental prerelease](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/hal-cache-bypass/v0.1.0).
+It bypasses the normal cached-pose reuse branch in the controller HAL. The ZIP
+ships disabled. The current GXR Manager installer does not support this module
+ID, so it is excluded from the Sources catalogue and stable update feeds;
+reviewed direct deployment is required. See its [validation and limits](docs/HAL-CACHE-BYPASS-2026-10-12.md).
+
 SHA-256 files accompany release ZIPs. Retired controller-velocity-frame and
 openxr-prediction-40 experiments are retained locally and are not distributed here.
 
@@ -58,7 +65,7 @@ this follows the soft reboot after root acquisition. Checking an idle module doe
 not start it immediately. See [startup and recovery](docs/AUTOSTART.md) and
 [Action reports](docs/ACTION-REPORT.md).
 
-The five downloadable modules modify private process memory. Framebuffer10 uses
+The five catalogue modules and HAL Cache Bypass modify private process memory. Framebuffer10 uses
 a temporary library bind and startup overrides, removes them after verification,
 and retains the live compositor mapping. Original APKs and libraries remain
 unchanged; no module flashes partitions or changes root acquisition. Full reboot clears memory patches, but enabled modules can

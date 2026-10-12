@@ -1,0 +1,6 @@
+id=gxr_hal_cache_bypass
+name=Galaxy XR HAL Cache Bypass
+version=0.1.0
+versionCode=1
+author=GalaxyXR
+description=Bypass reused controller predictor cache in private RAM after verified late-load soft restart. Installed disabled; Action reports live state and recovery.

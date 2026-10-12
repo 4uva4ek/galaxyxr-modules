@@ -1,0 +1,1 @@
+Contains project-owned guarded runtime patch helper. No Samsung libraries or firmware are distributed. Android NDK runtime notices accompany the binary.

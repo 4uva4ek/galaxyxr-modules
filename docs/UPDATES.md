@@ -25,9 +25,11 @@ advance a feed. `versionCode` must increase independently for each module.
 
 The initial catalogue was verified against the five public release ZIPs and their
 SHA-256 sidecars on 2026-10-12. Framebuffer10 remains source-only. New local
-experiments, including HAL Cache Bypass and OpenXR Quality, are not implicitly
-approved for distribution; add them to the explicit allowlist only after their
-release and safe update lifecycle have been reviewed.
+experiments are not implicitly approved for distribution; add them to the
+explicit allowlist only after their release and safe update lifecycle have been
+reviewed. HAL Cache Bypass 0.1.0 is separately published as an experimental
+prerelease, but is not in this catalogue: the current GXR Manager installer
+does not support its ID. OpenXR Quality remains unpublished.
 
 ## Release process
 
