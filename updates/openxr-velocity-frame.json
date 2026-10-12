@@ -1,7 +1,7 @@
 {
-  "version": "0.3.3",
-  "versionCode": 303,
-  "zipUrl": "https://github.com/4uva4ek/galaxyxr-modules/releases/download/openxr-velocity-frame/v0.3.3/gxr-openxr-velocity-frame-0.3.3-auto.zip",
+  "version": "0.3.5",
+  "versionCode": 305,
+  "zipUrl": "https://github.com/4uva4ek/galaxyxr-modules/releases/download/openxr-velocity-frame/v0.3.5/gxr-openxr-velocity-frame-0.3.5-auto.zip",
   "changelog": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/changelogs/openxr-velocity-frame.md",
-  "sha256": "e25dc96e8300fb5ebc9cbe65c474c646b27f7f99d441a4cf4982fcfca28b90ce"
+  "sha256": "97fd36cf612ba11b04081f9e26e7bce119cdf0fb965e7ecf504c36b0001e7a6a"
 }
