@@ -1,4 +1,20 @@
-# HAL Cache Bypass 0.1.0
+# HAL Cache Bypass
+
+Author: **4uva4ek**.
+
+## 0.1.1
+
+- Publish in the Sources catalogue and stable update feed.
+- Set author to `4uva4ek` and include the canonical `updateJson` in the package.
+- Keep the native executable and all lifecycle scripts unchanged from 0.1.0.
+- Install disabled through a GXR Manager with the generic GXR lifecycle-contract
+  installer. Older fixed-allowlist Managers do not support this module.
+
+The release-channel change adds no new claim about tracking quality or hardware
+validation. The exact compatibility checks and all recovery guards remain.
+
+## 0.1.0
+
 
 Initial experimental prerelease for Samsung Galaxy XR SM-I610 with the exact
 controller library hash documented in the module README.

@@ -23,13 +23,13 @@ Each public module has an independent stable feed in `updates/NAME.json`.
 ZIP**, not the current source checkout: unpublished development versions never
 advance a feed. `versionCode` must increase independently for each module.
 
-The initial catalogue was verified against the five public release ZIPs and their
-SHA-256 sidecars on 2026-10-12. Framebuffer10 remains source-only. New local
-experiments are not implicitly approved for distribution; add them to the
-explicit allowlist only after their release and safe update lifecycle have been
-reviewed. HAL Cache Bypass 0.1.0 is separately published as an experimental
-prerelease, but is not in this catalogue: the current GXR Manager installer
-does not support its ID. OpenXR Quality remains unpublished.
+The initial five-module catalogue was verified against its public release ZIPs
+and SHA-256 sidecars on 2026-10-12. HAL Cache Bypass 0.1.1 joins the catalogue
+with its own feed and unchanged native/lifecycle payload. Installation requires
+a GXR Manager with the generic GXR lifecycle-contract installer; older Managers
+with the five-module allowlist cannot install it. Framebuffer10 remains
+source-only and OpenXR Quality remains unpublished. Other modules require
+explicit publication authorization and lifecycle review before catalogue entry.
 
 ## Release process
 

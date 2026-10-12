@@ -1,11 +1,25 @@
-# HAL Cache Bypass 0.1.0: release validation
+# HAL Cache Bypass 0.1.1: Sources publication
+
+Version 0.1.1 adds the canonical `updateJson`, author `4uva4ek`, and a higher
+versionCode for the Sources catalogue. The native executable and lifecycle
+scripts are byte-identical to the verified 0.1.0 release described below.
+Only `module.prop` and its checksum change. The original 0.1.0 assets remain
+immutable. No headset installation, activation or reboot is part of publication.
+
+Use a GXR Manager with the generic GXR lifecycle-contract installer. Older
+Managers with the fixed five-module allowlist cannot install this module.
+The package retains its ordinary-installer refusal and empty disable marker.
+Stable-channel publication is a distribution decision, not additional hardware
+validation or a guarantee that all tracking corrections are eliminated.
+
+## Historical 0.1.0 validation
 
 Published scope: the independent cache-bypass module only. HAL360, HAL Native,
 NativeCopy and OpenXR Quality are separate experiments and are not included.
 The release contains project-owned native code and Android NDK runtime notices,
 without vendor libraries, APKs, device dumps, credentials or calibration data.
 
-## Compatibility and installation
+### Compatibility and installation
 
 The module checks SM-I610 and the exact `libsctrlclient.so` SHA-256
 `36120385f25c61f5c2d832d2ac2ebf2179dea1ba8142beeb1001994b7f0d22c0`.
@@ -13,13 +27,13 @@ Activation also requires KernelSU's real late-load mode and a completed, stable
 coordinated soft-restart generation. Unsupported or unavailable state is refused.
 The ordinary predictor's special paths, limits, smoothing and filters remain.
 
-Only the disabled automatic package is distributed. The current GXR Manager
+Only the disabled automatic package is distributed. The GXR Manager reviewed at 0.1.0 publication
 installer does not allow `gxr_hal_cache_bypass`; standard ZIP installation is
 also deliberately blocked. Reviewed direct deployment is required. No Manager
 change, installation, activation, service restart or headset write is part of
 this publication. It is a prerelease outside the stable catalogue and feeds.
 
-## Evidence
+### Evidence
 
 - NDK 28.2.13676358 ARM64 build uses warnings as errors. The release is built
   from a clean source snapshot and compared with the retained tested package.
@@ -45,7 +59,7 @@ this publication. It is a prerelease outside the stable catalogue and feeds.
   boundaries and do not access a headset. Initial sandboxed Git Bash launches
   were blocked by Windows; tests pass outside that sandbox.
 
-## Limits
+### Limits
 
 The user previously reported smoother motion during a combined cache-bypass and
 temporary HAL-source test. That does not isolate the cache-only effect. Later

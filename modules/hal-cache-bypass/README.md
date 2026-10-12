@@ -1,15 +1,16 @@
-# HAL Cache Bypass 0.1.0
+# HAL Cache Bypass 0.1.1
 
-Experimental [release and automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/hal-cache-bypass/v0.1.0).
+Author: **4uva4ek**.
+
+[Release and automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/hal-cache-bypass/v0.1.1).
 See [validation and remaining limits](../../docs/HAL-CACHE-BYPASS-2026-10-12.md).
 
-The current GXR Manager's reviewed installer supports five other module IDs,
-not `gxr_hal_cache_bypass`. This module is therefore not in the Sources catalogue
-or stable update feeds. Standard ZIP installation is deliberately refused by
-`customize.sh`; do not remove that guard. Installation requires a separately
-reviewed direct deployment that restores any existing patch, preserves same-boot
-failure evidence, verifies all payload hashes, and leaves the replacement disabled.
-Publication does not install or enable anything on the headset.
+Available through the repository's **Sources** catalogue and its own update feed.
+Use a GXR Manager with the generic GXR lifecycle-contract installer; older builds
+with a fixed five-module allowlist cannot install this module. The GXR installer
+verifies and installs the package disabled without executing `customize.sh`.
+The ordinary installer refusal remains for installers that can rewrite startup
+metadata. Enabling and soft restart remain separate actions.
 
 This independent module bypasses the cached-pose reuse branch in Samsung's
 controller predictor. It changes one instruction in the controller service's
@@ -18,7 +19,7 @@ horizon or application hook. It does not modify an on-disk system library,
 firmware, partition or calibration.
 HAL360, HAL Native and NativeCopy remain separate application source choices.
 
-This is an experimental predictor-path change. The bypass still uses the native
+This changes the native predictor path. The bypass still uses the native
 predictor's special-path cache behavior, other timing limits, smoothing and
 filters. Recomputing instead of returning the normal cached result intentionally
 can change the returned pose. It does not guarantee that every HAL
@@ -90,7 +91,7 @@ activation/restoration. Original files are never written.
 python modules/hal-cache-bypass/build.py --ndk /path/to/ndk/28.2.13676358
 ```
 
-Output: `dist/hal-cache-bypass/gxr-hal-cache-bypass-0.1.0-auto.zip`, containing the
-disable marker. The generic installer is deliberately blocked; use reviewed
-direct disabled deployment. The packaged helper's `--selftest` uses only an owned
+Output: `dist/hal-cache-bypass/gxr-hal-cache-bypass-0.1.1-auto.zip`, containing the
+disable marker. Use the compatible GXR Sources installer described above; the
+ordinary installer remains deliberately blocked. The packaged helper's `--selftest` uses only an owned
 child's executable memory and does not activate the service patch.
