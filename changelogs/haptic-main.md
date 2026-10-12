@@ -1,7 +1,15 @@
 # haptic-main
 
-Current stable release: **0.5.5**.
+## 0.5.6
 
-[Release notes](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/haptic-main/v0.5.5)
+- Embed the stable per-module update feed in the package.
+- Document source selection, ZIP installation and disabled replacement in the updated GXR Manager.
+- Native code and runtime scripts unchanged from 0.5.5; no new tracking or haptic behavior is claimed.
 
-The old module must stop and restore successfully before replacement. The new version stays **DISABLED**. Enable separately when intended, then use the documented KernelSU soft restart. Action reports runtime status.
+Previous runtime validation applies to unchanged patch behavior; this packaging update adds no new on-device behavior claim. Native object throwing and full cold-boot behavior are not established by package tests.
+
+The old module must stop and restore successfully before replacement. The replacement stays **DISABLED**. Enable separately when intended; no automatic restart is requested by installation. Action reports runtime status and recovery.
+
+[Release notes](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/haptic-main/v0.5.6)
+
+Previous public version: 0.5.5.

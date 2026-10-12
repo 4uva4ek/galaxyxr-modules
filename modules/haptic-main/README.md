@@ -1,4 +1,9 @@
-# Haptic MAIN 0.5.5
+# Haptic MAIN 0.5.6
+
+Current release **0.5.6** includes a stable `updateJson` feed for Manager updates. See [installation from Sources or ZIP](../../docs/INSTALLING-MODULES.md). The package remains automatic-only and installs **DISABLED**.
+
+Native patch behavior and runtime scripts are unchanged from the previous public release. This is a distribution/metadata update.
+
 
 After `sys.boot_completed=1`, activation waits up to 20 seconds for the
 controller service and JNI mapping, applying immediately when ready. Announced
@@ -8,7 +13,7 @@ See [behavior and validation](../../docs/COLD-BOOT-GUARDS-2026-10-11.md).
 
 Current controls: [Action report and recovery](../../docs/ACTION-REPORT.md).
 
-**Regular release:** [Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.5.5/gxr-haptic-main-0.5.5-auto.zip).
+**Regular release:** [Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.5.6/gxr-haptic-main-0.5.6-auto.zip).
 Only the automatic variant is published, shipped disabled. SHA-256 is attached to the release.
 
 A KernelSU module for Galaxy XR SM-I610 that routes standard OpenXR vibration

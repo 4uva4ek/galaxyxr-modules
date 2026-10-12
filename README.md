@@ -36,11 +36,11 @@ The table below lists public packages.
 
 | Module | Purpose | Version | Automatic package |
 | --- | --- | --- | --- |
-| [Haptic MAIN](modules/haptic-main/README.md) | Route standard haptics to the grip motor | 0.5.5 | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.5.5/gxr-haptic-main-0.5.5-auto.zip) |
-| [Controller Extrapolation](modules/controller-extrapolation/README.md) | Enable stock OpenXR extrapolation in Steam Link memory | 0.4.2 | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.4.2/gxr-controller-extrapolation-0.4.2-auto.zip) |
-| [OpenXR Velocity Frame](modules/openxr-velocity-frame/README.md) | Correct controller velocity coordinates in eligible third-party apps | 0.3.3 | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/openxr-velocity-frame/v0.3.3/gxr-openxr-velocity-frame-0.3.3-auto.zip) |
-| [Controller Whitening](modules/controller-whitening/README.md) | Correct process covariance whitening in the controller service | 0.1.3 | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-whitening/v0.1.3/gxr-controller-whitening-0.1.3-auto.zip) |
-| [Controller Timestamp Precision](modules/controller-timestamp-precision/README.md) | Preserve integer request timestamps in the controller HAL | 0.1.2 | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-timestamp-precision/v0.1.2/gxr-controller-timestamp-precision-0.1.2-auto.zip) |
+| [Haptic MAIN](modules/haptic-main/README.md) | Route standard haptics to the grip motor | 0.5.6 | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.5.6/gxr-haptic-main-0.5.6-auto.zip) |
+| [Controller Extrapolation](modules/controller-extrapolation/README.md) | Enable stock OpenXR extrapolation in Steam Link memory | 0.4.3 | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.4.3/gxr-controller-extrapolation-0.4.3-auto.zip) |
+| [OpenXR Velocity Frame](modules/openxr-velocity-frame/README.md) | Correct controller velocity coordinates in eligible third-party apps | 0.3.5 | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/openxr-velocity-frame/v0.3.5/gxr-openxr-velocity-frame-0.3.5-auto.zip) |
+| [Controller Whitening](modules/controller-whitening/README.md) | Correct process covariance whitening in the controller service | 0.1.4 | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-whitening/v0.1.4/gxr-controller-whitening-0.1.4-auto.zip) |
+| [Controller Timestamp Precision](modules/controller-timestamp-precision/README.md) | Preserve integer request timestamps in the controller HAL | 0.1.3 | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-timestamp-precision/v0.1.3/gxr-controller-timestamp-precision-0.1.3-auto.zip) |
 
 [Framebuffer10 0.3.1 source and local-build requirements](modules/framebuffer10/README.md)
 are also available. Its proprietary compositor payload and local ZIP are not distributed.
@@ -66,9 +66,11 @@ runtime logs and locks use `/dev` tmpfs.
 ## Installation
 
 Follow [KernelSU GXR with DFRoot](https://github.com/4uva4ek/KernelSU-GXR/blob/galaxyxr/GALAXYXR.md#installation)
-for root setup, then the selected module's deployment instructions. The tested
-Samsung KernelSU installer can separately rewrite startup metadata; these ZIPs
-deliberately block that installer and document reviewed direct deployment.
+for root setup, then [install from Sources or ZIP](docs/INSTALLING-MODULES.md).
+The source-enabled GXR Manager has a dedicated installer for these five modules.
+Older/standard Samsung KernelSU installers can rewrite startup metadata; these
+ZIPs still block that path. The module READMEs retain reviewed direct-deployment
+instructions for installations without the updated Manager.
 
 Install or update disabled. Disable and restore an existing module before replacing
 its directory. Activation requires a separate decision after verification; an

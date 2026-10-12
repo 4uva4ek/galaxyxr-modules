@@ -1,7 +1,11 @@
 #!/system/bin/sh
 set -eu
 MODDIR=${0%/*}
-if [ "$#" = 0 ]; then . "$MODDIR/action-report.sh"; fi
+if [ "$#" = 0 ]; then
+  echo 'App exits and crashes do not disable this module. The worker waits for a new app process.'
+  echo 'Ordinary app restarts do not require a cold boot. Interrupted writes and verification errors still require reviewed recovery.'
+  . "$MODDIR/action-report.sh"
+fi
 STATE=/dev/gxr_openxr_velocity_frame
 fail() { [ "${1:-}" = "" ] || echo "$*"; [ "${MODE:-status}" = status ] || : > "$MODDIR/disable"; exit 1; }
 [ "$(id -u)" = 0 ] || fail 'Root required'
@@ -29,7 +33,7 @@ GLOBAL_LOCK=/dev/gxr_openxr_transaction
 [ ! -L "$GLOBAL_LOCK" ] || fail 'Unsafe shared lock path'
 mkdir "$GLOBAL_LOCK" 2>/dev/null || { echo 'WAITING: another OpenXR module operation is active'; exit 2; }
 mkdir "$STATE/lock" 2>/dev/null || { rmdir "$GLOBAL_LOCK"; echo 'Another action is active'; exit 2; }
-trap 'code=$?; rmdir "$STATE/lock"; rmdir "$GLOBAL_LOCK"; if [ "$code" -ne 0 ] && [ "$code" -ne 3 ] && [ "$MODE" != status ]; then : > "$MODDIR/disable"; fi; exit "$code"' EXIT
+trap 'code=$?; rmdir "$STATE/lock"; rmdir "$GLOBAL_LOCK"; if [ "$code" -ne 0 ] && [ "$code" -ne 3 ] && [ "$code" -ne 4 ] && [ "$MODE" != status ]; then : > "$MODDIR/disable"; fi; exit "$code"' EXIT
 (cd "$MODDIR" && sha256sum -c SHA256SUMS) > "$STATE/checksums.log" || fail 'Module checksum failure'
 if [ "$MODE" = _auto-on ] && [ "$(getprop sys.boot_completed)" != 1 ]; then
   echo 'WAITING: Android is restarting; no writes'; exit 3
@@ -55,8 +59,10 @@ count=0
 failed=0
 while read -r TARGET STARTED PACKAGE; do
   [ -z "$FILTER" ] || [ "$TARGET:$STARTED" = "$FILTER" ] || continue
-  CURRENT=$(sed 's/.*) //' "/proc/$TARGET/stat" | awk '{print $20}')
-  [ "$CURRENT" = "$STARTED" ] || fail 'Target identity changed'
+  result=0
+  "$MODDIR/bin/gxr-openxr-velocity" "$TARGET" identity "$STARTED" || result=$?
+  if [ "$result" = 4 ]; then continue; fi
+  [ "$result" = 0 ] || fail 'Cannot verify target identity; no writes'
   OP=$MODE
   if [ "$OP" = toggle ]; then
     "$MODDIR/bin/gxr-openxr-velocity" "$TARGET" status > "$STATE/log"
@@ -72,21 +78,29 @@ while read -r TARGET STARTED PACKAGE; do
   if [ "$OP" = on ] && [ ! -f "$STATE/restore-needed" ]; then
     : > "$STATE/restore-needed"; NEW_RESTORE=1
   fi
-  if "$MODDIR/bin/gxr-openxr-velocity" "$TARGET" "$OP" > "$STATE/log" 2>&1; then cat "$STATE/log"; else
+  if "$MODDIR/bin/gxr-openxr-velocity" "$TARGET" "$OP" "$STARTED" > "$STATE/log" 2>&1; then cat "$STATE/log"; else
     result=$?
     cat "$STATE/log"
     # The native helper reserves 3 for failed package discovery, before it
     # opens target memory. Automatic activation addresses exactly one app.
-    if [ "$result" = 3 ] && [ "$OP" = on ] && [ -n "$FILTER" ]; then
+    if { [ "$result" = 3 ] || [ "$result" = 4 ]; } && [ "$OP" = on ] && [ -n "$FILTER" ]; then
       [ "$NEW_RESTORE" = 0 ] || rm -f "$STATE/restore-needed"
-      exit 3
+      exit "$result"
     fi
+    # The helper proves this exact process exited before any write. There is
+    # no private patch left to restore in a dead process; continue other apps.
+    [ "$result" != 4 ] || continue
     # Restore every eligible app even if one mapping no longer validates.
     [ "$OP" = off ] || exit 1
     failed=1
   fi
   count=$((count+1))
 done < "$STATE/targets"
-[ -z "$FILTER" ] || [ "$count" = 1 ] || fail 'Target disappeared before activation'
+if [ -n "$FILTER" ] && [ "$count" != 1 ]; then
+  result=0
+  "$MODDIR/bin/gxr-openxr-velocity" "${FILTER%:*}" identity "${FILTER#*:}" || result=$?
+  [ "$result" != 4 ] || { echo 'WAITING: target exited before activation; no writes'; exit 4; }
+  fail 'Target still alive but unavailable for activation; no writes'
+fi
 [ "$count" != 0 ] || echo 'WAITING: no third-party main app process has OpenXR loaded'
 exit "$failed"

@@ -30,17 +30,24 @@ struct Profile {
 #include "profiles.generated.h"
 #include "compatibility.h"
 #include "package_query.h"
+#include "process_identity.h"
 static void require(bool ok,const char* msg) { if(!ok) throw std::runtime_error(msg); }
+static void requireProcess(bool ok,const char* msg) { if(!ok) throw ProcessAccessError(msg); }
 static std::string proc(pid_t pid,const char* f) { return "/proc/"+std::to_string(pid)+"/"+f; }
 static std::string read(const std::string& path) {
-    std::ifstream f(path); require(bool(f),"Cannot read file");
+    std::ifstream f(path);
+    if(!f&&path.rfind("/proc/",0)==0)throw ProcessAccessError("Cannot read process file");
+    require(bool(f),"Cannot read file");
     return {std::istreambuf_iterator<char>(f),{}};
 }
 static std::string starttime(pid_t pid) {
-    auto text=read(proc(pid,"stat"));auto end=text.rfind(')');require(end!=std::string::npos,"Bad process stat");
-    std::istringstream fields(text.substr(end+2));std::string value;
-    for(int i=0;i<20;++i)require(bool(fields>>value),"Short process stat");
-    return value;
+    auto identity=readProcessIdentity(proc(pid,"stat"),{});
+    if(identity.state==ProcessState::Gone)throw ProcessGone("Target exited");
+    return identity.started;
+}
+static void verifyIdentity(pid_t pid,const std::string& expected) {
+    if(readProcessIdentity(proc(pid,"stat"),expected).state==ProcessState::Gone)
+        throw ProcessGone("Target exited or PID was reused");
 }
 static std::string hash(const std::string& path) {
     int p[2]; require(pipe2(p,O_CLOEXEC)==0,"pipe failed");
@@ -71,13 +78,13 @@ static Map mapping(pid_t pid) {
         require(!result.base,"Ambiguous runtime mapping");
         result={lo-off,hi,path};
     }
-    require(result.base,"Private OpenXR runtime RX mapping not found");return result;
+    requireProcess(result.base,"Private OpenXR runtime RX mapping not found");return result;
 }
 struct Memory {
     int fd;pid_t pid;
-    explicit Memory(pid_t p):fd(open(proc(p,"mem").c_str(),O_RDONLY|O_CLOEXEC)),pid(p) {require(fd>=0,"Cannot read memory");}
+    explicit Memory(pid_t p):fd(open(proc(p,"mem").c_str(),O_RDONLY|O_CLOEXEC)),pid(p) {requireProcess(fd>=0,"Cannot read memory");}
     ~Memory(){close(fd);}
-    void get(uintptr_t a,void* b,size_t n) {require(pread(fd,b,n,a)==static_cast<ssize_t>(n),"Memory read failed");}
+    void get(uintptr_t a,void* b,size_t n) {requireProcess(pread(fd,b,n,a)==static_cast<ssize_t>(n),"Memory read failed");}
     std::vector<unsigned char> bytes(uintptr_t a,size_t n) {std::vector<unsigned char>b(n);get(a,b.data(),n);return b;}
     void put(uintptr_t a,const void* b,size_t n) {
         const auto* src=static_cast<const unsigned char*>(b);
@@ -99,16 +106,16 @@ struct Frozen {
     void freeze(pid_t pid) {
         const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(4);
         for(int round=0;round<8;++round) {
-            DIR* d=opendir(proc(pid,"task").c_str());require(d,"Cannot list threads");std::vector<pid_t> fresh;
+            DIR* d=opendir(proc(pid,"task").c_str());requireProcess(d,"Cannot list threads");std::vector<pid_t> fresh;
             while(auto* e=readdir(d)) {pid_t t=atoi(e->d_name);if(t<=0)continue;
                 if(std::none_of(threads.begin(),threads.end(),[t](const Thread& x){return x.id==t;}))fresh.push_back(t);}
             closedir(d);if(fresh.empty())return;
             for(pid_t t:fresh) {
-                if(ptrace(PTRACE_SEIZE,t,nullptr,nullptr)==-1){if(errno==ESRCH)continue;throw std::runtime_error("PTRACE_SEIZE denied");}
-                threads.push_back({t,false,0});require(ptrace(PTRACE_INTERRUPT,t,nullptr,nullptr)==0,"Interrupt failed");
-                int s=0;for(;;){pid_t got=waitpid(t,&s,__WALL|WNOHANG);require(got>=0,"Wait failed");if(got==t)break;
+                if(ptrace(PTRACE_SEIZE,t,nullptr,nullptr)==-1){if(errno==ESRCH)continue;throw ProcessAccessError("PTRACE_SEIZE denied");}
+                threads.push_back({t,false,0});requireProcess(ptrace(PTRACE_INTERRUPT,t,nullptr,nullptr)==0,"Interrupt failed");
+                int s=0;for(;;){pid_t got=waitpid(t,&s,__WALL|WNOHANG);requireProcess(got>=0,"Wait failed");if(got==t)break;
                     require(std::chrono::steady_clock::now()<deadline,"Thread stop timeout");usleep(1000);}
-                require(WIFSTOPPED(s),"Thread exited while attaching");auto& item=threads.back();item.stopped=true;
+                requireProcess(WIFSTOPPED(s),"Thread exited while attaching");auto& item=threads.back();item.stopped=true;
                 if((s>>16)==0)item.signal=WSTOPSIG(s);
                 require((s>>16)==PTRACE_EVENT_STOP&&WSTOPSIG(s)==SIGTRAP,"Unexpected thread stop");
             }
@@ -197,6 +204,7 @@ static State validate(Memory& mem,const Map& m,const Profile& p,const std::strin
     return {bool(patched),!zero,enabled};
 }
 int main(int argc,char**argv) {
+    pid_t target=0;std::string expected;bool writesStarted=false;
     try {
         if(argc==2&&std::string(argv[1])=="list"){
             const auto apps=thirdPartyApps();DIR* d=opendir("/proc");require(d,"Cannot list processes");
@@ -209,11 +217,19 @@ int main(int argc,char**argv) {
                 }catch(const std::exception&){} }
             closedir(d);return 0;
         }
-        require(argc==3,"Usage: gxr-openxr-velocity PID status|on|off");char* end=nullptr;long number=strtol(argv[1],&end,10);
+        require(argc==3||argc==4,"Usage: gxr-openxr-velocity PID status|on|off [START] or PID identity START");char* end=nullptr;long number=strtol(argv[1],&end,10);
         require(end&&!*end&&number>1&&number<INT32_MAX,"Invalid PID");pid_t pid=number;
-        std::string mode=argv[2];require(mode=="status"||mode=="on"||mode=="off","Invalid mode");
+        target=pid;
+        if(argc==4){expected=argv[3];require(decimalIdentity(expected),"Invalid expected start time");}
+        std::string mode=argv[2];require(mode=="status"||mode=="on"||mode=="off"||mode=="identity","Invalid mode");
+        if(mode=="identity")require(argc==4,"Identity query requires expected start time");
+        verifyIdentity(pid,expected);
+        if(mode=="identity")return 0;
+        if(expected.empty())expected=starttime(pid);
         std::string package=read(proc(pid,"cmdline")).c_str();
-        require(thirdParty(pid,package,thirdPartyApps()),"Target is not a verified third-party main app process");
+        const bool eligible=thirdParty(pid,package,thirdPartyApps());
+        verifyIdentity(pid,expected);
+        require(eligible,"Target is not a verified third-party main app process");
         if(mode=="on"&&package=="com.valvesoftware.steamlinkvr"){
             require((access("/data/adb/modules/gxr_controller_velocity_frame",F_OK)!=0||
                     access("/data/adb/modules/gxr_controller_velocity_frame/disable",F_OK)==0)&&
@@ -223,17 +239,18 @@ int main(int argc,char**argv) {
             require(hash("/system/lib64/libsecxrcontrollerservice_jni.xrcontroller.samsung.so")==
                     "80d45131558b28107cf7e3c9a2c483bce4e2207b934e4f25e951f0fc79d1cd36","Controller producer firmware changed");
         }
-        const auto started=starttime(pid);
+        verifyIdentity(pid,expected);
         auto m=mapping(pid);std::string digest=hash(m.file);const Profile* selected=nullptr;
         for(const auto& p:PROFILES)if(digest==p.sha){require(!selected,"Ambiguous profile");selected=&p;}
         require(selected,"Unsupported library hash");const auto& p=*selected;auto disk=read(m.file);
         require(disk.size()>=p.end,"Pinned file truncated");Memory mem(pid);auto before=validate(mem,m,p,disk);
-        if(mode=="status"){printf("%s pid=%d profile=%s\n",before.hooked?"CORRECTED":"STOCK",pid,p.name);return 0;}
+        if(mode=="status"){verifyIdentity(pid,expected);printf("%s pid=%d profile=%s\n",before.hooked?"CORRECTED":"STOCK",pid,p.name);return 0;}
         signal(SIGINT,SIG_IGN);signal(SIGTERM,SIG_IGN);signal(SIGHUP,SIG_IGN);
         if(mode=="on"){noLegacyHook(pid,mem);}
         Frozen frozen;frozen.freeze(pid);auto again=mapping(pid);
         require(again.base==m.base&&again.file==m.file&&again.end==m.end,"Mapping changed");
-        require(read(proc(pid,"cmdline")).c_str()==package&&starttime(pid)==started,"Process identity changed");before=validate(mem,m,p,disk);
+        verifyIdentity(pid,expected);
+        require(read(proc(pid,"cmdline")).c_str()==package,"Process package changed");before=validate(mem,m,p,disk);
         bool on=mode=="on";
         if(on)noLegacyHook(pid,mem);
         if(on!=before.hooked) {
@@ -241,6 +258,8 @@ int main(int argc,char**argv) {
             // Payload remains after off: stopped threads may hold a return address into it.
             // Rollback restores reachability and activation, never erases reachable code.
             bool complete=before.resident;
+            // Any error after this boundary remains fatal, even if the app exits.
+            writesStarted=true;
             try {
                 if(on&&!complete){mem.put(m.base+p.cave,p.payload.data(),p.payload.size());
                     require(mem.bytes(m.base+p.cave,p.payload.size())==p.payload,"Payload mismatch");complete=true;}
@@ -259,6 +278,20 @@ int main(int argc,char**argv) {
         }
         printf("%s pid=%d profile=%s threads=%zu verified private memory only\n",on?"CORRECTED":"STOCK",pid,p.name,frozen.threads.size());
         return 0;
-    }catch(const PackageUnavailable& e){fprintf(stderr,"WAITING: %s\n",e.what());return 3;}
+    }catch(const ProcessGone& e){
+        if(writesStarted){fprintf(stderr,"ERROR: %s after write attempt\n",e.what());return 1;}
+        fprintf(stderr,"WAITING: %s; no writes\n",e.what());return 4;
+    }
+    catch(const ProcessAccessError& e){
+        if(!writesStarted&&target>1) {
+            try {
+                if(readProcessIdentity(proc(target,"stat"),expected).state==ProcessState::Gone) {
+                    fprintf(stderr,"WAITING: Target exited during read/attach; no writes\n");return 4;
+                }
+            }catch(const std::exception&){} // Unknown identity is not evidence of exit.
+        }
+        fprintf(stderr,"ERROR: %s\n",e.what());return 1;
+    }
+    catch(const PackageUnavailable& e){fprintf(stderr,"WAITING: %s\n",e.what());return 3;}
     catch(const std::exception& e){fprintf(stderr,"ERROR: %s\n",e.what());return 1;}
 }

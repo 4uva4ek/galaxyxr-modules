@@ -1,7 +1,7 @@
 id=gxr_controller_extrapolation
 name=Galaxy XR Controller Extrapolation
-version=0.4.2
-versionCode=7
+version=0.4.3
+versionCode=8
 author=GalaxyXR
 description=Enable stock controller extrapolation in Steam Link process memory. Automatic package, installed disabled. Action reports runtime state.
 updateJson=https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/controller-extrapolation.json

@@ -76,10 +76,8 @@ case "${1:-status}" in
       count=$((count+1)); [ "$count" -le 150 ] || fail 'Android restart exceeded five minutes'
       sleep 2
     done
-    planned=0
     # Retain the notice until discovery succeeds, including PackageManager's
     # recovery interval after boot_completed becomes 1.
-    [ ! -f "$STATE/soft-restart" ] || planned=1
     result=0
     "$MODDIR/bin/gxr-openxr-velocity" list > "$STATE/auto-targets" || result=$?
     if [ "$result" = 3 ]; then
@@ -100,9 +98,10 @@ case "${1:-status}" in
         if [ "$(getprop sys.boot_completed)" != 1 ]; then sleep 2; continue 2; fi
         # A verified process disappearing from discovery is not sufficient:
         # require that its exact PID/start identity really no longer exists.
-        current=$(sed 's/.*) //' "/proc/$pid/stat" 2>/dev/null | awk '{print $20}')
-        [ "$current" != "$started" ] || fail 'Patched process still alive but no longer eligible; inspect before retry'
-        [ "$planned" = 1 ] || [ $((now-ready)) -ge 30 ] || fail 'App exited during health check; auto disabled'
+        result=0
+        "$MODDIR/bin/gxr-openxr-velocity" "$pid" identity "$started" || result=$?
+        [ "$result" = 4 ] || fail 'Patched process still alive or identity unreadable; inspect before retry'
+        echo "WAITING: app process $pid:$started ended; watching for new apps"
         rm -f "$record"
       fi
     done
@@ -117,11 +116,18 @@ case "${1:-status}" in
         sync
         if sh "$MODDIR/action.sh" _auto-on "$pid:$started"; then :; else
           result=$?
-          if [ "$result" = 3 ]; then transient=1; continue; fi
-          if [ "$result" = 2 ]; then continue; fi
+          if [ "$result" = 2 ] || [ "$result" = 3 ] || [ "$result" = 4 ]; then
+            # All three statuses guarantee no memory writes in this action.
+            rm -f "$MODDIR/auto.pending"
+            if [ "$result" = 3 ]; then transient=1; fi
+            continue
+          fi
           exit "$result"
         fi
         printf '%s %s %s\n' "$started" "$now" "$now" > "$record"
+        # Native success includes readback of the complete patch. Pending is
+        # a write-transaction guard, not a 30-second app-survival requirement.
+        rm -f "$MODDIR/auto.pending"
       else
         read -r saved ready checked < "$record"
         [ "$saved" = "$started" ] || exit 1
@@ -129,25 +135,23 @@ case "${1:-status}" in
           # Serialize health reads with user status/patch operations.
           if ! mkdir "$STATE/lock" 2>/dev/null; then continue; fi
           result=0
-          "$MODDIR/bin/gxr-openxr-velocity" "$pid" status > "$STATE/auto-status.log" || result=$?
+          "$MODDIR/bin/gxr-openxr-velocity" "$pid" status "$started" > "$STATE/auto-status.log" 2>&1 || result=$?
           rmdir "$STATE/lock"
           # A read-only check can race the framework stop after discovery.
           if [ "$(getprop sys.boot_completed)" != 1 ]; then sleep 2; continue 2; fi
           if [ "$result" = 3 ]; then transient=1; continue; fi
-          [ "$result" = 0 ] || exit "$result"
-          grep -q '^CORRECTED pid=' "$STATE/auto-status.log"
+          if [ "$result" = 4 ]; then
+            cat "$STATE/auto-status.log"
+            rm -f "$record"
+            continue
+          fi
+          if [ "$result" != 0 ]; then cat "$STATE/auto-status.log"; fail 'Patch health verification failed'; fi
+          grep -q '^CORRECTED pid=' "$STATE/auto-status.log" || fail 'Live patch is no longer corrected'
           printf '%s %s %s\n' "$started" "$ready" "$now" > "$record"
           echo "Verified CORRECTED $package pid=$pid"
         fi
       fi
     done < "$STATE/auto-targets"
-    healthy=1
-    for record in "$STATE/worker/"*; do
-      [ -f "$record" ] || continue
-      read -r started ready checked < "$record"
-      [ "$checked" -gt "$ready" ] || healthy=0
-    done
-    [ "$healthy" = 0 ] || rm -f "$MODDIR/auto.pending"
     if [ "$transient" = 1 ]; then
       unavailable=$((unavailable+1))
       [ "$unavailable" -le 30 ] || fail 'PackageManager unavailable for 30 operation attempts'

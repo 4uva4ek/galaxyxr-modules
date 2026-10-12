@@ -45,6 +45,12 @@ sync() { :; }
 sha256sum() { return 0; }
 pidof() { cat pid; }
 native() {
+  if [ "${2:-}" = identity ]; then
+    [ -r "proc/$1/stat" ] || return 4
+    actual=$(sed 's/.*) //' "proc/$1/stat" | awk '{print $20}')
+    [ "$actual" = "$3" ] || return 4
+    return 0
+  fi
   if [ "$1" = list ]; then
     [ "$(cat boot)" = 1 ] || { touch queried_during_restart; return 3; }
     result=$(cat discovery)
@@ -54,6 +60,12 @@ native() {
   if [ -f race_health ]; then
     rm race_health; echo 0 > boot; touch state/soft-restart; return 1
   fi
+  if [ -f health_exit ]; then
+    rm -f health_exit proc/123/stat
+    echo '456 111 test.app' > targets
+    return 4
+  fi
+  [ ! -f health_failure ] || return 1
   echo 'CORRECTED pid=123'; return 0
 }
 sh() {
@@ -65,6 +77,7 @@ sh() {
   [ "$2" = _auto-on ] || return 90
   echo "$3" >> attempts
   [ ! -f action_unavailable ] || return 3
+  [ ! -f action_gone ] || return 4
   touch state/restore-needed
   [ ! -f activation_failure ] || return 1
   echo "$3" >> calls
@@ -72,6 +85,7 @@ sh() {
 tick=0
 sleep() {
   tick=$((tick+1))
+  if [ "$tick" = 1 ] && [ -f auto.pending ] && [ -f calls ]; then touch stale_pending; fi
   STEPS
   [ "$tick" -ne 8 ] || echo '140.0 0.0' > proc/uptime
   [ "$tick" -lt LIMIT ] || rm -f state/RUN
@@ -88,6 +102,21 @@ if [ "$tick" = 4 ]; then echo 1 > boot; fi'''
                     "rm -f proc/123/stat; echo 456 > pid; echo '456 111 test.app' > targets")
             elif scenario == 'crash':
                 steps = '[ "$tick" -ne 2 ] || { rm -f proc/123/stat; : > pid; : > targets; }'
+            elif scenario == 'app_relaunch':
+                steps = '''[ "$tick" -ne 2 ] || { rm -f proc/123/stat; : > targets; }
+[ "$tick" -ne 3 ] || echo '456 111 test.app' > targets'''
+            elif scenario == 'pid_reuse':
+                steps = '''if [ "$tick" = 2 ]; then
+  echo '123 (test) 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 112' > proc/123/stat
+  echo '123 112 test.app' > targets
+fi'''
+            elif scenario == 'action_gone':
+                (work/'action_gone').touch()
+                steps = '[ "$tick" -ne 3 ] || rm action_gone'
+            elif scenario == 'health_exit':
+                (work/'health_exit').touch()
+            elif scenario == 'health_failure':
+                (work/'health_failure').touch()
             elif scenario == 'lost_eligibility':
                 steps = '[ "$tick" -ne 2 ] || : > targets'
             elif scenario == 'pm_flaky':
@@ -117,6 +146,8 @@ fi'''
                     'MODDIR=${0%/*}', 'MODDIR=.').replace('STATE=/dev/gxr_openxr_velocity_frame', 'STATE=state').replace(
                     '"$MODDIR/bin/gxr-openxr-velocity"', 'native')
             result = execute(work, code)
+            if not haptic and scenario != 'activation_failure':
+                self.assertFalse((work/'stale_pending').exists(), result.stdout+result.stderr)
             self.assertFalse((work/'queried_during_restart').exists(), result.stdout+result.stderr)
             self.assertFalse((work/f'state/{worker}').exists(), result.stdout+result.stderr)
             calls = (work/'calls').read_text().splitlines() if (work/'calls').exists() else []
@@ -137,14 +168,36 @@ fi'''
             self.assertEqual(calls, ['123:99'])
             self.assertFalse(disabled)
 
-    def test_unannounced_early_exit_still_blocks_retry(self):
+    def test_service_exit_and_actual_activation_failure_still_block_retry(self):
         for module in ('haptic', 'velocity'):
-            for scenario in ('unannounced', 'crash', 'activation_failure'):
+            for scenario in (('unannounced', 'crash', 'activation_failure') if module == 'haptic' else ('activation_failure',)):
                 with self.subTest(module=module, scenario=scenario):
                     result, calls, disabled, _ = self.worker(module, scenario)
                     self.assertNotEqual(result.returncode, 0, result.stdout+result.stderr)
                     self.assertTrue(disabled)
                     self.assertLessEqual(len(calls), 1)
+
+    def test_velocity_app_exit_and_reuse_do_not_disable(self):
+        cases = {
+            'crash': ['123:99'],
+            'unannounced': ['123:99', '456:111'],
+            'app_relaunch': ['123:99', '456:111'],
+            'pid_reuse': ['123:99', '123:112'],
+            'action_gone': ['123:99'],
+            'health_exit': ['123:99', '456:111'],
+        }
+        for scenario, expected in cases.items():
+            with self.subTest(scenario=scenario):
+                result, calls, disabled, _ = self.worker('velocity', scenario)
+                self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
+                self.assertEqual(calls, expected)
+                self.assertFalse(disabled)
+
+    def test_live_health_failure_still_disables(self):
+        result, calls, disabled, restored = self.worker('velocity', 'health_failure')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertTrue(disabled and restored)
+        self.assertEqual(calls, ['123:99'])
 
     def test_package_manager_recovery(self):
         for scenario in ('pm_flaky', 'action_flaky'):
@@ -184,7 +237,7 @@ fi'''
                                       ('openxr-velocity-frame', 'gxr-openxr-velocity', 'gxr_openxr_velocity_frame')]:
             scenarios = ['boot_wait', 'failed_write']
             if module == 'haptic-main': scenarios += ['service_wait', 'identity_wait', 'library_wait']
-            if module == 'openxr-velocity-frame': scenarios += ['discovery_wait', 'native_wait']
+            if module == 'openxr-velocity-frame': scenarios += ['discovery_wait', 'native_wait', 'target_gone', 'native_gone', 'live_missing', 'identity_error']
             for scenario in scenarios:
                 with self.subTest(module=module, scenario=scenario), tempfile.TemporaryDirectory() as temp:
                     work = Path(temp)
@@ -208,8 +261,10 @@ sha256sum() {
   esac
 }
 native() {
+  if [ "${2:-}" = identity ]; then return IDENTITY; fi
   if [ "$1" = list ]; then
     [ DISCOVERY = 0 ] || return 3
+    [ LISTED = 1 ] || return 0
     echo '123 99 test.app'; return 0
   fi
   touch native_called
@@ -218,18 +273,21 @@ native() {
 set -- _auto-on 123:99
 '''.replace('BOOT', '0' if scenario == 'boot_wait' else '1').replace(
                         'DISCOVERY', '3' if scenario == 'discovery_wait' else '0').replace(
-                        'NATIVE', '3' if scenario == 'native_wait' else '1')
+                        'NATIVE', '3' if scenario == 'native_wait' else '4' if scenario == 'native_gone' else '1').replace(
+                        'IDENTITY', '4' if scenario == 'target_gone' else '1' if scenario == 'identity_error' else '0').replace(
+                        'LISTED', '0' if scenario in ('target_gone', 'live_missing') else '1')
                     code += (ROOT/'modules'/module/'module/action.sh').read_text().replace(
                         f'/dev/{state}', 'state').replace('/dev/gxr_openxr_transaction', 'global-lock').replace(
                         f'"$MODDIR/bin/{binary}"', 'native')
                     if scenario == 'service_wait': code=code.replace('pidof() { echo 123; }', 'pidof() { :; }')
                     result = execute(work, code)
-                    waiting = scenario != 'failed_write'
-                    self.assertEqual(result.returncode, 3 if waiting else 1, result.stdout+result.stderr)
+                    waiting = scenario not in ('failed_write', 'live_missing', 'identity_error')
+                    expected = 4 if scenario in ('target_gone', 'native_gone') else 3 if waiting else 1
+                    self.assertEqual(result.returncode, expected, result.stdout+result.stderr)
                     self.assertEqual((work/'disable').exists(), not waiting)
-                    self.assertEqual((work/'native_called').exists(), scenario in ('native_wait', 'failed_write'))
+                    self.assertEqual((work/'native_called').exists(), scenario in ('native_wait', 'native_gone', 'failed_write'))
                     if module == 'openxr-velocity-frame':
-                        self.assertEqual((work/'state/restore-needed').exists(), not waiting)
+                        self.assertEqual((work/'state/restore-needed').exists(), scenario == 'failed_write')
 
     def test_standard_notice_cannot_start_or_recover_worker(self):
         for running, disabled in [(False, False), (True, False), (True, True)]:

@@ -1,4 +1,9 @@
-# Controller Whitening 0.1.3
+# Controller Whitening 0.1.4
+
+Current release **0.1.4** includes a stable `updateJson` feed for Manager updates. See [installation from Sources or ZIP](../../docs/INSTALLING-MODULES.md). The package remains automatic-only and installs **DISABLED**.
+
+Native patch behavior and runtime scripts are unchanged from the previous public release. This is a distribution/metadata update.
+
 
 Version 0.1.3 restores the old owner before a planned Android restart and starts
 a fresh owner at the next service stage. Pointer diagnostics include the failing
@@ -7,7 +12,7 @@ consecutive active-to-active soft restarts passed. Cold-boot guards expire
 without changing the checkbox.
 See [current release evidence](../../docs/RELEASE-2026-10-11.md).
 
-[Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-whitening/v0.1.3/gxr-controller-whitening-0.1.3-auto.zip)
+[Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-whitening/v0.1.4/gxr-controller-whitening-0.1.4-auto.zip)
 with a SHA-256 checksum in the same release. The package ships disabled.
 
 Corrects a covariance whitening operation in the Galaxy XR controller tracking

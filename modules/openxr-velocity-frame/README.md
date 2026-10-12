@@ -1,5 +1,10 @@
 # OpenXR controller velocity frame correction
 
+Current release **0.3.5** includes a stable `updateJson` feed for Manager updates. See [installation from Sources or ZIP](../../docs/INSTALLING-MODULES.md). The package remains automatic-only and installs **DISABLED**.
+
+Includes the 0.3.4 app-exit/PID-identity lifecycle fixes. Correction math and compatibility remain unchanged; enabled app-exit/relaunch validation on the headset is still pending.
+
+
 Current controls: [Action report and recovery](../../docs/ACTION-REPORT.md).
 
 Corrects controller linear and angular velocity coordinates in each application's
@@ -7,8 +12,12 @@ private OpenXR runtime mapping. It also accounts for the velocity of offset pose
 origins (`omega cross offset`). Controller poses and timestamps are unchanged;
 this module does not enable additional prediction.
 
-Version **0.3.3** is an automatic-only release, packaged disabled.
-[Download the automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/openxr-velocity-frame/v0.3.3/gxr-openxr-velocity-frame-0.3.3-auto.zip).
+Version **0.3.4** introduced the lifecycle changes now included in **0.3.5**.
+App exit, crash and PID reuse now leave the worker waiting for new applications.
+This does not restart applications or change the correction math. See
+[lifecycle validation](../../docs/VELOCITY-LIFECYCLE-2026-10-12.md).
+The last published release is
+[0.3.3](https://github.com/4uva4ek/galaxyxr-modules/releases/download/openxr-velocity-frame/v0.3.5/gxr-openxr-velocity-frame-0.3.5-auto.zip).
 During an announced Android restart, temporary Package Manager unavailability
 is a bounded waiting state. Native discovery uses a distinct result for this
 condition and rechecks process identity before writing. Cold-boot guards expire
@@ -54,7 +63,7 @@ modules and fully restart the app before updating. Unknown hooks are rejected.
 
 ## Installation and rollback
 
-Do not invoke `ksud module install` on the tested Samsung setup: its installer
+Older/standard `ksud module install` must not be used on the tested Samsung setup: that installer
 can rewrite metadata startup files. `customize.sh` deliberately aborts. Extract
 the selected ZIP on the host and copy its reviewed contents into a **new**
 `/data/adb/modules/gxr_openxr_velocity_frame` directory. Do not overlay another
@@ -77,20 +86,30 @@ If restoration reports failure, closing the affected apps clears their private
 memory patches. A reboot clears memory but can reapply the auto variant unless
 it is disabled first. A full reboot has not been used to validate this release.
 
-An interrupted activation leaves a persistent pending marker that prevents automatic
-retry. An app exit during the first 30 seconds or a verification error disables the
-watcher; explicit re-enablement is required after investigation. This is conservative
-and can also trigger when the user intentionally closes an app during that window.
+An interrupted write transaction leaves a persistent pending marker that prevents
+automatic retry. Successful native readback clears that marker immediately;
+application survival for 30 seconds is no longer required. Exits, crashes, zombies
+and PID reuse discard the old process record and leave the worker enabled.
+The worker never launches or restarts an application. A live process losing
+eligibility, unknown identity, incompatible bytes, failed writes or health
+verification still disable the module and require investigation.
 The watcher depends on KernelSU dispatching its service stage after root is available.
 Version 0.3.2 handles the standard KernelSU pre-restart notification without
 changing the checkbox. The existing worker waits for Android; disappeared app
-processes from that announced restart do not trip the early-exit guard. Unexpected
-early exits still do. A still-living patched process that loses eligibility is not
+processes from that announced restart can be replaced. Version 0.3.4 also accepts
+ordinary app exits outside a restart. A still-living patched process that loses eligibility is not
 silently forgotten. PackageManager discovery uses a three-second query deadline
 and a separate pre-write WAITING result; at most 30 unsuccessful discovery/operation
 cycles are allowed before disabling. Failed writes and compatibility errors are
 never retried automatically. Native correction math and compatibility are unchanged.
 See [restart validation](../../docs/MODULE-RESTART-2026-10-11.md).
+
+Native result 4 means the exact PID/start identity ended before any writes, including
+read/attach races. Shell actions pass the discovered start identity into the native
+helper; a recycled PID can never silently become the mutation target. Result 4 does
+not consume the PackageManager failure budget. Process access errors with a still-live
+or unreadable identity remain errors. No error after the write boundary is converted
+into an ordinary exit. The 30-second read-only health checks remain enabled.
 
 Runtime state/logs are in `/dev/gxr_openxr_velocity_frame`; only module files,
 the disable preference and activation-pending marker persist in `/data`.

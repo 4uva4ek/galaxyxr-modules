@@ -1,4 +1,9 @@
-# Controller Timestamp Precision 0.1.2
+# Controller Timestamp Precision 0.1.3
+
+Current release **0.1.3** includes a stable `updateJson` feed for Manager updates. See [installation from Sources or ZIP](../../docs/INSTALLING-MODULES.md). The package remains automatic-only and installs **DISABLED**.
+
+Native patch behavior and runtime scripts are unchanged from the previous public release. This is a distribution/metadata update.
+
 
 Version 0.1.2 expires previous-boot interruption guards after a confirmed change
 of kernel boot ID, preserving both ON and OFF preferences. Same-boot failures
@@ -6,7 +11,7 @@ remain guarded. This version was packaged and checked locally; it remained OFF
 during the recent coordinated soft-restart tests.
 See [current release evidence](../../docs/RELEASE-2026-10-11.md).
 
-[Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-timestamp-precision/v0.1.2/gxr-controller-timestamp-precision-0.1.2-auto.zip)
+[Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-timestamp-precision/v0.1.3/gxr-controller-timestamp-precision-0.1.3-auto.zip)
 with a SHA-256 checksum in the same release. The package ships disabled.
 
 Version 0.1.1 uses the standard KernelSU service stage. Press Action to check

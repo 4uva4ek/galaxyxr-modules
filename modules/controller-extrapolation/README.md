@@ -1,4 +1,9 @@
-# Controller extrapolation 0.4.2
+# Controller extrapolation 0.4.3
+
+Current release **0.4.3** includes a stable `updateJson` feed for Manager updates. See [installation from Sources or ZIP](../../docs/INSTALLING-MODULES.md). The package remains automatic-only and installs **DISABLED**.
+
+Native patch behavior and runtime scripts are unchanged from the previous public release. This is a distribution/metadata update.
+
 
 Version 0.4.2 adds cold-boot guard expiry and shared lifecycle reporting without
 changing the native extrapolation patch. ON and OFF preferences are preserved.
@@ -10,7 +15,7 @@ The previous native implementation was user-confirmed on 2026-10-11;
 
 Current controls: [Action report and recovery](../../docs/ACTION-REPORT.md).
 
-Version **0.4.2** is compatible with OpenXR Velocity Frame **0.3.3** (the same native
+Version **0.4.2** is compatible with OpenXR Velocity Frame **0.3.3/0.3.4** (the same native
 contract as 0.4.0/0.3.0). Automatic package only, shipped disabled.
 Build Velocity Frame first to regenerate the exact shared native compatibility
 contract. Unknown/partial hooks are rejected; each module restores only its sites.
@@ -123,6 +128,11 @@ Original APK on headset:
 `/data/local/tmp/gxr-extrapolation-20261010/original-steamlink.apk`.
 
 ## Next tracking investigation
+
+Offline replay on 2026-10-12 validates the existing minimal gate patch using
+retained recordings, including negative prediction intervals and repeated API
+queries. See [consumePose replay and prepared candidate](../../docs/CONSUMEPOSE-2026-10-12.md).
+The native patch is unchanged; no new tracking capture or deployment was needed.
 
 Compare stock instructions and enabled extrapolation using the same APK and PC
 driver settings. Record stationary jitter, smooth motion, reversals, tracking
