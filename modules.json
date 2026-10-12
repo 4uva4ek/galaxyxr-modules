@@ -37,6 +37,12 @@
       "name": "HAL Cache Bypass",
       "description": "Recompute controller poses instead of reusing the normal HAL predictor cache.",
       "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/hal-cache-bypass.json"
+    },
+    {
+      "id": "gxr_steamlink_pose_time",
+      "name": "Steam Link Pose Time",
+      "description": "Forward controller slot timestamps to PCVR. Requires Steam Link 2.0.20 and Velocity Frame.",
+      "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/steamlink-pose-time.json"
     }
   ]
 }

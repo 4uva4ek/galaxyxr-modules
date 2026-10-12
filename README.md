@@ -44,6 +44,12 @@ The table below lists public packages.
 | [Controller Timestamp Precision](modules/controller-timestamp-precision/README.md) | Preserve integer request timestamps in the controller HAL | 0.1.3 | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-timestamp-precision/v0.1.3/gxr-controller-timestamp-precision-0.1.3-auto.zip) |
 | [HAL Cache Bypass](modules/hal-cache-bypass/README.md) | Recompute controller poses instead of reusing the normal HAL predictor cache | 0.1.1 | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/hal-cache-bypass/v0.1.1/gxr-hal-cache-bypass-0.1.1-auto.zip) |
 
+[Steam Link Pose Time 0.1.2](modules/steamlink-pose-time/README.md) forwards the
+full controller slot timestamp to PCVR. Requires Steam Link 2.0.20 and Velocity
+Frame; this is not a universal OpenXR timing fix.
+[Download automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/steamlink-pose-time/v0.1.2/gxr-steamlink-pose-time-0.1.2-auto.zip).
+See its documented validation limits before enabling.
+
 [Framebuffer10 0.3.1 source and local-build requirements](modules/framebuffer10/README.md)
 are also available. Its proprietary compositor payload and local ZIP are not distributed.
 
@@ -57,7 +63,7 @@ this follows the soft reboot after root acquisition. Checking an idle module doe
 not start it immediately. See [startup and recovery](docs/AUTOSTART.md) and
 [Action reports](docs/ACTION-REPORT.md).
 
-The six catalogue modules modify private process memory. Framebuffer10 uses
+The seven catalogue modules modify private process memory. Framebuffer10 uses
 a temporary library bind and startup overrides, removes them after verification,
 and retains the live compositor mapping. Original APKs and libraries remain
 unchanged; no module flashes partitions or changes root acquisition. Full reboot clears memory patches, but enabled modules can
@@ -69,7 +75,7 @@ runtime logs and locks use `/dev` tmpfs.
 
 Follow [KernelSU GXR with DFRoot](https://github.com/4uva4ek/KernelSU-GXR/blob/galaxyxr/GALAXYXR.md#installation)
 for root setup, then [install from Sources or ZIP](docs/INSTALLING-MODULES.md).
-Use a GXR Manager with the generic GXR lifecycle-contract installer for all six modules.
+Use a GXR Manager with the generic GXR lifecycle-contract installer for all seven modules.
 Older versions with the five-module allowlist cannot install HAL Cache Bypass.
 Older/standard Samsung KernelSU installers can rewrite startup metadata; these
 ZIPs still block that path. The module READMEs retain reviewed direct-deployment
