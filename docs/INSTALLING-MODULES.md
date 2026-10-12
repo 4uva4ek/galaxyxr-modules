@@ -5,8 +5,10 @@ The repository's `modules.json` makes them discoverable as one source.
 
 ## Manager with the reviewed GXR installer
 
-The source-enabled GXR Manager preview (1.0.6-updates-preview or a build containing
-that implementation) supports both repository selection and a local module ZIP:
+[KernelSU GXR 1.0.6](https://github.com/4uva4ek/KernelSU-GXR/releases/tag/gxr-v1.0.6)
+supports both repository selection and a local module ZIP. Its catalogue and
+legacy update mappings come from the configured GitHub sources; there is no
+built-in module-ID allowlist or module selection/source count limit:
 
 1. Open Modules, then the repository icon and Sources.
 2. Add `https://github.com/4uva4ek/galaxyxr-modules` if it is not already listed.
@@ -34,10 +36,14 @@ restart. Enable only as a separate decision after verification, then follow the
 documented KernelSU service-stage workflow. Action reports status and recovery.
 Checking a module is a preference, not proof of a live patch.
 
-The preview was built and installed during local validation. Live replacement
+The final 1.0.6 APK was installed and its bytes read back during local validation. Live replacement
 through its new updater has not yet been tested on the headset; host tests are
 not evidence that every historical installation can be restored. Do not mistake
 successful package download or catalogue loading for live update validation.
+
+New `gxr_*` IDs do not require a Manager rebuild. Their ZIPs must satisfy the
+[GXR package and restoration contract](https://github.com/4uva4ek/KernelSU-GXR/blob/galaxyxr/docs/MODULE-UPDATES.md).
+Adding an entry to the source catalogue makes a published package discoverable.
 
 ## Other sources
 
