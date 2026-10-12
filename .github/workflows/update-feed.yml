@@ -1,0 +1,52 @@
+name: Publish stable module update feed
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing reviewed stable release tag (module/v1.2.3)'
+        required: true
+        type: string
+permissions:
+  contents: write
+concurrency:
+  group: stable-module-feeds
+  cancel-in-progress: false
+jobs:
+  promote:
+    if: github.event_name == 'workflow_dispatch' || (!github.event.release.prerelease && !github.event.release.draft)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Read approved release and download assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag || github.event.release.tag_name }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re, subprocess
+          from pathlib import Path
+          from tools.update_feed import MODULES
+          tag = os.environ['RELEASE_TAG']
+          match = re.fullmatch(r'([a-z0-9-]+)/v(\d+\.\d+\.\d+)', tag)
+          if not match or match[1] not in MODULES:
+              raise SystemExit('Release is not in the public stable allowlist')
+          release = json.loads(subprocess.check_output(['gh', 'release', 'view', tag, '--json', 'isDraft,isPrerelease']))
+          if release['isDraft'] or release['isPrerelease']:
+              raise SystemExit('Draft/prerelease cannot advance stable')
+          asset = f'gxr-{match[1]}-{match[2]}-auto.zip'
+          subprocess.run(['gh', 'release', 'download', tag, '--dir', 'release-assets', '--pattern', asset, '--pattern', asset + '.sha256'], check=True)
+          subprocess.run(['python3', 'tools/update_feed.py', '--zip', 'release-assets/' + asset, '--tag', tag], check=True)
+          PY
+      - name: Commit catalogue after artifact validation
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add updates/
+          if ! git diff --cached --quiet; then
+            git commit -m 'release: Update stable module feed'
+            git push origin HEAD:main
+          fi

@@ -1,6 +1,10 @@
 # Galaxy XR Modules
 
 Independent KernelSU modules for Samsung Galaxy XR. Each has its own version.
+Stable KernelSU update feeds live in [`updates/`](updates/); see the
+[update and release workflow](docs/UPDATES.md). The update-aware GXR Manager can
+check OFF modules and install reviewed replacements disabled. Older installers
+remain blocked by the packages' safety checks.
 Public automatic ZIPs ship disabled; Framebuffer10 is source-only. Build tools and device safety rules are shared.
 
 Framebuffer10 0.3.1 uses KernelSU GXR 1.0.3's

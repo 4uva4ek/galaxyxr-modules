@@ -4,3 +4,4 @@ version=0.5.5
 versionCode=11
 author=GalaxyXR
 description=MAIN pulse tuning: step 2 (100 Hz request), unchanged amplitude. Action reports status and recovery.
+updateJson=https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/haptic-main.json

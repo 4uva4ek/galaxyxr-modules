@@ -4,3 +4,4 @@ version=0.1.2
 versionCode=3
 author=GalaxyXR
 description=Preserve integer request timestamps in the controller HAL. Installed disabled; Action reports runtime ownership and recovery.
+updateJson=https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/controller-timestamp-precision.json

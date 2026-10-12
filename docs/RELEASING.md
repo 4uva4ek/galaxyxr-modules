@@ -32,4 +32,8 @@ Automatic packages use standard KernelSU hooks and must retain failure latching;
 do not alter root acquisition or system partitions. Supporting new firmware
 requires fresh analysis and precise compatibility checks; do not remove existing
 hash checks to accept an unknown build.
-Releases are published manually. A push does not automatically publish a release.
+Releases are published deliberately after validation. A source push does not
+publish a release. After a stable release is published, the update-feed workflow
+validates its existing ZIP and SHA-256 sidecar and advances that module's feed.
+See [KernelSU update catalogue](UPDATES.md). Update the module changelog before
+publication; never advance a feed to an untested or unpublished package.
