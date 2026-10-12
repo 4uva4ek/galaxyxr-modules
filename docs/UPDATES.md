@@ -1,5 +1,23 @@
 # KernelSU update catalogue
 
+In the update-aware Manager, open the module repository and choose **Sources**.
+Paste `https://github.com/4uva4ek/galaxyxr-modules`, select the desired modules,
+then choose **Install selected**. The Galaxy XR source is included by default.
+Repository selection is saved in the Manager's app preferences.
+
+The root `modules.json` (schemaVersion 1) lists `id`, `name`, `description` and
+`updateJson` for each public module. Its feeds provide the current download URLs,
+versions and hashes. Other public GitHub repositories can publish the same
+catalogue. Without it, the Manager lists ZIP assets from their latest stable
+release per `module/vVERSION` tag line (or the latest stable release for ordinary
+version tags). Private repositories/authentication are not supported.
+
+Selected downloads are checked as module ZIPs before the installation batch
+starts. Catalogue identity/version and any provided SHA-256 must match; duplicate
+module IDs and already-installed/newer versions are rejected. A download failure
+does not start a partial batch. Installation itself is sequential, not an atomic
+transaction across several modules; a failure can leave earlier modules installed.
+
 Each public module has an independent stable feed in `updates/NAME.json`.
 `module.prop` points to it with `updateJson`. The JSON describes the **published
 ZIP**, not the current source checkout: unpublished development versions never

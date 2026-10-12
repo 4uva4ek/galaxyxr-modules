@@ -1,0 +1,15 @@
+name: Check module catalogue
+on:
+  push:
+    paths: ['modules.json', 'updates/**', 'changelogs/**', 'modules/**/module.prop', 'tools/*catalogue*', 'tools/*update_feed*', '.github/workflows/*catalogue*']
+  pull_request:
+    paths: ['modules.json', 'updates/**', 'changelogs/**', 'modules/**/module.prop', 'tools/*catalogue*', 'tools/*update_feed*', '.github/workflows/*catalogue*']
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/check_catalogue.py
+      - run: python3 tools/test_update_feed.py

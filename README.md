@@ -5,6 +5,22 @@ Stable KernelSU update feeds live in [`updates/`](updates/); see the
 [update and release workflow](docs/UPDATES.md). The update-aware GXR Manager can
 check OFF modules and install reviewed replacements disabled. Older installers
 remain blocked by the packages' safety checks.
+
+Add `https://github.com/4uva4ek/galaxyxr-modules` under **Sources** in the
+update-aware Manager, select modules, and choose **Install selected**.
+The [root catalogue](modules.json) is the single public module registry.
+
+```text
+modules/             Module sources, lifecycle scripts and build definitions
+modules.json         Public module catalogue for the Manager
+updates/             Published versions, ZIP URLs and SHA-256 hashes
+changelogs/          Per-module release notes
+tools/               Shared build, validation and release tools
+.github/workflows/   Catalogue checks and stable feed publication
+docs/                Deployment, compatibility and validation records
+```
+
+Compiled automatic ZIPs live in GitHub Releases, not in the source tree.
 Public automatic ZIPs ship disabled; Framebuffer10 is source-only. Build tools and device safety rules are shared.
 
 Framebuffer10 0.3.1 uses KernelSU GXR 1.0.3's

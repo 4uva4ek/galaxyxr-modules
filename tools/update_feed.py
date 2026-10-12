@@ -10,18 +10,28 @@ import re
 import stat
 import zipfile
 from pathlib import Path
+from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 REPO = '4uva4ek/galaxyxr-modules'
 # Explicit public distribution allowlist. Source-only and local experiments
 # cannot become downloadable merely because somebody creates a release tag.
-MODULES = {
-    'haptic-main': 'gxr_haptic_main',
-    'controller-extrapolation': 'gxr_controller_extrapolation',
-    'openxr-velocity-frame': 'gxr_openxr_velocity_frame',
-    'controller-whitening': 'gxr_controller_whitening',
-    'controller-timestamp-precision': 'gxr_controller_timestamp_precision',
-}
+def load_registry():
+    registry = json.loads((ROOT / 'modules.json').read_text('utf-8'))
+    if registry['schemaVersion'] != 1:
+        raise ValueError('Unsupported catalogue schema')
+    modules = {}
+    for entry in registry['modules']:
+        name = Path(urlsplit(entry['updateJson']).path).stem
+        expected = f'https://raw.githubusercontent.com/{REPO}/main/updates/{name}.json'
+        if (not re.fullmatch(r'[a-z0-9-]+', name) or entry['updateJson'] != expected
+                or name in modules or entry['id'] in modules.values()):
+            raise ValueError('Invalid/duplicate public catalogue entry')
+        modules[name] = entry['id']
+    return modules
+
+
+MODULES = load_registry()
 
 
 def validate(archive, module, version):
