@@ -1,5 +1,7 @@
 # Galaxy XR Modules
 
+Author: **4uva4ek**. See [source layout for existing and new modules](docs/MODULE-LAYOUT.md).
+
 Independent KernelSU modules for Samsung Galaxy XR. Each has its own version.
 
 **HAL Cache Bypass 0.1.0 — experimental:** makes the controller HAL recompute a
@@ -46,7 +48,7 @@ The table below lists public packages.
 | [OpenXR Velocity Frame](modules/openxr-velocity-frame/README.md) | Correct controller velocity coordinates in eligible third-party apps | 0.3.5 | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/openxr-velocity-frame/v0.3.5/gxr-openxr-velocity-frame-0.3.5-auto.zip) |
 | [Controller Whitening](modules/controller-whitening/README.md) | Correct process covariance whitening in the controller service | 0.1.4 | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-whitening/v0.1.4/gxr-controller-whitening-0.1.4-auto.zip) |
 | [Controller Timestamp Precision](modules/controller-timestamp-precision/README.md) | Preserve integer request timestamps in the controller HAL | 0.1.3 | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-timestamp-precision/v0.1.3/gxr-controller-timestamp-precision-0.1.3-auto.zip) |
-| [HAL Cache Bypass](#hal-cache-bypass) | Recompute controller poses instead of reusing the normal HAL predictor cache | 0.1.0 experimental | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/hal-cache-bypass/v0.1.0/gxr-hal-cache-bypass-0.1.0-auto.zip) — reviewed direct deployment only |
+| [HAL Cache Bypass](#hal-cache-bypass) | Recompute controller poses instead of reusing the normal HAL predictor cache | 0.1.0 experimental | [ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/hal-cache-bypass/v0.1.0/gxr-hal-cache-bypass-0.1.0-auto.zip) |
 
 [Framebuffer10 0.3.1 source and local-build requirements](modules/framebuffer10/README.md)
 are also available. Its proprietary compositor payload and local ZIP are not distributed.
