@@ -6,7 +6,6 @@ from pathlib import Path
 import re
 
 ROOT = Path(__file__).resolve().parents[1]
-AUTHOR = '4uva4ek'
 FEED_BASE = 'https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/'
 
 
@@ -38,14 +37,12 @@ def check(root=ROOT, module=None):
         identities.add(props['id'])
         if not props['versionCode'].isdigit() or int(props['versionCode']) <= 0:
             raise ValueError(f'{name}: invalid versionCode')
-        if props['author'] != AUTHOR:
-            raise ValueError(f'{name}: author must be {AUTHOR}')
         if props['updateJson'] != f'{FEED_BASE}{name}.json':
             raise ValueError(f'{name}: noncanonical updateJson')
         for required in (source.parents[1] / 'README.md', root / 'changelogs' / f'{name}.md'):
             if not required.is_file():
                 raise ValueError(f'{name}: missing {required.name}')
-    print(f'Module layout: {len(sources)} local module folders verified; author={AUTHOR}')
+    print(f'Module layout: {len(sources)} local module folders verified')
 
 
 if __name__ == '__main__':

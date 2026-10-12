@@ -2,6 +2,6 @@ id=gxr_haptic_main
 name=Galaxy XR Haptics MAIN
 version=0.5.6
 versionCode=12
-author=GalaxyXR
+author=4uva4ek
 description=MAIN pulse tuning: step 2 (100 Hz request), unchanged amplitude. Action reports status and recovery.
 updateJson=https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/haptic-main.json

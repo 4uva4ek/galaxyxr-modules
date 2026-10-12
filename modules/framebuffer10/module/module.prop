@@ -2,5 +2,6 @@ id=gxr_framebuffer10
 name=Galaxy XR Framebuffer10 - corrected camera color
 version=0.3.1-experimental
 versionCode=301
-author=Galaxy XR research
+author=4uva4ek
 description=Continuous 10-bit SDR framebuffer with corrected camera output encoding. Independent crash guardian, original-library rollback, no automatic retries after interruption. Installed disabled. Action reports actual runtime state. Not full HDR.
+updateJson=https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/framebuffer10.json

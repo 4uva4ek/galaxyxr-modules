@@ -1,5 +1,9 @@
 # controller-extrapolation
 
+## Unreleased
+
+- Set module author to `4uva4ek` in source metadata; published archives and update feeds are unchanged.
+
 ## 0.4.3
 
 - Embed the stable per-module update feed in the package.

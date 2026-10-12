@@ -2,6 +2,6 @@ id=gxr_controller_timestamp_precision
 name=Galaxy XR Controller Timestamp Precision
 version=0.1.3
 versionCode=4
-author=GalaxyXR
+author=4uva4ek
 description=Preserve integer request timestamps in the controller HAL. Installed disabled; Action reports runtime ownership and recovery.
 updateJson=https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/controller-timestamp-precision.json
