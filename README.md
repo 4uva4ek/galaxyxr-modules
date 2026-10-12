@@ -50,9 +50,6 @@ are also available. Its proprietary compositor payload and local ZIP are not dis
 SHA-256 files accompany release ZIPs. Retired controller-velocity-frame and
 openxr-prediction-40 experiments are retained locally and are not distributed here.
 
-See [2026-10-12 release validation and limits](docs/RELEASE-2026-10-12.md) for the
-current packages and their differences from the previous public versions.
-
 Action reports runtime state and recovery commands. It never toggles a patch.
 The KernelSU checkbox saves the startup preference. Enabled modules start through
 the standard `service.sh` stage; in the documented GXR 1.0 temporary-root flow,
