@@ -1,15 +1,21 @@
 """Compile and exercise the exact validator used by both native modules."""
-import argparse,ctypes as C,json,struct,subprocess
+import argparse,ctypes as C,json,struct,subprocess,os
 from pathlib import Path
 HERE=Path(__file__).resolve().parent
 OUT=HERE.parents[1]/'dist/openxr-velocity-frame'
 def test(ndk):
- tc=ndk/'toolchains/llvm/prebuilt/windows-x86_64/bin'
  source=OUT/'test-compatibility.cpp'
- source.write_text('#include "compatibility.h"\nextern "C" __declspec(dllexport) int check(const unsigned char* f,const unsigned char* p){int s=gxr_consumer_state(f);return s<0||!gxr_payload_valid(p,s&1)?-1:s;}\n')
- subprocess.run([str(tc/'clang++.exe'),'--target=x86_64-pc-windows-msvc','-std=c++17','-O2','-ffreestanding','-fno-exceptions','-fno-rtti','-I',str(HERE/'native'),'-c',str(source),'-o',str(OUT/'compat.obj')],check=True)
- subprocess.run([str(tc/'ld.lld.exe'),'-flavor','link','/dll','/noentry','/nodefaultlib',f'/out:{OUT/"compat.dll"}',str(OUT/'compat.obj')],check=True)
- lib=C.CDLL(str(OUT/'compat.dll'));check=lib.check;check.argtypes=[C.c_char_p,C.c_char_p];check.restype=C.c_int
+ export='__declspec(dllexport)' if os.name=='nt' else '__attribute__((visibility("default")))'
+ source.write_text('#include "compatibility.h"\nextern "C" '+export+' int check(const unsigned char* f,const unsigned char* p){int s=gxr_consumer_state(f);return s<0||!gxr_payload_valid(p,s&1)?-1:s;}\n')
+ if os.name=='nt':
+  tc=ndk/'toolchains/llvm/prebuilt/windows-x86_64/bin'
+  subprocess.run([str(tc/'clang++.exe'),'--target=x86_64-pc-windows-msvc','-std=c++17','-O2','-ffreestanding','-fno-exceptions','-fno-rtti','-I',str(HERE/'native'),'-c',str(source),'-o',str(OUT/'compat.obj')],check=True)
+  subprocess.run([str(tc/'ld.lld.exe'),'-flavor','link','/dll','/noentry','/nodefaultlib',f'/out:{OUT/"compat.dll"}',str(OUT/'compat.obj')],check=True)
+  lib=C.CDLL(str(OUT/'compat.dll'))
+ else:
+  subprocess.run(['c++','-std=c++17','-O2','-shared','-fPIC','-I',str(HERE/'native'),str(source),'-o',str(OUT/'compat.so')],check=True)
+  lib=C.CDLL(str(OUT/'compat.so'))
+ check=lib.check;check.argtypes=[C.c_char_p,C.c_char_p];check.restype=C.c_int
  # Parse generated constants, so a stale contract is caught against build output.
  import re
  header=(HERE/'native/compatibility.generated.h').read_text()

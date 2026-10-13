@@ -1,6 +1,6 @@
 # Galaxy XR KernelSU Modules
 
-KernelSU modules for the Samsung Galaxy XR (SM-I610) running Android XR. All modules are non-invasive — they patch private process memory at runtime and never modify system files, partitions or the original APKs. Every package installs **disabled**; you enable it yourself.
+KernelSU modules for the Samsung Galaxy XR (SM-I610) running Android XR. All modules are non-invasive — they apply changes in process memory at runtime and never modify system files, partitions or the original APKs. Every package installs **disabled**; you enable it yourself.
 Requires a rooted Samsung Galaxy XR with [KernelSU-GXR](https://github.com/4uva4ek/KernelSU-GXR) (1.0.6 or later for Sources installation).
 
 Add this repository as a source within the KernelSU Manager with the url: ``https://github.com/4uva4ek/galaxyxr-modules``.
@@ -31,6 +31,12 @@ Keeps controller pose **request timestamps at integer precision** inside the con
 ### HAL Cache Bypass (`gxr_hal_cache_bypass`)
 Makes the controller HAL **recompute each requested pose** instead of returning its predictor cache. Experimental; the stock predictor's other filters remain.
 
+### OpenXR QUALITY (`gxr_openxr_quality`)
+Holds the camera tracking **QUALITY** request during visible OpenXR sessions.
+Experimental: sleep/app exit releases it; critical thermal severity 4 releases
+it until severity falls to 2. This is not a guarantee of camera frame rate or
+better controller motion. [Behavior, validation limits and local 0.1.0 migration](modules/openxr-quality/README.md).
+
 ### Deprecated and retired
 **Framebuffer10** (10-bit SDR output with corrected camera colors) is deprecated and source-only — its payload contains vendor code and is not distributed. Earlier tracking experiments (Bracket, IMU Time, HAL 360, native copy) are retired and kept locally; they are not distributed here.
 
@@ -56,6 +62,11 @@ docs/                Installation, deployment, compatibility and validation reco
 ```
 
 ## Building
+
+Raising both `version` and `versionCode` in a public module's `module.prop` and
+pushing to `main` now builds, checks and publishes its disabled ZIP automatically.
+No manual archive upload is needed. See [automatic releases](docs/AUTOMATIC-RELEASES.md)
+for build-only runs, private inputs, validation requirements and recovery.
 
 Python 3.10+ and Android NDK **28.2.13676358**. Build commands never connect to the headset.
 

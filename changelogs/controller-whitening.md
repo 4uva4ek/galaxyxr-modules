@@ -1,5 +1,18 @@
 # controller-whitening
 
+## 0.1.7
+
+- Recognize the exact paired IMU wait gates during full-code validation, health
+  checks and restoration. Unknown or partial mutations remain rejected.
+- Preserve the whitening correction, calibration guards, shared transaction lock
+  and existing lifecycle behavior. The retired IMU Time module is not included.
+- Author: 4uva4ek. Automatic package only; installation and replacement stay disabled.
+
+The binary matches the previously device-validated local 0.1.7. Local 0.1.5
+introduced this compatibility, 0.1.6 temporarily removed it, and 0.1.7 restored
+it at the user's request; 0.1.5 and 0.1.6 were not public releases.
+See [release validation](../docs/RELEASE-QUALITY-WHITENING-2026-10-13.md).
+
 ## Unreleased
 
 - Set module author to `4uva4ek` in source metadata; published archives and update feeds are unchanged.
