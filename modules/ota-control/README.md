@@ -35,6 +35,12 @@ notes:
   files: no `magisk/` directory, no Zygisk, no `$MAGISK_VER`.
 - `disable` is a KernelSU status flag: present means the module is skipped.
   The ZIP ships it, so installation never activates anything.
+- `skip_mount` is the second empty marker. The GXR installer and
+  `tools/update_feed.py` reject a package without it; the module has no
+  `system/` overlay, so the marker changes nothing at runtime.
+- `auto.sh` maps the verbs the other GXR modules and the release pipeline use
+  (`resume`, `enable`, `disable`, `status`) onto `ota-ctl.sh`. It never touches
+  the KernelSU markers; `action.sh` owns those.
 - `service.sh` runs in the non-blocking late_start service stage. KernelSU is
   not expected to wait for it, so it detaches the boot work with `nohup` and
   returns at once.
@@ -92,7 +98,7 @@ activated reports STOCK: nothing of ours is applied.
 
 ## Safety
 
-- Packages install **disabled**, and `disable` is part of the ZIP.
+- Packages install **disabled**; `disable` and `skip_mount` are part of the ZIP.
 - `customize.sh` refuses the generic installer path, as in the other modules.
 - `uninstall.sh` restores the baseline during removal, and it runs
   unconditionally: a block that failed after the first package still changed the

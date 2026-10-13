@@ -11,11 +11,13 @@ Package contents:
   service.sh     boot stage entry point
   ota-ctl.sh     block, restore, status and boot logic
   action.sh      KernelSU Action button report and explicit on/off commands
+  auto.sh        resume/enable/disable/status verbs mapped onto ota-ctl.sh
   uninstall.sh   restore on removal
   customize.sh   refuses the generic installer path
   NOTICE.txt     this file
   disable        empty marker: the package installs disabled
-  SHA256SUMS     checksums of every other file except the marker
+  skip_mount     empty marker: no system overlay is mounted
+  SHA256SUMS     checksums of every other file except disable
 
 The module changes Android package enabled state and one global setting only.
 It never writes system partitions, APKs, libraries or KernelSU startup files.

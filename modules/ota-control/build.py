@@ -21,9 +21,11 @@ for path in sorted((HERE / 'module').rglob('*')):
     if b'\r' in data:
         raise ValueError(f'{path.name}: source must use LF line endings')
     payload[path.relative_to(HERE / 'module').as_posix()] = data
-for required in ('module.prop', 'service.sh', 'action.sh', 'ota-ctl.sh', 'uninstall.sh', 'customize.sh'):
+for required in ('module.prop', 'service.sh', 'action.sh', 'ota-ctl.sh', 'uninstall.sh', 'customize.sh', 'auto.sh', 'skip_mount'):
     if required not in payload:
         raise ValueError(f'missing {required}')
+if payload['skip_mount']:
+    raise ValueError('skip_mount must be an empty marker')
 payload['disable'] = b''
 payload['SHA256SUMS'] = ''.join(f'{hashlib.sha256(b).hexdigest()}  {n}\n' for n, b in sorted(payload.items()) if n != 'disable').encode()
 output = ROOT / 'dist' / HERE.name

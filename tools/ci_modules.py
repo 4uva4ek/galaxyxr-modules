@@ -104,6 +104,9 @@ def build(names, ndk, inputs):
             run(sys.executable, f'modules/{name}/verify_package.py')
         elif name == 'steamlink-pose-time':
             run(sys.executable, f'modules/{name}/build.py', '--ndk', ndk, '--runtime', runtime, '--scene', scene)
+        elif name == 'ota-control':
+            run(sys.executable, f'modules/{name}/build.py')
+            run(sys.executable, f'modules/{name}/test_ota_ctl.py')
         else:
             if name == 'controller-extrapolation':
                 run(sys.executable, 'modules/openxr-velocity-frame/prepare.py', '--ndk', ndk, '--runtime', runtime)
