@@ -3,8 +3,38 @@ import hashlib
 import tempfile
 import unittest
 import zipfile
+from unittest.mock import patch
 from pathlib import Path
 from update_feed import promote
+import check_catalogue
+
+
+class CatalogueTests(unittest.TestCase):
+    def test_first_release_and_existing_feed_validation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / 'modules/first/module/module.prop'
+            source.parent.mkdir(parents=True)
+            source.write_text(
+                'id=gxr_first\nversion=0.1.0\nversionCode=1\n'
+                f'updateJson=https://raw.githubusercontent.com/{check_catalogue.REPO}/main/updates/first.json\n')
+            (root / 'changelogs').mkdir()
+            changelog = root / 'changelogs/first.md'
+            with patch.object(check_catalogue, 'ROOT', root), \
+                 patch.object(check_catalogue, 'MODULES', {'first': 'gxr_first'}):
+                # Missing feeds must not bypass source/changelog checks.
+                with self.assertRaises(AssertionError):
+                    check_catalogue.check()
+                changelog.write_text('## 0.1.0\nFirst release\n')
+                check_catalogue.check()
+                (root / 'updates').mkdir()
+                feed = root / 'updates/first.json'
+                feed.write_text('not json')
+                with self.assertRaises(ValueError):
+                    check_catalogue.check()
+                feed.write_text('{"versionCode": 2}')
+                with self.assertRaises(AssertionError):
+                    check_catalogue.check()
 
 
 class PromotionTests(unittest.TestCase):

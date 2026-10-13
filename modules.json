@@ -49,6 +49,12 @@
       "name": "OpenXR QUALITY",
       "description": "Experimental QUALITY camera request during visible OpenXR sessions, with thermal and session guards.",
       "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/openxr-quality.json"
+    },
+    {
+      "id": "gxr_ota_control",
+      "name": "Galaxy XR OTA Control",
+      "description": "Block Samsung firmware updates and restore the saved baseline. Changes persistent Android settings; installs disabled.",
+      "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/ota-control.json"
     }
   ]
 }
