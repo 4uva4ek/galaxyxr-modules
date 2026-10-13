@@ -1,0 +1,28 @@
+name: Check module contract
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: check-modules-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python tools/check_module_layout.py
+      - run: python tools/check_catalogue.py
+      - run: python tools/test_update_feed.py
+      - run: python tools/test_ci_modules.py
+      - name: Module contract, shell-only packages and their host tests
+        run: python tools/check_module_contract.py
