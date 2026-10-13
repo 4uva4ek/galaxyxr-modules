@@ -1,7 +1,9 @@
 # Automatic module releases
 
-The **Build and release modules** workflow builds and publishes an approved
-module when a push to `main` raises both fields in its source metadata:
+The **Build and release modules** workflow starts on every push to `main`,
+including documentation-only commits. It compares all approved module versions
+against their published feeds and builds/publishes only modules whose source
+metadata raises both fields:
 
 ```properties
 # modules/NAME/module/module.prop
@@ -21,8 +23,9 @@ requires explicit distribution authorization and lifecycle/installer review.
 
 ## Pipeline
 
-1. Compare the pushed `module.prop` files against the previous commit; select
-   approved increases that have not already reached their stable feed.
+1. Compare every approved `module.prop` against its stable feed; select pending
+   increases regardless of which files changed in the latest commit. If none
+   exist, finish successfully without native builds or release changes.
 2. Install Android NDK **28.2.13676358**, build from the pushed commit and run
    layout, package, hash, shell and relevant native/contract checks.
 3. Upload only disabled automatic ZIPs, SHA-256 sidecars and the build manifest.
