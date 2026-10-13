@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import ci_modules as ci
@@ -62,6 +63,60 @@ class PrivateInputs(unittest.TestCase):
             with patch.dict(os.environ,{'FIXTURE_01':bad}),self.assertRaises(ValueError):
                 ci.restore_input('fixture',path)
             self.assertEqual((path/'fixture.bin').read_bytes(),data)
+
+
+class Publication(unittest.TestCase):
+    def exercise(self, existing=None, tag_commit=None, verify_error=False):
+        calls=[]
+        commit='a'*40
+        item={'version':'1.2.4','versionCode':11,'tag':'one/v1.2.4',
+              'archive':'dist/one/gxr-one-1.2.4-auto.zip','sha256':hashlib.sha256(b'zip').hexdigest()}
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            archive=root/item['archive'];archive.parent.mkdir(parents=True)
+            archive.write_bytes(b'zip');archive.with_suffix('.zip.sha256').write_text('fixture\n')
+            (root/'changelogs').mkdir();(root/'changelogs/one.md').write_text('## 1.2.4\nValidated fix\n')
+            manifest=root/'dist/ci-manifest.json'
+            manifest.write_text(json.dumps({'commit':commit,'modules':{'one':item}}))
+
+            def fake_run(*args, **kwargs):
+                calls.append(args)
+                if args[:4]==('git','diff','--cached','--name-only'): return 'updates/one.json'
+                return SimpleNamespace(returncode=0)
+
+            result=SimpleNamespace(returncode=0 if tag_commit else 1,stdout=(tag_commit or '')+'\n')
+            responses=[existing] if existing else [None,{'draft':True,'assets':[]}]
+            with patch.object(ci,'ROOT',root),patch.object(ci,'MODULES',{'one':'gxr_one'}), \
+                 patch.dict(os.environ,{'GITHUB_SHA':commit}),patch.object(ci,'run',side_effect=fake_run), \
+                 patch.object(ci.subprocess,'run',return_value=result), \
+                 patch.object(ci,'release_info',side_effect=responses),patch.object(ci,'validate',return_value=11), \
+                 patch.object(ci,'verify_download',side_effect=ValueError('mismatching assets') if verify_error else None), \
+                 patch.object(ci,'promote') as promote:
+                error=None
+                try: ci.publish(manifest)
+                except ValueError as e:error=str(e)
+                return calls,promote.called,error
+
+    def test_new_draft_verified_before_publication_and_feed(self):
+        calls,promoted,error=self.exercise()
+        self.assertIsNone(error)
+        self.assertTrue(promoted)
+        self.assertTrue(any(c[:3]==('gh','release','create') and '--draft' in c for c in calls))
+        self.assertEqual(sum(c[:3]==('gh','release','upload') for c in calls),2)
+        self.assertTrue(any(c[:3]==('gh','release','edit') and '--draft=false' in c for c in calls))
+        self.assertFalse(any('--clobber' in c or '--force' in c for c in calls))
+
+    def test_existing_release_is_verified_without_upload(self):
+        calls,promoted,error=self.exercise({'draft':False,'prerelease':False},'a'*40)
+        self.assertIsNone(error);self.assertTrue(promoted)
+        self.assertFalse(any(c[:2]==('gh','release') for c in calls))
+
+    def test_conflicting_tag_or_assets_never_promote(self):
+        for kwargs in ({'tag_commit':'b'*40}, {'verify_error':True}):
+            with self.subTest(kwargs=kwargs):
+                calls,promoted,error=self.exercise(**kwargs)
+                self.assertIsNotNone(error);self.assertFalse(promoted)
+                self.assertFalse(any(c[:3]==('gh','release','edit') for c in calls))
 
 
 if __name__=='__main__':unittest.main(verbosity=2)
