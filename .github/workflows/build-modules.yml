@@ -1,0 +1,162 @@
+name: Build and release modules
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      module:
+        description: 'Approved module name, or all'
+        default: all
+        required: true
+        type: string
+      publish:
+        description: 'Publish pending version bumps (false builds/tests only)'
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+concurrency:
+  group: stable-module-feeds
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      any: ${{ steps.plan.outputs.any }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Detect approved version bumps
+        id: plan
+        env:
+          EVENT: ${{ github.event_name }}
+          SELECTED_MODULE: ${{ inputs.module || 'all' }}
+          PUBLISH: ${{ inputs.publish }}
+        run: |
+          args=(--module "$SELECTED_MODULE")
+          if [[ "$EVENT" == push ]]; then args+=(--publish); fi
+          if [[ "$PUBLISH" == true ]]; then args+=(--publish); fi
+          python tools/ci_modules.py plan "${args[@]}"
+      - name: Install pinned native toolchain
+        if: steps.plan.outputs.any == 'true'
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'ndk;28.2.13676358'
+          python -m pip install 'unicorn==2.1.4'
+      - name: Restore private runtime build input
+        if: steps.plan.outputs.runtime == 'true'
+        env:
+          GXR_RUNTIME_01: ${{ secrets.GXR_RUNTIME_01 }}
+          GXR_RUNTIME_02: ${{ secrets.GXR_RUNTIME_02 }}
+          GXR_RUNTIME_03: ${{ secrets.GXR_RUNTIME_03 }}
+          GXR_RUNTIME_04: ${{ secrets.GXR_RUNTIME_04 }}
+          GXR_RUNTIME_05: ${{ secrets.GXR_RUNTIME_05 }}
+          GXR_RUNTIME_06: ${{ secrets.GXR_RUNTIME_06 }}
+          GXR_RUNTIME_07: ${{ secrets.GXR_RUNTIME_07 }}
+          GXR_RUNTIME_08: ${{ secrets.GXR_RUNTIME_08 }}
+          GXR_RUNTIME_09: ${{ secrets.GXR_RUNTIME_09 }}
+          GXR_RUNTIME_10: ${{ secrets.GXR_RUNTIME_10 }}
+          GXR_RUNTIME_11: ${{ secrets.GXR_RUNTIME_11 }}
+          GXR_RUNTIME_12: ${{ secrets.GXR_RUNTIME_12 }}
+          GXR_RUNTIME_13: ${{ secrets.GXR_RUNTIME_13 }}
+          GXR_RUNTIME_14: ${{ secrets.GXR_RUNTIME_14 }}
+          GXR_RUNTIME_15: ${{ secrets.GXR_RUNTIME_15 }}
+          GXR_RUNTIME_16: ${{ secrets.GXR_RUNTIME_16 }}
+          GXR_RUNTIME_17: ${{ secrets.GXR_RUNTIME_17 }}
+          GXR_RUNTIME_18: ${{ secrets.GXR_RUNTIME_18 }}
+          GXR_RUNTIME_19: ${{ secrets.GXR_RUNTIME_19 }}
+          GXR_RUNTIME_20: ${{ secrets.GXR_RUNTIME_20 }}
+          GXR_RUNTIME_21: ${{ secrets.GXR_RUNTIME_21 }}
+          GXR_RUNTIME_22: ${{ secrets.GXR_RUNTIME_22 }}
+          GXR_RUNTIME_23: ${{ secrets.GXR_RUNTIME_23 }}
+          GXR_RUNTIME_24: ${{ secrets.GXR_RUNTIME_24 }}
+          GXR_RUNTIME_25: ${{ secrets.GXR_RUNTIME_25 }}
+          GXR_RUNTIME_26: ${{ secrets.GXR_RUNTIME_26 }}
+          GXR_RUNTIME_27: ${{ secrets.GXR_RUNTIME_27 }}
+        run: python tools/ci_modules.py restore-input runtime --directory "$RUNNER_TEMP/gxr-build-inputs"
+      - name: Restore private scene build input
+        if: steps.plan.outputs.scene == 'true'
+        env:
+          GXR_SCENE_01: ${{ secrets.GXR_SCENE_01 }}
+          GXR_SCENE_02: ${{ secrets.GXR_SCENE_02 }}
+          GXR_SCENE_03: ${{ secrets.GXR_SCENE_03 }}
+          GXR_SCENE_04: ${{ secrets.GXR_SCENE_04 }}
+          GXR_SCENE_05: ${{ secrets.GXR_SCENE_05 }}
+          GXR_SCENE_06: ${{ secrets.GXR_SCENE_06 }}
+          GXR_SCENE_07: ${{ secrets.GXR_SCENE_07 }}
+          GXR_SCENE_08: ${{ secrets.GXR_SCENE_08 }}
+          GXR_SCENE_09: ${{ secrets.GXR_SCENE_09 }}
+          GXR_SCENE_10: ${{ secrets.GXR_SCENE_10 }}
+          GXR_SCENE_11: ${{ secrets.GXR_SCENE_11 }}
+          GXR_SCENE_12: ${{ secrets.GXR_SCENE_12 }}
+          GXR_SCENE_13: ${{ secrets.GXR_SCENE_13 }}
+          GXR_SCENE_14: ${{ secrets.GXR_SCENE_14 }}
+          GXR_SCENE_15: ${{ secrets.GXR_SCENE_15 }}
+          GXR_SCENE_16: ${{ secrets.GXR_SCENE_16 }}
+          GXR_SCENE_17: ${{ secrets.GXR_SCENE_17 }}
+          GXR_SCENE_18: ${{ secrets.GXR_SCENE_18 }}
+          GXR_SCENE_19: ${{ secrets.GXR_SCENE_19 }}
+          GXR_SCENE_20: ${{ secrets.GXR_SCENE_20 }}
+          GXR_SCENE_21: ${{ secrets.GXR_SCENE_21 }}
+          GXR_SCENE_22: ${{ secrets.GXR_SCENE_22 }}
+          GXR_SCENE_23: ${{ secrets.GXR_SCENE_23 }}
+          GXR_SCENE_24: ${{ secrets.GXR_SCENE_24 }}
+        run: python tools/ci_modules.py restore-input scene --directory "$RUNNER_TEMP/gxr-build-inputs"
+      - name: Build and validate selected disabled packages
+        if: steps.plan.outputs.any == 'true'
+        env:
+          MODULES: ${{ steps.plan.outputs.modules }}
+        run: python tools/ci_modules.py build --modules "$MODULES" --ndk "$ANDROID_HOME/ndk/28.2.13676358" --inputs "$RUNNER_TEMP/gxr-build-inputs"
+      - name: Upload only release packages and manifest
+        if: steps.plan.outputs.any == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: disabled-module-packages
+          path: |
+            dist/*/*-auto.zip
+            dist/*/*-auto.zip.sha256
+            dist/ci-manifest.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Remove private inputs from the ephemeral runner
+        if: always()
+        run: |
+          python - <<'PY'
+          import os, pathlib, shutil
+          base = pathlib.Path(os.environ['RUNNER_TEMP']).resolve()
+          target = base / 'gxr-build-inputs'
+          assert target.resolve().parent == base
+          if target.exists(): shutil.rmtree(target)
+          PY
+
+  publish:
+    needs: build
+    if: needs.build.outputs.any == 'true' && (github.event_name == 'push' || inputs.publish)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: disabled-module-packages
+          path: dist
+      - name: Publish immutable releases and advance verified feeds
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/ci_modules.py publish

@@ -1,8 +1,12 @@
-# Controller Whitening 0.1.4
+# Controller Whitening 0.1.7
 
-Current release **0.1.4** includes a stable `updateJson` feed for Manager updates. See [installation from Sources or ZIP](../../docs/INSTALLING-MODULES.md). The package remains automatic-only and installs **DISABLED**.
+Current release **0.1.7** includes a stable `updateJson` feed for Manager updates. See [installation from Sources or ZIP](../../docs/INSTALLING-MODULES.md). The package remains automatic-only and installs **DISABLED**.
 
-Native patch behavior and runtime scripts are unchanged from the previous public release. This is a distribution/metadata update.
+The whitening correction and runtime scripts are unchanged. Version 0.1.7
+recognizes only the exact paired IMU wait-gate modification during full-code
+validation, so it can check and restore whitening while that known peer patch
+is present. Partial and unknown changes remain rejected. This package does not
+install or reactivate the retired IMU Time experiment.
 
 
 Version 0.1.3 restores the old owner before a planned Android restart and starts
@@ -12,7 +16,7 @@ consecutive active-to-active soft restarts passed. Cold-boot guards expire
 without changing the checkbox.
 See [current release evidence](../../docs/RELEASE-2026-10-11.md).
 
-[Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-whitening/v0.1.4/gxr-controller-whitening-0.1.4-auto.zip)
+[Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-whitening/v0.1.7/gxr-controller-whitening-0.1.7-auto.zip)
 with a SHA-256 checksum in the same release. The package ships disabled.
 
 Corrects a covariance whitening operation in the Galaxy XR controller tracking

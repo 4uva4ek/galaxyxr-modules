@@ -1,7 +1,7 @@
 id=gxr_controller_whitening
 name=Galaxy XR Controller Whitening
-version=0.1.4
-versionCode=5
+version=0.1.7
+versionCode=8
 author=4uva4ek
 description=Correct controller process covariance whitening in private service memory. Installed disabled; Action reports state and recovery.
 updateJson=https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/controller-whitening.json

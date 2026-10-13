@@ -38,7 +38,8 @@ subprocess.run(driver + ['-std=c++17', '-O2', '-Wall', '-Wextra', '-Werror',
                 '-c', str(source/'native/main.cpp'), '-o', str(output/'main.o')], check=True)
 subprocess.run(driver + [f'--ld-path={toolchain/"bin"/("ld.lld"+ext)}', '-static-libstdc++',
                 '-Wl,-z,max-page-size=16384', '-Wl,--build-id=sha1',
-                str(output/'main.o'), '-o', str(binary)], check=True)
+                str(output/'main.o')] + ['-l'+lib for lib in config.get('link_libraries', [])] +
+                ['-o', str(binary)], check=True)
 strip = toolchain/'bin'/('llvm-strip.exe' if os.name == 'nt' else 'llvm-strip')
 subprocess.run([str(strip), '--strip-unneeded', str(binary)], check=True)
 blob = binary.read_bytes()

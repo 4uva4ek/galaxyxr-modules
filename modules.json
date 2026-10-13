@@ -43,6 +43,12 @@
       "name": "Steam Link Pose Time",
       "description": "Forward controller slot timestamps to PCVR. Requires Steam Link 2.0.20 and Velocity Frame.",
       "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/steamlink-pose-time.json"
+    },
+    {
+      "id": "gxr_openxr_quality",
+      "name": "OpenXR QUALITY",
+      "description": "Experimental QUALITY camera request during visible OpenXR sessions, with thermal and session guards.",
+      "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/openxr-quality.json"
     }
   ]
 }

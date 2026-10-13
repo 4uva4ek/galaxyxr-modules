@@ -1,7 +1,7 @@
 {
-  "version": "0.1.4",
-  "versionCode": 5,
-  "zipUrl": "https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-whitening/v0.1.4/gxr-controller-whitening-0.1.4-auto.zip",
+  "version": "0.1.7",
+  "versionCode": 8,
+  "zipUrl": "https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-whitening/v0.1.7/gxr-controller-whitening-0.1.7-auto.zip",
   "changelog": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/changelogs/controller-whitening.md",
-  "sha256": "e655821dc33581c1206e45a48fb8e2006fa3ef9a69079f7853fa9c1570326e85"
+  "sha256": "7c56804a00524735ad5859d14c3ca10eee4dc953d535a56c876f9759ec8e20f7"
 }

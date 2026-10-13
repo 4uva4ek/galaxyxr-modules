@@ -1,5 +1,5 @@
 """Run actual payload C++ on host against independent quaternion algebra."""
-import ctypes as C, math, random, subprocess, sys, json
+import ctypes as C, math, random, subprocess, sys, json, os
 from pathlib import Path
 HERE=Path(__file__).resolve().parent
 from geometry_oracle import descriptor,pitch,mul,rotate
@@ -9,10 +9,16 @@ class R(C.Structure): _fields_=[('flags',C.c_uint32),('q',Q),('p',V),('v',V),('w
 def xyz(v):return v.x,v.y,v.z
 def cross(a,b):return (a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0])
 def verify(ndk):
- out=HERE.parents[1]/'dist/openxr-velocity-frame';tc=ndk/'toolchains/llvm/prebuilt/windows-x86_64/bin'
- subprocess.run([str(tc/'clang++.exe'),'--target=x86_64-pc-windows-msvc','-std=c++17','-Oz','-ffreestanding','-fno-exceptions','-fno-rtti','-ffp-contract=off','-DGXR_HOST_TEST','-c',str(HERE/'native/correction.cpp'),'-o',str(out/'test.obj')],check=True)
- subprocess.run([str(tc/'ld.lld.exe'),'-flavor','link','/dll','/noentry','/nodefaultlib',f'/out:{out/"test.dll"}',str(out/'test.obj')],check=True)
- core=C.CDLL(str(out/'test.dll'));fn=core.gxr_correct;fn.argtypes=[C.POINTER(R),C.c_uint32,C.c_uint32,C.c_void_p];fn.restype=None
+ out=HERE.parents[1]/'dist/openxr-velocity-frame'
+ if os.name=='nt':
+  tc=ndk/'toolchains/llvm/prebuilt/windows-x86_64/bin'
+  subprocess.run([str(tc/'clang++.exe'),'--target=x86_64-pc-windows-msvc','-std=c++17','-Oz','-ffreestanding','-fno-exceptions','-fno-rtti','-ffp-contract=off','-DGXR_HOST_TEST','-c',str(HERE/'native/correction.cpp'),'-o',str(out/'test.obj')],check=True)
+  subprocess.run([str(tc/'ld.lld.exe'),'-flavor','link','/dll','/noentry','/nodefaultlib',f'/out:{out/"test.dll"}',str(out/'test.obj')],check=True)
+  core=C.CDLL(str(out/'test.dll'))
+ else:
+  subprocess.run(['c++','-std=c++17','-O2','-shared','-fPIC','-ffp-contract=off','-DGXR_HOST_TEST',str(HERE/'native/correction.cpp'),'-o',str(out/'test.so')],check=True)
+  core=C.CDLL(str(out/'test.so'))
+ fn=core.gxr_correct;fn.argtypes=[C.POINTER(R),C.c_uint32,C.c_uint32,C.c_void_p];fn.restype=None
  enabled=C.c_uint32.in_dll(core,'gxr_enabled');rng=random.Random(20261011);n=0;err=0
  for dev in (2,3):
   for name in range(0x130005,0x180006,0x10000):

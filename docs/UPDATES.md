@@ -28,7 +28,10 @@ and SHA-256 sidecars on 2026-10-12. HAL Cache Bypass 0.1.1 joins the catalogue
 with its own feed and unchanged native/lifecycle payload. Installation requires
 a GXR Manager with the generic GXR lifecycle-contract installer; older Managers
 with the five-module allowlist cannot install it. Framebuffer10 remains
-source-only and OpenXR Quality remains unpublished. Other modules require
+source-only. OpenXR QUALITY 0.1.1 is experimental but available in the public
+catalogue. New installation uses the generic GXR installer; existing unpublished
+QUALITY 0.1.0 needs the reviewed migration in its module README because its old
+Action script lacks the update contract. Other modules require
 explicit publication authorization and lifecycle review before catalogue entry.
 
 ## Release process

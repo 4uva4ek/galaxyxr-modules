@@ -1,0 +1,1 @@
+Contains project-owned runtime mode controller and client-side Binder adapter. No Samsung libraries or firmware are distributed. Android NDK runtime notices accompany the binary.
