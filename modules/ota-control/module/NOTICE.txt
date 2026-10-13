@@ -12,7 +12,7 @@ Package contents:
   ota-ctl.sh     block, restore, status and boot logic
   action.sh      KernelSU Action button report and explicit on/off commands
   auto.sh        resume/enable/disable/status verbs mapped onto ota-ctl.sh
-  uninstall.sh   restore on removal
+  uninstall.sh   starts the post-boot restore on removal
   customize.sh   refuses the generic installer path
   NOTICE.txt     this file
   disable        empty marker: the package installs disabled

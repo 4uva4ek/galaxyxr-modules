@@ -14,8 +14,9 @@ report)
  echo "  su -c 'sh $MODDIR/action.sh on'"
  echo "  su -c 'sh $MODDIR/action.sh off'"
  echo "  su -c 'sh $MODDIR/action.sh status'"
- echo 'on blocks updates now; off restores the recorded baseline now. Neither needs a reboot.'
- echo 'The KernelSU checkbox is the boot preference and the boot stage re-asserts the blocked state while it is on.'
+ echo 'on blocks updates now and turns the KernelSU preference ON; off restores the recorded baseline now and turns it OFF. Neither needs a reboot.'
+ echo 'While the preference is ON the boot stage re-asserts the block. Unticking alone does not restore: run off, or remove the module and let the next boot finish.'
+ echo 'ENABLED means the block is live. DISABLED means it is not applied, with a waiting or error reason.'
  echo "State directory: ${GXR_OTA_STATE:-/data/adb/gxr-ota-control}"
  exec sh "$MODDIR/ota-ctl.sh" report
  ;;
