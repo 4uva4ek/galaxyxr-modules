@@ -179,6 +179,14 @@ status() {
  if [ -f "$STATE/log" ]; then
   tail -n 3 "$STATE/log"
  fi
+ if [ -f "$MODDIR/disable" ] || [ -f "$MODDIR/remove" ]; then
+  if is_stock; then
+   say 'DISABLED - KernelSU preference OFF; nothing from this module is applied.'
+  else
+   say 'DISABLED - KernelSU preference OFF but the block is still live.'
+   say "Restore now: sh $MODDIR/action.sh off"
+  fi
+ fi
  if is_stock; then
   say 'GXR_UPDATE_STATE=STOCK'
  fi
@@ -190,6 +198,10 @@ chmod 700 "$STATE"
 
 case "$MODE" in
 boot)
+ # KernelSU does not run the scripts of a disabled module, so this stage
+ # never restores an unticked module by itself: action.sh off is the
+ # documented restore. A marker that appears while this stage is still
+ # waiting is handled below, before anything is blocked.
  if [ -f "$MODDIR/remove" ]; then
   exit 0
  fi
@@ -209,6 +221,16 @@ boot)
   fi
   sleep 2
  done
+ if [ -f "$MODDIR/remove" ]; then
+  exit 0
+ fi
+ if [ -f "$MODDIR/disable" ]; then
+  if was_applied; then
+   log 'boot: module turned off while waiting; restoring'
+   allow
+  fi
+  exit 0
+ fi
  log 'boot: re-asserting the blocked state'
  block
  ;;

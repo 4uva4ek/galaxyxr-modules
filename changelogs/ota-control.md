@@ -31,3 +31,12 @@ No pending public changes.
   `settings` and `getprop` called by absolute path because KernelSU runs module
   scripts in BusyBox ash standalone mode where PATH order does not decide the
   command. No Magisk-only files are used.
+- Corrected the restore contract: KernelSU runs no script of a disabled module,
+  so unticking the checkbox does not restore at the next boot. `action.sh off` is
+  the restore, and the status output names that command when the preference is
+  off while the block is still live. The install/replace flow still restores by
+  itself because it calls `action.sh off`.
+- Removal now restores unconditionally, so a block that failed after the first
+  package no longer leaves that package disabled on the device. The boot stage
+  also re-checks the off and remove markers after its boot wait, so a module
+  turned off during the wait is not blocked afterwards.

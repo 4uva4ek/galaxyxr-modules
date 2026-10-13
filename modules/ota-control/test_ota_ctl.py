@@ -75,7 +75,13 @@ esac
 exit 0
 '''
 
-GETPROP_STUB = '#!/bin/sh\nprintf \'%s\\n\' "${GETPROP_BOOT_COMPLETED:-1}"\n'
+GETPROP_STUB = '''#!/bin/sh
+if [ -n "${GETPROP_BOOT_FILE:-}" ] && [ -f "$GETPROP_BOOT_FILE" ]; then
+ cat "$GETPROP_BOOT_FILE"
+else
+ printf '%s\\n' "${GETPROP_BOOT_COMPLETED:-1}"
+fi
+'''
 
 # The host has no Android root, so the behaviour scenarios run copies of the
 # scripts with the root guard neutralised. check_root_guard runs the pristine
@@ -152,7 +158,7 @@ class Sandbox:
     def failed(self):
         return (self.root / 'state' / 'failed').exists()
 
-    def env(self, boot='1', deny='', tools=False, trace=None):
+    def env(self, boot='1', deny='', tools=False, trace=None, boot_file=None):
         env = dict(os.environ)
         env['PATH'] = msys(self.root / 'bin') + ':' + env['PATH']
         env['PM_DB'] = msys(self.pm_db)
@@ -160,6 +166,8 @@ class Sandbox:
         env['GXR_OTA_STATE'] = msys(self.root / 'state')
         env['GETPROP_BOOT_COMPLETED'] = boot
         env['PM_DENY'] = deny
+        if boot_file is not None:
+            env['GETPROP_BOOT_FILE'] = boot_file
         if tools:
             env['GXR_OTA_PM'] = msys(self.tool_bin / 'pm')
             env['GXR_OTA_SETTINGS'] = msys(self.tool_bin / 'settings')
@@ -280,7 +288,10 @@ def check_failure_latch():
         assert PKG_A not in b.disabled()
         expect(b.run('action.sh', 'status'), 0, 'DISABLED - Error details:')
         expect(b.run('action.sh', 'status'), 0, absent='GXR_UPDATE_STATE=STOCK')
-    print('PASS failure latches: disable marker, failed record, no stock claim')
+        expect(b.run('uninstall.sh'), 0)
+        assert b.disabled() == [], b.disabled()
+        assert b.setting() == 'null', b.setting()
+    print('PASS failure latches: disable marker, failed record, no stock claim, and removal still reverts a half-applied block')
 
 
 def check_removal_refusal():
@@ -346,6 +357,44 @@ def check_service_entry():
     print('PASS service.sh: the KernelSU service stage returns at once and the detached boot work blocks updates')
 
 
+def check_status_guidance():
+    with tempfile.TemporaryDirectory(dir=WORK) as tmp:
+        b = Sandbox(tmp)
+        b.seed(disabled=[PKG_B])
+        expect(b.run('action.sh', 'on'), 0)
+        b.marker('disable')
+        expect(b.run('action.sh', 'status'), 0, 'DISABLED - KernelSU preference OFF but the block is still live.')
+        expect(b.run('action.sh', 'status'), 0, 'Restore now: sh ')
+        expect(b.run('action.sh', 'status'), 0, absent='GXR_UPDATE_STATE=STOCK')
+        expect(b.run('action.sh', 'off'), 0)
+        expect(b.run('action.sh', 'status'), 0, 'DISABLED - KernelSU preference OFF; nothing from this module is applied.')
+        expect(b.run('action.sh', 'status'), 0, 'GXR_UPDATE_STATE=STOCK')
+    print('PASS status guidance: an off preference with a live block names the restore command and reports clean afterwards')
+
+
+def check_boot_marker_race():
+    with tempfile.TemporaryDirectory(dir=WORK) as tmp:
+        b = Sandbox(tmp)
+        b.seed()
+        (b.root / 'module' / 'disable').unlink()
+        boot_file = b.root / 'boot-completed'
+        boot_file.write_text('0\n', newline='\n')
+        log = (b.root / 'boot-race.log').open('w')
+        proc = subprocess.Popen([BASH, msys(b.root / 'module' / 'ota-ctl.sh'), 'boot'],
+                                stdout=log, stderr=subprocess.STDOUT,
+                                env=b.env(boot_file=msys(boot_file)))
+        time.sleep(4)
+        b.marker('disable')
+        boot_file.write_text('1\n', newline='\n')
+        proc.wait(timeout=30)
+        log.close()
+        assert proc.returncode == 0, proc.returncode
+        assert b.disabled() == [], b.disabled()
+        assert b.setting() == 'null', b.setting()
+        assert b.record() != 'blocked', b.record()
+    print('PASS boot race: a module turned off while the boot stage waits is not blocked afterwards')
+
+
 def check_root_guard():
     with tempfile.TemporaryDirectory(dir=WORK) as tmp:
         env = dict(os.environ)
@@ -357,8 +406,9 @@ def check_root_guard():
     print('PASS root guard: the pristine script refuses to run without root')
 
 
-for check in (check_root_guard, check_tool_paths, check_service_entry, check_block_and_restore,
-              check_preset_setting, check_boot_reassert, check_boot_waits, check_failure_latch,
-              check_removal_refusal, check_uninstall_restore):
+for check in (check_root_guard, check_tool_paths, check_service_entry, check_status_guidance,
+              check_boot_marker_race, check_block_and_restore, check_preset_setting,
+              check_boot_reassert, check_boot_waits, check_failure_latch, check_removal_refusal,
+              check_uninstall_restore):
     check()
-print('PASS OTA control: 10 host scenarios')
+print('PASS OTA control: 12 host scenarios')

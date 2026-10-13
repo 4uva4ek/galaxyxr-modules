@@ -38,6 +38,11 @@ notes:
 - `service.sh` runs in the non-blocking late_start service stage. KernelSU is
   not expected to wait for it, so it detaches the boot work with `nohup` and
   returns at once.
+- KernelSU runs no script of a disabled module, so the boot stage cannot restore
+  an unticked module. Ticking the checkbox arms the re-assert; un-ticking stops
+  it and requires `action.sh off` (or module removal) to restore. The boot stage
+  re-checks the off and remove markers after its boot wait, so turning the module
+  off while it waits does not block updates afterwards.
 - KernelSU executes module scripts in BusyBox ash with standalone mode on. In
   that mode PATH order does not decide which command runs, so `pm`, `settings`
   and `getprop` are called by absolute path (`/system/bin/...`) with a PATH
@@ -62,8 +67,14 @@ su -c 'sh /data/adb/modules/gxr_ota_control/action.sh status'  # raw diagnostics
 ```
 
 `on` and `off` act immediately: no reboot, no soft reboot, no KernelSU checkbox
-change. Unticking the module in the Manager makes the next boot restore the
-baseline, which covers the case where an `off` call never arrived.
+change. KernelSU does not run the scripts of a disabled module, so unticking the
+checkbox only stops future boot re-asserts; it does **not** restore updates by
+itself. Run `action.sh off` to restore, or delete the module in the Manager so
+that `uninstall.sh` restores. When status finds the preference off and the block
+still live, it prints that exact command.
+
+Only the Manager's install/replace flow restores by itself: it calls `action.sh
+off` before swapping the module directory.
 
 State lives in `/data/adb/gxr-ota-control/`:
 
@@ -83,7 +94,10 @@ activated reports STOCK: nothing of ours is applied.
 
 - Packages install **disabled**, and `disable` is part of the ZIP.
 - `customize.sh` refuses the generic installer path, as in the other modules.
-- `uninstall.sh` restores the baseline during removal.
+- `uninstall.sh` restores the baseline during removal, and it runs
+  unconditionally: a block that failed after the first package still changed the
+  device, so restore works from live state against the baseline instead of from
+  a state file. `allow` only re-enables packages the baseline says were enabled.
 - A failed change writes the `disable` marker and stops retrying in the same
   boot; the cause is reported by Action.
 - Manual restore, if the module directory is gone:
