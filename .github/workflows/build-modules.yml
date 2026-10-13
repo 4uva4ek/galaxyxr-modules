@@ -1,0 +1,61 @@
+name: Build changed modules
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: build-modules-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      count: ${{ steps.plan.outputs.count }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Plan changed modules
+        id: plan
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            python3 tools/changed_modules.py --all
+          else
+            python3 tools/changed_modules.py --base "${{ github.event.before || github.event.pull_request.base.sha }}" --head "${{ github.sha }}"
+          fi
+  build:
+    needs: plan
+    if: needs.plan.outputs.count != '0'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install Android NDK 28.2.13676358
+        if: matrix.needs_ndk
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/ndk.zip" https://dl.google.com/android/repository/android-ndk-r28c-linux.zip
+          unzip -q "$RUNNER_TEMP/ndk.zip" -d "$RUNNER_TEMP"
+          echo "ANDROID_NDK_HOME=$RUNNER_TEMP/android-ndk-r28c" >> "$GITHUB_ENV"
+      - name: Build ${{ matrix.module }}
+        run: ${{ matrix.command }}
+      - name: Verify package
+        run: |
+          python3 tools/verify_built.py "${{ matrix.module }}"
+          if [ -f "modules/${{ matrix.module }}/tests/verify_package.py" ]; then
+            python3 "modules/${{ matrix.module }}/tests/verify_package.py"
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            dist/${{ matrix.module }}/${{ matrix.artifact }}.zip
+            dist/${{ matrix.module }}/${{ matrix.artifact }}.zip.sha256
+          if-no-files-found: error
