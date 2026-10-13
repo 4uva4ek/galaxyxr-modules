@@ -75,6 +75,15 @@ jobs:
           GXR_RUNTIME_16: ${{ secrets.GXR_RUNTIME_16 }}
           GXR_RUNTIME_17: ${{ secrets.GXR_RUNTIME_17 }}
           GXR_RUNTIME_18: ${{ secrets.GXR_RUNTIME_18 }}
+          GXR_RUNTIME_19: ${{ secrets.GXR_RUNTIME_19 }}
+          GXR_RUNTIME_20: ${{ secrets.GXR_RUNTIME_20 }}
+          GXR_RUNTIME_21: ${{ secrets.GXR_RUNTIME_21 }}
+          GXR_RUNTIME_22: ${{ secrets.GXR_RUNTIME_22 }}
+          GXR_RUNTIME_23: ${{ secrets.GXR_RUNTIME_23 }}
+          GXR_RUNTIME_24: ${{ secrets.GXR_RUNTIME_24 }}
+          GXR_RUNTIME_25: ${{ secrets.GXR_RUNTIME_25 }}
+          GXR_RUNTIME_26: ${{ secrets.GXR_RUNTIME_26 }}
+          GXR_RUNTIME_27: ${{ secrets.GXR_RUNTIME_27 }}
         run: python tools/ci_modules.py restore-input runtime --directory "$RUNNER_TEMP/gxr-build-inputs"
       - name: Restore private scene build input
         if: steps.plan.outputs.scene == 'true'
@@ -95,6 +104,14 @@ jobs:
           GXR_SCENE_14: ${{ secrets.GXR_SCENE_14 }}
           GXR_SCENE_15: ${{ secrets.GXR_SCENE_15 }}
           GXR_SCENE_16: ${{ secrets.GXR_SCENE_16 }}
+          GXR_SCENE_17: ${{ secrets.GXR_SCENE_17 }}
+          GXR_SCENE_18: ${{ secrets.GXR_SCENE_18 }}
+          GXR_SCENE_19: ${{ secrets.GXR_SCENE_19 }}
+          GXR_SCENE_20: ${{ secrets.GXR_SCENE_20 }}
+          GXR_SCENE_21: ${{ secrets.GXR_SCENE_21 }}
+          GXR_SCENE_22: ${{ secrets.GXR_SCENE_22 }}
+          GXR_SCENE_23: ${{ secrets.GXR_SCENE_23 }}
+          GXR_SCENE_24: ${{ secrets.GXR_SCENE_24 }}
         run: python tools/ci_modules.py restore-input scene --directory "$RUNNER_TEMP/gxr-build-inputs"
       - name: Build and validate selected disabled packages
         if: steps.plan.outputs.any == 'true'

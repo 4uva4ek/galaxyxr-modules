@@ -17,8 +17,8 @@ from update_feed import MODULES, ROOT, REPO, validate, promote
 NDK_VERSION = '28.2.13676358'
 RUNTIME_MODULES = {'controller-extrapolation', 'openxr-velocity-frame', 'steamlink-pose-time'}
 INPUTS = {
-    'runtime': ('GXR_RUNTIME_', 18, 'libopenxr_android.so', 'a7dabaa1030cc7979efe987f212488c61b61e8afb9aa3add59f7ae4fbeff4c92'),
-    'scene': ('GXR_SCENE_', 16, 'libvrlink_scene.so', 'a1f1907ee91dc30dcdb4e3924cf3cff6e78302131fa835d9eb40f3fd4946ebde'),
+    'runtime': ('GXR_RUNTIME_', 27, 'libopenxr_android.so', 'a7dabaa1030cc7979efe987f212488c61b61e8afb9aa3add59f7ae4fbeff4c92'),
+    'scene': ('GXR_SCENE_', 24, 'libvrlink_scene.so', 'a1f1907ee91dc30dcdb4e3924cf3cff6e78302131fa835d9eb40f3fd4946ebde'),
 }
 
 
