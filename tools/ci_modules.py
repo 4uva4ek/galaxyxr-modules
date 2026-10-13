@@ -59,22 +59,11 @@ def pending(name):
         {k: str(v) for k, v in json.loads(feed_path.read_text()).items()}, p)
 
 
-def plan(before=None, selection='all', publish=False):
+def plan(selection='all', publish=False):
     if selection != 'all' and selection not in MODULES:
         raise ValueError('Module is not in the approved public catalogue')
     selected = sorted(MODULES) if selection == 'all' else [selection]
-    if before:
-        if not re.fullmatch(r'[0-9a-f]{40}', before) or before == '0'*40:
-            raise ValueError('Cannot establish the previous commit; use an explicit dispatch')
-        run('git', 'cat-file', '-e', before+'^{commit}')
-        changed = []
-        for name in selected:
-            previous = run('git', 'show', f'{before}:modules/{name}/module/module.prop', capture=True, check=False)
-            if bumped(properties(previous) if previous else None, source_props(name)):
-                if pending(name):
-                    changed.append(name)
-        selected = changed
-    elif publish:
+    if publish:
         selected = [name for name in selected if pending(name)]
     return selected
 
@@ -244,13 +233,13 @@ def publish(manifest_path):
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     sub=parser.add_subparsers(dest='command',required=True)
-    p=sub.add_parser('plan');p.add_argument('--before');p.add_argument('--module',default='all');p.add_argument('--publish',action='store_true')
+    p=sub.add_parser('plan');p.add_argument('--module',default='all');p.add_argument('--publish',action='store_true')
     p=sub.add_parser('restore-input');p.add_argument('kind',choices=INPUTS);p.add_argument('--directory',type=Path,required=True)
     p=sub.add_parser('build');p.add_argument('--modules',required=True);p.add_argument('--ndk',type=Path,required=True);p.add_argument('--inputs',type=Path,required=True)
     p=sub.add_parser('publish');p.add_argument('--manifest',type=Path,default=ROOT/'dist/ci-manifest.json')
     args=parser.parse_args()
     if args.command=='plan':
-        names=plan(args.before,args.module,args.publish)
+        names=plan(args.module,args.publish)
         result={'modules':json.dumps(names),'any':str(bool(names)).lower(),
                 'runtime':str(bool(set(names)&RUNTIME_MODULES)).lower(),'scene':str('steamlink-pose-time' in names).lower()}
         if os.environ.get('GITHUB_OUTPUT'):

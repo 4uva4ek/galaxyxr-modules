@@ -26,20 +26,23 @@ class Selection(unittest.TestCase):
 
     def test_unchanged_and_unpublished_filter(self):
         with patch.object(ci,'MODULES',{'one':'gxr_one','two':'gxr_two'}), \
-             patch.object(ci,'source_props',return_value=props('1.2.4',11)), \
-             patch.object(ci,'run',return_value='version=1.2.3\nversionCode=10'), \
              patch.object(ci,'pending',side_effect=lambda name:name=='one'):
-            self.assertEqual(ci.plan('a'*40),['one'])
             self.assertEqual(ci.plan(publish=True),['one'])
             self.assertEqual(ci.plan(),['one','two'])
             with self.assertRaises(ValueError):ci.plan(selection='framebuffer10')
-            with self.assertRaises(ValueError):ci.plan('0'*40)
 
-    def test_metadata_only_does_not_release(self):
-        with patch.object(ci,'MODULES',{'one':'gxr_one'}), \
-             patch.object(ci,'source_props',return_value=props()), \
-             patch.object(ci,'run',return_value='version=1.2.3\nversionCode=10\nauthor=old'):
-            self.assertEqual(ci.plan('a'*40),[])
+    def test_every_push_compares_to_published_feed(self):
+        with tempfile.TemporaryDirectory() as directory, patch.object(ci,'ROOT',Path(directory)), \
+             patch.object(ci,'MODULES',{'one':'gxr_one'}):
+            root=Path(directory);(root/'updates').mkdir()
+            (root/'updates/one.json').write_text(json.dumps(props()))
+            with patch.object(ci,'source_props',return_value={**props(),'author':'changed'}):
+                self.assertEqual(ci.plan(publish=True),[])
+            # A version raised in an earlier commit remains pending on any later push.
+            with patch.object(ci,'source_props',return_value=props('1.2.4',11)):
+                self.assertEqual(ci.plan(publish=True),['one'])
+                (root/'updates/one.json').write_text(json.dumps(props('1.2.4',11)))
+                self.assertEqual(ci.plan(publish=True),[])
 
     def test_first_source_and_codes(self):
         self.assertTrue(ci.bumped(None,props('0.1.0',1)))

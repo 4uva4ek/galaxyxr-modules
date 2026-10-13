@@ -3,7 +3,6 @@ name: Build and release modules
 on:
   push:
     branches: [main]
-    paths: ['modules/**/module/module.prop']
   workflow_dispatch:
     inputs:
       module:
@@ -40,13 +39,12 @@ jobs:
       - name: Detect approved version bumps
         id: plan
         env:
-          BEFORE: ${{ github.event.before }}
           EVENT: ${{ github.event_name }}
           SELECTED_MODULE: ${{ inputs.module || 'all' }}
           PUBLISH: ${{ inputs.publish }}
         run: |
           args=(--module "$SELECTED_MODULE")
-          if [[ "$EVENT" == push ]]; then args+=(--before "$BEFORE" --publish); fi
+          if [[ "$EVENT" == push ]]; then args+=(--publish); fi
           if [[ "$PUBLISH" == true ]]; then args+=(--publish); fi
           python tools/ci_modules.py plan "${args[@]}"
       - name: Install pinned native toolchain
