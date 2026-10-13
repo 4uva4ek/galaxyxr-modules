@@ -130,6 +130,8 @@ python modules/ota-control/build.py
 
 No NDK is required: the module has no native payload. The result is
 `dist/ota-control/gxr-ota-control-0.1.0-auto.zip` plus its `.zip.sha256`.
+CI builds the same ZIP as a job artifact whenever this module's files change
+(see [CI.md](../../docs/CI.md)).
 
 The module is **not** in `modules.json` and has no `updates/ota-control.json`
 feed: those describe reviewed public distribution and need separate publication
