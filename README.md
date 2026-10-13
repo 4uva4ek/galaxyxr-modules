@@ -66,6 +66,6 @@ python modules/openxr-velocity-frame/prepare.py --ndk /path/to/android-ndk --run
 python tools/build.py controller-extrapolation --ndk /path/to/android-ndk
 ```
 
-Only `-auto.zip` packages and `.zip.sha256` files are produced under `dist/MODULE/`. Modules with dedicated build commands document them in their READMEs. Proprietary libraries, APKs, device dumps and compiled artifacts are never committed. Release rules: [RELEASING.md](docs/RELEASING.md), source layout: [MODULE-LAYOUT.md](docs/MODULE-LAYOUT.md), CI builds: [CI.md](docs/CI.md).
+Only `-auto.zip` packages and `.zip.sha256` files are produced under `dist/MODULE/`. Modules with dedicated build commands document them in their READMEs. Proprietary libraries, APKs, device dumps and compiled artifacts are never committed. Release rules: [RELEASING.md](docs/RELEASING.md), source layout: [MODULE-LAYOUT.md](docs/MODULE-LAYOUT.md).
 
 Author: **4uva4ek**.
