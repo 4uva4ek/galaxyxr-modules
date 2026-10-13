@@ -9,12 +9,6 @@
       "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/haptic-main.json"
     },
     {
-      "id": "gxr_controller_extrapolation",
-      "name": "Controller Extrapolation",
-      "description": "Enable stock OpenXR controller extrapolation in Steam Link.",
-      "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/controller-extrapolation.json"
-    },
-    {
       "id": "gxr_openxr_velocity_frame",
       "name": "OpenXR Velocity Frame",
       "description": "Correct controller velocity coordinates in supported third-party apps.",
