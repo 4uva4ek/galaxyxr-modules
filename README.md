@@ -63,6 +63,11 @@ docs/                Installation, deployment, compatibility and validation reco
 
 ## Building
 
+Raising both `version` and `versionCode` in a public module's `module.prop` and
+pushing to `main` now builds, checks and publishes its disabled ZIP automatically.
+No manual archive upload is needed. See [automatic releases](docs/AUTOMATIC-RELEASES.md)
+for build-only runs, private inputs, validation requirements and recovery.
+
 Python 3.10+ and Android NDK **28.2.13676358**. Build commands never connect to the headset.
 
 ```sh

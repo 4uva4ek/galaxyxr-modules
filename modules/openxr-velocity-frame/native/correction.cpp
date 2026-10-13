@@ -6,7 +6,11 @@ struct Q { float x,y,z,w; };
 struct Relation { U flags; Q q; V p,v,w; };
 static_assert(sizeof(Relation)==56,"Unexpected relation ABI");
 #ifdef GXR_HOST_TEST
+#ifdef _WIN32
 #define API extern "C" __declspec(dllexport)
+#else
+#define API extern "C" __attribute__((visibility("default")))
+#endif
 API volatile U gxr_enabled=1;
 extern "C" int _fltused=0;
 #else

@@ -1,5 +1,11 @@
 # Independent module releases
 
+For approved catalogue modules, the default path is now [automatic release on
+version bump](AUTOMATIC-RELEASES.md): raise both fields in `module.prop`, update
+the changelog/validation record and push to main after the required validation.
+GitHub Actions builds and publishes the ZIP and advances the feed. The manual
+steps below remain for reviewed recovery and first-time distribution onboarding.
+
 1. Update `version` and `versionCode` in the selected module's `module.prop`.
 2. Update its README and compatibility/validation record.
 3. Build from a clean Git checkout using the selected module's documented command.
