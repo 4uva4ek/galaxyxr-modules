@@ -1,4 +1,5 @@
 #include "patch.h"
+#include "../../../tools/controller-imu-compat.h"
 static constexpr uintptr_t SITE=GXR_WHITENING_SITE;
 #define ORIGINAL GXR_WHITENING_ORIGINAL
 #define PATCHED GXR_WHITENING_PATCHED
@@ -67,6 +68,7 @@ static int validate(Memory& mem,const Map& m,const std::string& disk) {
   state=2;
  }
  memcpy(slot(SITE),ORIGINAL,sizeof(ORIGINAL));
+ normalizeImuWait(live,TEXT_BEGIN);
  // Prior min2 experiment must be OFF. Only its known unreachable padding is allowed.
  const unsigned char oldPayload[]={95,11,0,113,227,1,0,84,122,5,251,23};
  const uint32_t oldBridge=402326809u,oldEntry=0x34fff5da;
