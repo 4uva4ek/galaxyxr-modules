@@ -20,6 +20,12 @@ node_modules/
 # Retired experiments remain local; current replacements are published separately.
 /modules/controller-velocity-frame/
 /modules/openxr-prediction-40/
+/modules/hal-openxr-360/
+/modules/hal-openxr-native/
+/modules/openxr-native-copy/
+/changelogs/hal-openxr-360.md
+/changelogs/hal-openxr-native.md
+/changelogs/openxr-native-copy.md
 
 # Local framebuffer package verification receipt.
 /modules/framebuffer10/tests/module-tests.json
