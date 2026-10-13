@@ -68,6 +68,25 @@ class PrivateInputs(unittest.TestCase):
             self.assertEqual((path/'fixture.bin').read_bytes(),data)
 
 
+class ReleaseLookup(unittest.TestCase):
+    def test_draft_on_later_page(self):
+        draft = {'tag_name': 'one/v1.0.0', 'draft': True, 'assets': []}
+        replies = [SimpleNamespace(returncode=1, stderr='HTTP 404'),
+                   SimpleNamespace(returncode=0, stdout=json.dumps([[], [draft]]))]
+        with patch.object(ci.subprocess, 'run', side_effect=replies):
+            self.assertEqual(ci.release_info('one/v1.0.0'), draft)
+
+    def test_absent_and_failed_draft_lookup(self):
+        for response, fails in ((SimpleNamespace(returncode=0, stdout='[[]]'), False),
+                                (SimpleNamespace(returncode=1), True)):
+            with self.subTest(fails=fails), patch.object(ci.subprocess, 'run', side_effect=[
+                    SimpleNamespace(returncode=1, stderr='HTTP 404'), response]):
+                if fails:
+                    with self.assertRaises(RuntimeError): ci.release_info('one/v1.0.0')
+                else:
+                    self.assertIsNone(ci.release_info('one/v1.0.0'))
+
+
 class Publication(unittest.TestCase):
     def exercise(self, existing=None, tag_commit=None, verify_error=False):
         calls=[]

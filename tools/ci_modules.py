@@ -154,7 +154,16 @@ def release_info(tag):
     if result.returncode == 0:
         return json.loads(result.stdout)
     if '404' in result.stderr:
-        return None
+        # The tag endpoint does not return drafts. Include every page so a
+        # partially published release can be resumed without creating another.
+        drafts = subprocess.run(
+            ['gh', 'api', '--paginate', '--slurp',
+             f'repos/{REPO}/releases?per_page=100'],
+            cwd=ROOT, text=True, capture_output=True)
+        if drafts.returncode != 0:
+            raise RuntimeError('Cannot query draft releases; refusing to assume absence')
+        return next((release for page in json.loads(drafts.stdout)
+                     for release in page if release['tag_name'] == tag), None)
     raise RuntimeError('Cannot query release; refusing to assume it is absent')
 
 
@@ -201,6 +210,8 @@ def publish(manifest_path):
                 f'\nZIP SHA-256: `{item["sha256"]}`\n')
             run('gh','release','create',item['tag'],'--repo',REPO,'--verify-tag','--draft','--title',name+' '+item['version'],'--notes-file',notes)
             existing=release_info(item['tag'])
+            if existing is None:
+                raise RuntimeError('Created release is not visible; retry publication later')
         if existing['draft']:
             assets={a['name']:a for a in existing['assets']}
             for file in (archive,archive.with_suffix('.zip.sha256')):
