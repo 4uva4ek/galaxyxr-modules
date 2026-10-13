@@ -1,7 +1,7 @@
 """Plan rules for the CI build matrix; offline against the real tree."""
 import unittest
 
-from changed_modules import EXCLUDED, plan, registry
+from changed_modules import EXCLUDED, build_all, plan, registry
 
 ENTRIES = registry()
 
@@ -21,14 +21,12 @@ class PlanTests(unittest.TestCase):
 
     def test_shared_tools_file_builds_its_declared_consumers(self):
         self.assertEqual(self.build_names('tools/cold-boot-reset.sh'),
-                         ['controller-extrapolation', 'controller-timestamp-precision', 'controller-whitening',
-                          'hal-cache-bypass', 'haptic-main'])
-        self.assertEqual(self.build_names('tools/action-report.sh'), ['controller-extrapolation', 'haptic-main'])
+                         ['controller-timestamp-precision', 'controller-whitening', 'hal-cache-bypass', 'haptic-main'])
+        self.assertEqual(self.build_names('tools/action-report.sh'), ['haptic-main'])
 
     def test_native_builder_change_rebuilds_every_native_module(self):
         self.assertEqual(self.build_names('tools/build.py'),
-                         ['controller-extrapolation', 'controller-timestamp-precision', 'controller-whitening',
-                          'hal-cache-bypass', 'haptic-main'])
+                         ['controller-timestamp-precision', 'controller-whitening', 'hal-cache-bypass', 'haptic-main'])
 
     def test_metadata_docs_and_pipeline_changes_build_nothing(self):
         self.assertEqual(self.build_names('changelogs/ota-control.md', 'modules.json', 'updates/ota-control.json',
@@ -49,10 +47,18 @@ class PlanTests(unittest.TestCase):
     def test_every_module_directory_is_covered(self):
         # Deliberate canary: extend it when a module is added or its CI entry changes.
         self.assertEqual(sorted(n for n, e in ENTRIES.items() if e and 'excluded' not in e),
-                         ['controller-extrapolation', 'controller-timestamp-precision', 'controller-whitening',
-                          'hal-cache-bypass', 'haptic-main', 'ota-control'])
+                         ['controller-timestamp-precision', 'controller-whitening', 'hal-cache-bypass',
+                          'haptic-main', 'ota-control'])
         self.assertEqual(sorted(n for n, e in ENTRIES.items() if e and 'excluded' in e), sorted(EXCLUDED))
         self.assertEqual([n for n, e in ENTRIES.items() if e is None], [])
+
+    def test_full_build_covers_buildable_and_reports_excluded(self):
+        builds, excluded, unchanged = build_all(ENTRIES)
+        self.assertEqual([build['module'] for build in builds],
+                         ['controller-timestamp-precision', 'controller-whitening', 'hal-cache-bypass',
+                          'haptic-main', 'ota-control'])
+        self.assertEqual(sorted(item['module'] for item in excluded), sorted(EXCLUDED))
+        self.assertEqual(unchanged, [])
 
     def test_matrix_entries_carry_the_build_metadata(self):
         builds, _, _ = plan(['modules/ota-control/module/ota-ctl.sh'], ENTRIES)
@@ -66,8 +72,7 @@ class PlanTests(unittest.TestCase):
     def test_shared_and_own_change_reports_both_reasons(self):
         builds, _, _ = plan(['modules/haptic-main/module/action.sh', 'tools/cold-boot-reset.sh'], ENTRIES)
         self.assertEqual([build['module'] for build in builds],
-                         ['controller-extrapolation', 'controller-timestamp-precision', 'controller-whitening',
-                          'hal-cache-bypass', 'haptic-main'])
+                         ['controller-timestamp-precision', 'controller-whitening', 'hal-cache-bypass', 'haptic-main'])
         haptic = builds[-1]
         self.assertIn('tools/cold-boot-reset.sh', haptic['why'])
         self.assertIn('modules/haptic-main/', haptic['why'])

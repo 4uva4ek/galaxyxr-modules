@@ -22,6 +22,7 @@ NATIVE_BUILDER = 'tools/build.py'
 # repository. The reason is printed in the run summary. See docs/RELEASING.md.
 EXCLUDED = {
     'framebuffer10': 'deprecated 2026-10-13; pinned vendor payload not in repo; RELEASING.md says do not build',
+    'controller-extrapolation': 'needs the compatibility header generated from a user-supplied libopenxr_android.so (proprietary, not in repo)',
     'openxr-velocity-frame': 'needs a user-supplied libopenxr_android.so (proprietary, not in repo)',
     'steamlink-pose-time': 'needs user-supplied libopenxr_android.so and libvrlink_scene.so (proprietary, not in repo)',
 }
@@ -97,12 +98,13 @@ def changed_files(base, head):
     return names.splitlines()
 
 
-def build_all(entries):
-    builds, excluded, unchanged = plan([], entries)
+def build_all(entries, why='full build'):
     builds = [{'module': name, 'artifact': entry['artifact'], 'command': entry['command'],
-               'needs_ndk': entry['needs_ndk'], 'why': 'manual full build'}
+               'needs_ndk': entry['needs_ndk'], 'why': why}
               for name, entry in sorted(entries.items()) if entry and 'excluded' not in entry]
-    return builds, excluded, unchanged
+    excluded = [{'module': name, 'reason': entry['excluded']} for name, entry in sorted(entries.items())
+                if entry and 'excluded' in entry]
+    return builds, excluded, []
 
 
 def summary(builds, excluded, unchanged, note):
@@ -124,12 +126,12 @@ def main():
     args = parser.parse_args()
     entries = registry()
     if args.all:
-        builds, excluded, unchanged = build_all(entries)
+        builds, excluded, unchanged = build_all(entries, 'manual full build')
         note = 'manual full build'
     else:
         files = args.files if args.files is not None else changed_files(args.base, args.head)
         if files is None:
-            builds, excluded, unchanged = build_all(entries)
+            builds, excluded, unchanged = build_all(entries, 'full build (unknown base)')
             note = 'base commit unknown (new branch or force push), full build'
         else:
             builds, excluded, unchanged = plan(files, entries)
@@ -137,11 +139,11 @@ def main():
     matrix = {'include': builds}
     output = os.environ.get('GITHUB_OUTPUT')
     if output:
-        with open(output, 'a', encoding='utf-8') as handle:
+        with open(output, 'a', encoding='utf-8', newline='\n') as handle:
             handle.write(f'matrix={json.dumps(matrix)}\ncount={len(builds)}\n')
     step_summary = os.environ.get('GITHUB_STEP_SUMMARY')
     if step_summary:
-        with open(step_summary, 'a', encoding='utf-8') as handle:
+        with open(step_summary, 'a', encoding='utf-8', newline='\n') as handle:
             handle.write(summary(builds, excluded, unchanged, note))
     print(f'Plan ({note}): {len(builds)} build(s), {len(excluded)} excluded, {len(unchanged)} unchanged')
     if not output:
