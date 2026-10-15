@@ -316,8 +316,9 @@ def check_uninstall_restore():
         expect(b.run('uninstall.sh'), 0)
         assert b.disabled() == [PKG_B], b.disabled()
         assert b.setting() == 'null', b.setting()
-        assert b.record() == 'allowed', b.record()
-    print('PASS uninstall restores the baseline before the module directory goes away')
+        assert b.record() is None, b.record()
+        assert not (b.root / 'state').exists(), 'uninstall must delete its state directory'
+    print('PASS uninstall restores the baseline and deletes its own state directory')
 
 
 def check_tool_paths():

@@ -1,10 +1,20 @@
 # OTA Control
 
-Author: **4uva4ek**.
+Author: **AngelDark92**.
 
 ## Unreleased
 
-No pending public changes.
+### 0.1.1
+
+- Module author field, README and changelog attribution changed to AngelDark92.
+- Removal cleans everything the module owns: after a verified restore,
+  `uninstall.sh` deletes the state directory, so no module state survives an
+  uninstall. A failed restore keeps the state directory for diagnosis.
+- Verified: no telemetry and no network use anywhere in the module; all state is
+  local, under `/data/adb/gxr-ota-control/`. No change to the block itself.
+- Packaged artifact `gxr-ota-control-0.1.1-auto.zip`, sha256
+  `0c4cb00827458cf4098d6d038e27ab5a1d07e084b72efcf1d42b67258d1c4836`; the host
+  suite passes (12 scenarios).
 
 ## 0.1.0 — 2026-10-13
 

@@ -5,7 +5,7 @@ disabling `com.wssyncmldm` and `com.sec.android.soagent` for user 0 and setting
 `ota_disable_automatic_update` to 1. The same script restores all three to the
 values recorded in a baseline captured immediately before the first block.
 
-Author: **4uva4ek**. Status: **not yet validated on a headset.** Local host tests
+Author: **AngelDark92**. Status: **not yet validated on a headset.** Local host tests
 cover the script logic; the package is not published and has no live update feed.
 
 ## Difference from the other GXR modules
@@ -70,7 +70,7 @@ su -c 'sh /data/adb/modules/gxr_ota_control/action.sh status'  # raw diagnostics
 change. KernelSU does not run the scripts of a disabled module, so unticking the
 checkbox only stops future boot re-asserts; it does **not** restore updates by
 itself. Run `action.sh off` to restore, or delete the module in the Manager so
-that `uninstall.sh` restores. When status finds the preference off and the block
+that `uninstall.sh` restores and then deletes the module's state directory. When status finds the preference off and the block
 still live, it prints that exact command.
 
 Only the Manager's install/replace flow restores by itself: it calls `action.sh
@@ -98,6 +98,11 @@ activated reports STOCK: nothing of ours is applied.
   unconditionally: a block that failed after the first package still changed the
   device, so restore works from live state against the baseline instead of from
   a state file. `allow` only re-enables packages the baseline says were enabled.
+  After a verified restore it deletes the state directory, so no module state
+  survives an uninstall; a failed restore keeps it for diagnosis.
+- No telemetry and no network use anywhere in the module: only the local Android
+  package and settings tools are called, and the only state written is the
+  module's own directory under `/data/adb/gxr-ota-control/`.
 - A failed change writes the `disable` marker and stops retrying in the same
   boot; the cause is reported by Action.
 - Manual restore, if the module directory is gone:
@@ -129,7 +134,7 @@ python modules/ota-control/build.py
 ```
 
 No NDK is required: the module has no native payload. The result is
-`dist/ota-control/gxr-ota-control-0.1.0-auto.zip` plus its `.zip.sha256`.
+`dist/ota-control/gxr-ota-control-0.1.1-auto.zip` plus its `.zip.sha256`.
 
 The module is **not** in `modules.json` and has no `updates/ota-control.json`
 feed: those describe reviewed public distribution and need separate publication
