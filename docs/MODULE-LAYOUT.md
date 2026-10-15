@@ -52,3 +52,26 @@ second also validates the published catalogue and feeds. Neither accesses a
 headset or network. Keep automatic-only, disabled packaging, English Action
 status/recovery reporting and the existing safety and rollback guards. Never
 copy activation scripts from a template without reviewing the new module's scope.
+
+## Installer acceptance (GXR manager)
+
+The GXR installer (KernelSU-GXR, `userspace/ksud/src/gxr_update.rs`) accepts only a
+strict package shape. A module ZIP must contain: `module.prop`, empty `disable` and
+`skip_mount` markers, `service.sh` and `action.sh`, and — listed in `SHA256SUMS` —
+`action.sh`, `auto.sh` and `module.prop`. Payload files live in the ZIP root or
+under `bin/` (and `webroot/` since Manager 1.0.9); `system/` overlays, a `payload/`
+directory or any other directory, and early-boot/state files are rejected.
+`SHA256SUMS` lists every file except `disable` and itself.
+
+Known rejection messages and their causes:
+
+| message | cause |
+| --- | --- |
+| `Missing empty skip_mount` | marker file absent or not empty |
+| `Unexpected payload directory` | entry under an unsupported directory (e.g. `payload/`) |
+| `Unverified installed lifecycle script` | `auto.sh` missing from `SHA256SUMS` |
+
+Replay the installer's checks host-side before pushing anything to a headset:
+`modules/mvhevc-eye-fix/tests/verify_package.py` mirrors read_archive,
+validate_payload, install_notes and verify_installed with the installer's own
+error strings.
