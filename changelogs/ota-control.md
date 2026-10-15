@@ -50,3 +50,19 @@ Author: **AngelDark92**.
   package no longer leaves that package disabled on the device. The boot stage
   also re-checks the off and remove markers after its boot wait, so a module
   turned off during the wait is not blocked afterwards.
+- Ships the empty `skip_mount` marker next to `disable`. The GXR installer and
+  `tools/update_feed.py` reject a package without it, so the earlier ZIP could
+  not be installed through the Manager or promoted to a feed.
+- Adds `auto.sh` with the shared `resume|enable|disable|status` verbs over
+  `ota-ctl.sh`, which the release pipeline's package check requires, and a
+  `tools/ci_modules.py` branch that builds this shell-only module with its own
+  `build.py` and runs its host tests instead of the NDK builder.
+- Removal restore moved out of `uninstall.sh`: KernelSU runs it in post-fs-data
+  before `pm` exists, so it now starts one process of that boot from a `/dev`
+  copy of `ota-ctl.sh` that waits for `sys.boot_completed`, restores, then
+  removes the state directory; on failure the state stays for manual recovery.
+- Status ends with the universal label: `ENABLED` while the block is live,
+  `DISABLED - Waiting` with the preference ON and nothing applied, the existing
+  OFF lines, or `DISABLED - Error:` with the recorded cause and retry commands.
+- `action.sh on|off` are documented as the KernelSU preference: they remove or
+  create the `disable` marker, which the README previously denied.

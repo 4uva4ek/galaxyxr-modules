@@ -7,7 +7,7 @@
 # the baseline captured immediately before the first block. A package that was
 # already disabled by the vendor is never enabled.
 #
-# Modes: boot, block, allow, status, report.
+# Modes: boot, block, allow, status, report, restore-after-boot.
 set -eu
 MODDIR=${0%/*}
 STATE=${GXR_OTA_STATE:-/data/adb/gxr-ota-control}
@@ -31,13 +31,32 @@ log() { printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" >> "$STATE/log"; 
 fail() {
  say "DISABLED - Error: $1"
  printf '%s\n' "$1" > "$STATE/failed"
- : > "$MODDIR/disable"
+ log "failed: $1"
+ # The removal restore runs from a tmpfs copy; there is no module to disable.
+ [ "$MODE" = restore-after-boot ] || : > "$MODDIR/disable"
  exit 1
 }
 pkg_disabled() { "$PM" list packages -d 2>/dev/null | grep -qx "package:$1"; }
 setting_value() { "$SETTINGS" get global "$KEY" 2>/dev/null | tr -d '\r'; }
 boot_ready() { [ "$("$GETPROP" sys.boot_completed 2>/dev/null)" = 1 ]; }
 was_applied() { [ "$(cat "$STATE/state" 2>/dev/null || true)" = blocked ]; }
+is_blocked() {
+ for p in $PACKAGES; do
+  pkg_disabled "$p" || return 1
+ done
+ [ "$(setting_value)" = 1 ]
+}
+wait_boot() {
+ count=0
+ log "$1: waiting for sys.boot_completed"
+ while ! boot_ready; do
+  count=$((count + 1))
+  if [ "$count" -gt 300 ]; then
+   fail 'Android boot did not complete within 10 minutes'
+  fi
+  sleep 2
+ done
+}
 
 # Record the untouched device state once, before the first change. Written
 # through a temporary file so an interrupted run cannot leave a partial
@@ -172,20 +191,25 @@ status() {
   say 'baseline:'
   sed 's/^/  /' "$STATE/baseline"
  fi
- if [ -f "$STATE/failed" ]; then
-  say 'DISABLED - Error details:'
-  cat "$STATE/failed"
- fi
  if [ -f "$STATE/log" ]; then
   tail -n 3 "$STATE/log"
  fi
- if [ -f "$MODDIR/disable" ] || [ -f "$MODDIR/remove" ]; then
+ # The last label line is the universal report: ENABLED only while the block
+ # is live; every DISABLED line carries its waiting or error reason.
+ if [ -f "$STATE/failed" ]; then
+  say "DISABLED - Error: $(cat "$STATE/failed")"
+  say "Fix the cause, then retry: sh $MODDIR/action.sh on (block) or sh $MODDIR/action.sh off (restore)."
+ elif [ -f "$MODDIR/disable" ] || [ -f "$MODDIR/remove" ]; then
   if is_stock; then
    say 'DISABLED - KernelSU preference OFF; nothing from this module is applied.'
   else
    say 'DISABLED - KernelSU preference OFF but the block is still live.'
    say "Restore now: sh $MODDIR/action.sh off"
   fi
+ elif is_blocked; then
+  say "ENABLED - updates blocked; restore the recorded baseline with: sh $MODDIR/action.sh off"
+ else
+  say "DISABLED - Waiting: KernelSU preference ON; the block applies at the next service stage or now with: sh $MODDIR/action.sh on"
  fi
  if is_stock; then
   say 'GXR_UPDATE_STATE=STOCK'
@@ -212,15 +236,7 @@ boot)
   fi
   exit 0
  fi
- count=0
- log 'boot: waiting for sys.boot_completed'
- while ! boot_ready; do
-  count=$((count + 1))
-  if [ "$count" -gt 300 ]; then
-   fail 'Android boot did not complete within 10 minutes'
-  fi
-  sleep 2
- done
+ wait_boot boot
  if [ -f "$MODDIR/remove" ]; then
   exit 0
  fi
@@ -234,6 +250,15 @@ boot)
  log 'boot: re-asserting the blocked state'
  block
  ;;
+restore-after-boot)
+ # Started by uninstall.sh from a tmpfs copy during post-fs-data, when pm and
+ # settings do not exist yet. One process of this boot: the module directory
+ # is already gone and nothing survives the next reboot.
+ wait_boot 'removal restore'
+ allow
+ log 'removal restore: baseline restored; removing the state directory'
+ [ -L "$STATE" ] || rm -rf "$STATE"
+ ;;
 block)
  block
  ;;
@@ -244,7 +269,7 @@ status|report)
  status
  ;;
 *)
- say 'Expected boot, block, allow, status or report'
+ say 'Expected boot, block, allow, status, report or restore-after-boot'
  exit 1
  ;;
 esac

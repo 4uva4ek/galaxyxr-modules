@@ -45,11 +45,16 @@ Run from the repository root before building or publishing:
 ```sh
 python tools/check_module_layout.py
 python tools/check_catalogue.py
+python tools/check_module_contract.py
 ```
 
 The first check includes local and ignored experimental module folders. The
-second also validates the published catalogue and feeds. Neither accesses a
-headset or network. Keep automatic-only, disabled packaging, English Action
+second also validates the published catalogue and feeds. The third verifies the
+package and report contract of every tracked module (markers, lifecycle scripts,
+shell syntax, ENABLED/DISABLED labels, a removal path that does not need Android
+services) and builds shell-only modules; the `Check module contract` workflow
+runs all three on every branch and pull request. None accesses a headset or
+network. Keep automatic-only, disabled packaging, English Action
 status/recovery reporting and the existing safety and rollback guards. Never
 copy activation scripts from a template without reviewing the new module's scope.
 

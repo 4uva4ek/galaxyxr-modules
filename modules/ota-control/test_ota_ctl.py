@@ -164,6 +164,7 @@ class Sandbox:
         env['PM_DB'] = msys(self.pm_db)
         env['SETTINGS_DB'] = msys(self.settings_db)
         env['GXR_OTA_STATE'] = msys(self.root / 'state')
+        env['GXR_OTA_RUN'] = msys(self.root / 'run')
         env['GETPROP_BOOT_COMPLETED'] = boot
         env['PM_DENY'] = deny
         if boot_file is not None:
@@ -190,6 +191,15 @@ def expect(result, code, text=None, absent=None):
         assert absent not in result.stdout, (absent, result.stdout)
 
 
+def wait_until(condition, timeout=20):
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if condition():
+            return True
+        time.sleep(0.5)
+    return condition()
+
+
 def check_block_and_restore():
     with tempfile.TemporaryDirectory(dir=WORK) as tmp:
         b = Sandbox(tmp)
@@ -205,6 +215,7 @@ def check_block_and_restore():
         assert not b.has_marker('disable')
         assert b.baseline() == [f'package:{PKG_A}:enabled', f'package:{PKG_B}:disabled', 'setting:null'], b.baseline()
         expect(b.run('action.sh', 'status'), 0, 'package com.wssyncmldm: disabled')
+        expect(b.run('action.sh', 'status'), 0, 'ENABLED - updates blocked')
         expect(b.run('action.sh', 'status'), 0, 'ota_disable_automatic_update: 1')
         expect(b.run('action.sh', 'status'), 0, absent='GXR_UPDATE_STATE=STOCK')
         expect(b.run('action.sh', 'on'), 0)
@@ -238,6 +249,7 @@ def check_boot_reassert():
         b.seed()
         expect(b.run('action.sh', 'on'), 0)
         b.seed(disabled=[])
+        expect(b.run('action.sh', 'status'), 0, 'DISABLED - Waiting: KernelSU preference ON')
         expect(b.run('ota-ctl.sh', 'boot', boot='1'), 0)
         assert b.disabled() == [PKG_A, PKG_B], b.disabled()
         b.marker('disable')
@@ -278,7 +290,7 @@ def check_boot_waits():
 
 
 def check_failure_latch():
-    with tempfile.TemporaryDirectory(dir=WORK) as tmp:
+    with tempfile.TemporaryDirectory(dir=WORK, ignore_cleanup_errors=True) as tmp:
         b = Sandbox(tmp)
         b.seed()
         expect(b.run('action.sh', 'on', deny=PKG_A), 1, 'DISABLED - Error: could not disable')
@@ -286,9 +298,10 @@ def check_failure_latch():
         assert b.failed()
         assert b.record() != 'blocked', b.record()
         assert PKG_A not in b.disabled()
-        expect(b.run('action.sh', 'status'), 0, 'DISABLED - Error details:')
+        expect(b.run('action.sh', 'status'), 0, 'DISABLED - Error: could not disable')
         expect(b.run('action.sh', 'status'), 0, absent='GXR_UPDATE_STATE=STOCK')
         expect(b.run('uninstall.sh'), 0)
+        assert wait_until(lambda: not (b.root / 'state').exists()), 'removal restore did not finish'
         assert b.disabled() == [], b.disabled()
         assert b.setting() == 'null', b.setting()
     print('PASS failure latches: disable marker, failed record, no stock claim, and removal still reverts a half-applied block')
@@ -308,17 +321,30 @@ def check_removal_refusal():
 
 
 def check_uninstall_restore():
-    with tempfile.TemporaryDirectory(dir=WORK) as tmp:
+    with tempfile.TemporaryDirectory(dir=WORK, ignore_cleanup_errors=True) as tmp:
         b = Sandbox(tmp)
         b.seed(disabled=[PKG_B])
         expect(b.run('action.sh', 'on'), 0)
         assert sorted(b.disabled()) == sorted([PKG_A, PKG_B])
         expect(b.run('uninstall.sh'), 0)
+        assert (b.root / 'run' / 'restore.sh').exists(), 'no tmpfs copy for the post-boot restore'
+        assert wait_until(lambda: not (b.root / 'state').exists()), 'removal restore did not finish'
         assert b.disabled() == [PKG_B], b.disabled()
         assert b.setting() == 'null', b.setting()
-        assert b.record() is None, b.record()
-        assert not (b.root / 'state').exists(), 'uninstall must delete its state directory'
-    print('PASS uninstall restores the baseline and deletes its own state directory')
+    print('PASS uninstall hands the restore to a post-boot process that restores the baseline and removes the state directory')
+
+
+def check_uninstall_never_activated():
+    with tempfile.TemporaryDirectory(dir=WORK) as tmp:
+        b = Sandbox(tmp)
+        b.seed(disabled=[PKG_B])
+        expect(b.run('action.sh', 'status'), 0, 'GXR_UPDATE_STATE=STOCK')
+        assert (b.root / 'state').exists()
+        expect(b.run('uninstall.sh'), 0)
+        assert not (b.root / 'state').exists()
+        assert not (b.root / 'run').exists()
+        assert b.disabled() == [PKG_B], b.disabled()
+    print('PASS uninstall of a never-activated module only removes its state directory and starts nothing')
 
 
 def check_tool_paths():
@@ -410,6 +436,6 @@ def check_root_guard():
 for check in (check_root_guard, check_tool_paths, check_service_entry, check_status_guidance,
               check_boot_marker_race, check_block_and_restore, check_preset_setting,
               check_boot_reassert, check_boot_waits, check_failure_latch, check_removal_refusal,
-              check_uninstall_restore):
+              check_uninstall_restore, check_uninstall_never_activated):
     check()
-print('PASS OTA control: 12 host scenarios')
+print('PASS OTA control: 13 host scenarios')

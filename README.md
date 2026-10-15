@@ -1,12 +1,12 @@
 # Galaxy XR KernelSU Modules
 
-KernelSU modules for the Samsung Galaxy XR (SM-I610) running Android XR. All modules are non-invasive — they apply changes in process memory at runtime and never modify system files, partitions or the original APKs. Every package installs **disabled**; you enable it yourself.
+KernelSU modules for the Samsung Galaxy XR (SM-I610) running Android XR. Tracking and haptic modules apply changes in process memory at runtime. OTA Control changes persistent Android package states and an update setting. No module modifies original system APKs or libraries or flashes partitions. Every package installs **disabled**; you enable it yourself.
 Requires a rooted Samsung Galaxy XR with [KernelSU-GXR](https://github.com/4uva4ek/KernelSU-GXR) (1.0.6 or later for Sources installation).
 
 Add this repository as a source within the KernelSU Manager with the url: ``https://github.com/4uva4ek/galaxyxr-modules``.
 Open **Modules → Sources**, select the modules you want and choose **Install selected**. Each module has its own version and update feed, so the Manager offers updates per module. Automatic ZIPs are also attached to [GitHub Releases](https://github.com/4uva4ek/galaxyxr-modules/releases); see [installing from Sources or ZIP](docs/INSTALLING-MODULES.md).
 
-After installation: tick the module's checkbox, then use the Manager's documented soft reboot. The **Action** button only reports live status and recovery steps — it never toggles a patch. Untick the checkbox to restore the original code; a full reboot clears every memory patch, but an enabled module applies again at the next start.
+For memory patches after installation: tick the module's checkbox, then use the Manager's documented soft reboot. The **Action** button only reports live status and recovery steps — it never toggles a patch. Untick the checkbox to restore the original code; a full reboot clears every memory patch, but an enabled module applies again at the next start. OTA Control has separate restore instructions below; reboot does not undo its persistent changes.
 
 ## Modules
 
@@ -37,16 +37,25 @@ Experimental: sleep/app exit releases it; critical thermal severity 4 releases
 it until severity falls to 2. This is not a guarantee of camera frame rate or
 better controller motion. [Behavior, validation limits and local 0.1.0 migration](modules/openxr-quality/README.md).
 
+### OTA Control (`gxr_ota_control`)
+Blocks Samsung firmware updates by disabling `com.wssyncmldm` and
+`com.sec.android.soagent` for user 0 and setting `ota_disable_automatic_update=1`.
+Saves the original state for restoration. These changes **survive reboot**;
+unticking the checkbox only stops future reapplication. Run the module's
+`action.sh off` as root to restore the saved baseline. Installs disabled;
+host-tested, **not yet validated on a headset**.
+[Controls, recovery and validation limits](modules/ota-control/README.md).
+
 ### Deprecated and retired
 **Framebuffer10** (10-bit SDR output with corrected camera colors) is deprecated and source-only — its payload contains vendor code and is not distributed. Earlier tracking experiments (Bracket, IMU Time, HAL 360, native copy) are retired and kept locally; they are not distributed here.
 
 ## Safety
 
 - Packages install **disabled**; installation never enables a module.
-- Patches live only in process RAM. Original APKs, libraries, partitions and root setup are never written.
-- Every module checks exact firmware and library hashes before touching anything and refuses unknown builds.
-- Failures are contained: a failed activation disables the module, restores the original code and records the cause for **Action** to show. Guards reset after a confirmed cold boot.
-- Disable a module before relying on reboot as rollback — an enabled module reapplies.
+- Tracking and haptic patches live only in process RAM and check exact firmware/library compatibility before activation. OTA Control changes persistent Android state and restores a saved baseline.
+- Original APKs and libraries are preserved; modules do not flash partitions or change root setup.
+- Failures disable the module and record the cause for **Action** to show. Follow the module's recovery instructions if restoration is incomplete.
+- Disable memory-patch modules before relying on reboot as rollback — an enabled module reapplies. For OTA Control, use `action.sh off` to restore; reboot alone does not restore updates.
 
 Details: [startup and recovery](docs/AUTOSTART.md), [Action reports](docs/ACTION-REPORT.md), [cold-boot guards](docs/COLD-BOOT-GUARDS-2026-10-11.md), [update feeds and release process](docs/UPDATES.md).
 

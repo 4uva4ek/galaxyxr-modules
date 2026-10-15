@@ -1,0 +1,7 @@
+{
+  "version": "0.1.0",
+  "versionCode": 1,
+  "zipUrl": "https://github.com/4uva4ek/galaxyxr-modules/releases/download/ota-control/v0.1.0/gxr-ota-control-0.1.0-auto.zip",
+  "changelog": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/changelogs/ota-control.md",
+  "sha256": "f6882981838a0b81940839ef34e1a4aaffd90c535f1375b0239a6aacfd579c91"
+}
