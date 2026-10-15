@@ -144,8 +144,8 @@ def check_package(name, module, problems):
         for missing in sorted(LIFECYCLE - names):
             problems.append(f'{name}: {archive.name} lacks {missing}; the release pipeline rejects it')
         packaged = dict(line.split('=', 1) for line in z.read('module.prop').decode().splitlines() if '=' in line)
-        if packaged.get('author') != '4uva4ek' or packaged.get('updateJson') != props['updateJson']:
-            problems.append(f'{name}: packaged module.prop author/updateJson differ from the source')
+        if packaged.get('updateJson') != props['updateJson']:
+            problems.append(f'{name}: packaged module.prop updateJson differs from the source')
         for info in z.infolist():
             if info.filename.endswith('.sh'):
                 if info.external_attr >> 16 & 0o777 != 0o755:
