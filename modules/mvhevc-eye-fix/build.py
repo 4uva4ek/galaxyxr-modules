@@ -24,9 +24,14 @@ for path in sorted((HERE / 'module').rglob('*')):
     if path.suffix.lower() in TEXT_SUFFIXES and b'\r' in data:
         raise ValueError(f'{path}: source must use LF line endings')
     payload[path.relative_to(HERE / 'module').as_posix()] = data
-for required in ('module.prop', 'customize.sh', 'service.sh', 'action.sh', 'auto.sh', 'uninstall.sh', 'bin/libstagefright.so', 'bin/libaplayer.so', 'skip_mount', 'install-info.txt'):
+for required in ('module.prop', 'customize.sh', 'service.sh', 'action.sh', 'auto.sh', 'uninstall.sh', 'skip_mount', 'install-info.txt'):
     if required not in payload:
         raise ValueError(f'missing {required}')
+missing_payloads = [n for n in ('bin/libstagefright.so', 'bin/libaplayer.so') if n not in payload]
+if missing_payloads:
+    print('note: binary payloads not present (' + ', '.join(missing_payloads) + ');')
+    print('note: building the metadata-only package that the repository contract check validates (CI).')
+    print('note: the full package needs the patched payloads in module/bin; see module/NOTICE.txt.')
 if payload['skip_mount'] != b'':
     raise ValueError('skip_mount marker must be empty')
 bad_dirs = [n for n in payload if '/' in n and not n.startswith('bin/')]

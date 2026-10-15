@@ -23,6 +23,10 @@
   removal while the headset keeps running.
 - Restore paths, in any case: watcher (seconds after untick or removal), `action.sh
   off` (verified), `uninstall.sh` (removal), reboot (always).
+- `build.py` no longer requires the binary payloads: when they are absent (a fresh
+  clone, CI) it builds the metadata-only package with an explicit note, which is
+  what the repository contract check validates; with the payloads present the
+  package is unchanged. The module refuses to apply without its payloads.
 - Packaged artifact `gxr-mvhevc-eye-fix-0.3.3-auto.zip`, sha256
   `c24c361cfdb00f364396c80411ba0ebfbbefa834924bba9eb088033e8bfaaa4a`; the
   `tests/verify_package.py` GXR-installer replay passes.

@@ -106,6 +106,10 @@ No Knox state, no partition writes.
 
 ## Build / host checks
 
+The builder includes the patched payloads when `module/bin/` holds them (they are
+not published); without them it produces the metadata-only package that the
+repository's contract check builds in CI.
+
 ```sh
 python modules/mvhevc-eye-fix/build.py
 python modules/mvhevc-eye-fix/tests/verify_package.py   # replays the GXR installer's validation
