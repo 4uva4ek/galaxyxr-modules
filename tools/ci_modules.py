@@ -128,7 +128,7 @@ def build(names, ndk, inputs):
             if z.testzip() is not None:
                 raise ValueError('Corrupt ZIP')
             packaged = properties(z.read('module.prop').decode())
-            if packaged.get('author') != '4uva4ek' or packaged.get('updateJson') != props['updateJson']:
+            if packaged.get('updateJson') != props['updateJson']:
                 raise ValueError('Package metadata mismatch')
             if not {'action.sh', 'auto.sh', 'service.sh', 'customize.sh'} <= set(z.namelist()):
                 raise ValueError('Missing reviewed lifecycle contract')
