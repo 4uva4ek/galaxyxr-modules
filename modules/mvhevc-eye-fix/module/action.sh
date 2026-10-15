@@ -10,8 +10,9 @@
 #   status         report only
 # Gallery XR is restarted after a successful apply so it loads the patched
 # libraries, and stopped before an unbind so it releases its mappings.
-# Note: the manager vetoes any status line containing "ACTIVE", so the stock
-# and error lines must not contain that substring.
+# Universal report labels (docs/ACTION-REPORT.md): ENABLED while the patch is
+# applied, DISABLED for everything else, with the reason on the same line. The
+# GXR manager vetoes any status line containing "ACTIVE", so no line carries it.
 set -u
 MODDIR=${0%/*}
 LOG="$MODDIR/last-run.log"
@@ -51,10 +52,10 @@ apply_one() {
     src="$1"
     name="$2"
     pay="$MODDIR/bin/$name"
-    if [ ! -f "$pay" ]; then echo "$name payload missing; refuse"; return 1; fi
+    if [ ! -f "$pay" ]; then echo "DISABLED - Error: $name payload missing; refuse"; return 1; fi
     chown 0:0 "$pay" && chmod 0444 "$pay" && chcon u:object_r:system_lib_file:s0 "$pay" \
-        || { echo "$name cannot prepare payload"; return 1; }
-    mount -o bind "$pay" "$src" || { echo "$name bind mount failed"; return 1; }
+        || { echo "DISABLED - Error: $name cannot prepare payload"; return 1; }
+    mount -o bind "$pay" "$src" || { echo "DISABLED - Error: $name bind mount failed"; return 1; }
     log "$name bound (action)"
     return 0
 }
@@ -85,11 +86,11 @@ unbind_all() {
     fi
     rc=0
     if ! unbind_one "$SF" libstagefright.so; then
-        echo 'libstagefright.so is still bound over the stock library; reboot to finish.'
+        echo 'DISABLED - Error: libstagefright.so is still bound over the stock library; reboot to finish.'
         rc=1
     fi
     if ! unbind_one "$AP" libaplayer.so; then
-        echo 'libaplayer.so is still bound over the stock library; reboot to finish.'
+        echo 'DISABLED - Error: libaplayer.so is still bound over the stock library; reboot to finish.'
         rc=1
     fi
     if [ "$rc" = 0 ]; then log 'stock libraries restored (unbind)'; fi
@@ -97,16 +98,16 @@ unbind_all() {
 }
 
 apply_all() {
-    (cd "$MODDIR" && sha256sum -c SHA256SUMS >/dev/null 2>&1) || { echo 'module checksum mismatch; refuse'; return 1; }
+    (cd "$MODDIR" && sha256sum -c SHA256SUMS >/dev/null 2>&1) || { echo 'DISABLED - Error: module checksum mismatch; refuse'; return 1; }
     sf=$(check "$SF" libstagefright.so)
     ap=$(check "$AP" libaplayer.so)
     if [ "$sf" = stock ]; then
         s=$(sha256sum "$SF" | cut -d' ' -f1)
-        [ "$s" = "$SF_HASH" ] || { echo "REFUSED: unexpected libstagefright.so ($s)"; return 1; }
+        [ "$s" = "$SF_HASH" ] || { echo "DISABLED - Error: unexpected libstagefright.so ($s)"; return 1; }
     fi
     if [ "$ap" = stock ]; then
         s=$(sha256sum "$AP" | cut -d' ' -f1)
-        [ "$s" = "$AP_HASH" ] || { echo "REFUSED: unexpected libaplayer.so ($s)"; return 1; }
+        [ "$s" = "$AP_HASH" ] || { echo "DISABLED - Error: unexpected libaplayer.so ($s)"; return 1; }
     fi
     [ "$sf" = bound ] || apply_one "$SF" libstagefright.so || return 1
     [ "$ap" = bound ] || apply_one "$AP" libaplayer.so || return 1
@@ -118,12 +119,12 @@ report() {
     sf=$(check "$SF" libstagefright.so)
     ap=$(check "$AP" libaplayer.so)
     if [ "$sf" = bound ] && [ "$ap" = bound ]; then
-        echo "ACTIVE: patched libstagefright.so and libaplayer.so are bound"
+        echo "ENABLED - patched libstagefright.so and libaplayer.so are bound"
     elif [ "$sf" = stock ] && [ "$ap" = stock ] && ! bound_now "$SF" && ! bound_now "$AP"; then
-        echo "STOCK: no patched library bound; original libraries are in use"
+        echo "DISABLED - stock libraries in use; nothing from this module is applied"
         echo 'GXR_UPDATE_STATE=STOCK'
     else
-        echo "PARTIAL: libstagefright=$sf libaplayer=$ap"
+        echo "DISABLED - Error: partial state (libstagefright=$sf libaplayer=$ap); run action.sh off"
     fi
 }
 
@@ -136,7 +137,7 @@ off)
     if ! unbind_all; then
         exit 1
     fi
-    echo 'STOCK: original libraries restored. Restart Gallery XR to compare.'
+    echo 'DISABLED - stock libraries restored; restart Gallery XR to compare.'
     echo 'GXR_UPDATE_STATE=STOCK'
     ;;
 '')
@@ -147,7 +148,7 @@ off)
         if ! unbind_all; then
             exit 1
         fi
-        echo 'STOCK: original libraries restored. Restart Gallery XR to compare.'
+        echo 'DISABLED - stock libraries restored; restart Gallery XR to compare.'
         echo 'GXR_UPDATE_STATE=STOCK'
     else
         apply_all

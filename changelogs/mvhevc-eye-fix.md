@@ -14,10 +14,17 @@
 - The Action button on a disabled or removing module now restores the stock libraries
   instead of applying the patch; on an enabled module it still applies if needed and
   reports.
+- Reports use the repository's universal labels (`docs/ACTION-REPORT.md`): `ENABLED`
+  while the patch is applied, `DISABLED` with the reason otherwise, never the
+  substring `ACTIVE` (the GXR manager vetoes it).
+- `uninstall.sh` rewritten to the removal contract: KernelSU runs it in post-fs-data,
+  before Android services exist, and the bind mounts do not survive a boot — the
+  script has nothing to unmount and calls no Android service; the watcher covers a
+  removal while the headset keeps running.
 - Restore paths, in any case: watcher (seconds after untick or removal), `action.sh
   off` (verified), `uninstall.sh` (removal), reboot (always).
 - Packaged artifact `gxr-mvhevc-eye-fix-0.3.3-auto.zip`, sha256
-  `ac0a3010ce8e58e1315bd10d07bb21a0442ae96e1adebd27f18b706c00495ef1`; the
+  `c24c361cfdb00f364396c80411ba0ebfbbefa834924bba9eb088033e8bfaaa4a`; the
   `tests/verify_package.py` GXR-installer replay passes.
 
 ### 0.3.2

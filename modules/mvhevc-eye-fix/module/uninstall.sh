@@ -1,12 +1,8 @@
 #!/system/bin/sh
-# Galaxy XR MV-HEVC Eye Fix - KernelSU removal entry. Restores the stock
-# libraries immediately so removal leaves nothing patched behind, whether the
-# module was enabled or disabled before deletion. Runs as root; harmless when
-# nothing is bound.
-set -u
-MODDIR=${0%/*}
-[ "$(id -u)" = 0 ] || exit 0
-if ! /system/bin/sh "$MODDIR/action.sh" off >/dev/null 2>&1; then
-    echo 'ERROR: could not restore the stock libraries during removal; reboot to finish.'
-fi
+# KernelSU runs this in post-fs-data of the boot that removes the module, before
+# pm, settings, cmd or am exist. The bind mounts this module creates do not
+# survive a reboot, so the stock libraries are already in use by then and there is
+# nothing to unmount here. A removal while the headset keeps running is handled by
+# the watcher service.sh leaves behind, which unbinds within seconds of the remove
+# marker or the directory disappearing; nothing here needs Android services.
 exit 0

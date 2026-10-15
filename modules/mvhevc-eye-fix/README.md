@@ -63,8 +63,10 @@ manager's installed-lifecycle verification.
   directory it stops Gallery XR, unbinds both libraries with the same
   retry/lazy-detach/verify logic, logs the result and exits. Disabling therefore
   reverts within seconds, without a reboot.
-- `uninstall.sh` (KernelSU removal entry) unbinds both libraries on removal the same
-  way the watcher does; a reboot always restores the stock libraries regardless.
+- `uninstall.sh` (KernelSU removal entry) runs in post-fs-data, before Android
+  services exist: the bind mounts do not survive a boot, so it has nothing to
+  unmount and needs no Android service. Live removal is covered by the watcher; a
+  reboot always restores the stock libraries.
 - `auto.sh status|on|off` is the lifecycle entry required by the manager; it
   delegates to `action.sh`.
 - No boot image, partition or system file is modified. Nothing stays mounted while

@@ -7,14 +7,15 @@ Author: **AngelDark92**.
 ### 0.1.1
 
 - Module author field, README and changelog attribution changed to AngelDark92.
-- Removal cleans everything the module owns: after a verified restore,
-  `uninstall.sh` deletes the state directory, so no module state survives an
-  uninstall. A failed restore keeps the state directory for diagnosis.
-- Verified: no telemetry and no network use anywhere in the module; all state is
-  local, under `/data/adb/gxr-ota-control/`. No change to the block itself.
+- Removal cleanup is documented as shipped: KernelSU runs the removal restore from
+  a tmpfs copy only after the next boot completes, and that restore deletes the
+  state directory once the baseline is back; a failed restore keeps it for manual
+  recovery.
+- No telemetry and no network use anywhere in the module; all state is local,
+  under `/data/adb/gxr-ota-control/`. No change to the block itself.
 - Packaged artifact `gxr-ota-control-0.1.1-auto.zip`, sha256
-  `0c4cb00827458cf4098d6d038e27ab5a1d07e084b72efcf1d42b67258d1c4836`; the host
-  suite passes (12 scenarios).
+  `365500cbbc3a16574fb4a1e8465e4c42fa00a1c1a9c38dbcd4c3dbfc8f31a38e`; the host
+  suite passes (13 scenarios).
 
 ## 0.1.0 — 2026-10-13
 
