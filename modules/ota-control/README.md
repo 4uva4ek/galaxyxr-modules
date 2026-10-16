@@ -5,7 +5,7 @@ disabling `com.wssyncmldm` and `com.sec.android.soagent` for user 0 and setting
 `ota_disable_automatic_update` to 1. The same script restores all three to the
 values recorded in a baseline captured immediately before the first block.
 
-Author: **4uva4ek**. Status: **not yet validated on a headset.** Local host tests
+Author: **AngelDark92**. Status: **not yet validated on a headset.** Local host tests
 cover the script logic; the package is not published and has no live update feed.
 
 ## Difference from the other GXR modules
@@ -108,6 +108,9 @@ activated reports STOCK: nothing of ours is applied.
 
 - Packages install **disabled**; `disable` and `skip_mount` are part of the ZIP.
 - `customize.sh` refuses the generic installer path, as in the other modules.
+- No telemetry and no network use anywhere in the module: only the local Android
+  package and settings tools are called, and all state stays under
+  `/data/adb/gxr-ota-control/`.
 - Removal restores the baseline, but not inside `uninstall.sh` itself: KernelSU
   runs that script in post-fs-data of the next boot, before `pm` and `settings`
   exist. It copies `ota-ctl.sh` to the `/dev` tmpfs and starts one process of

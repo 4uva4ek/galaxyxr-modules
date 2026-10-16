@@ -1,10 +1,21 @@
 # OTA Control
 
-Author: **4uva4ek**.
+Author: **AngelDark92**.
 
 ## Unreleased
 
-No pending public changes.
+### 0.1.1
+
+- Module author field, README and changelog attribution changed to AngelDark92.
+- Removal cleanup is documented as shipped: KernelSU runs the removal restore from
+  a tmpfs copy only after the next boot completes, and that restore deletes the
+  state directory once the baseline is back; a failed restore keeps it for manual
+  recovery.
+- No telemetry and no network use anywhere in the module; all state is local,
+  under `/data/adb/gxr-ota-control/`. No change to the block itself.
+- Packaged artifact `gxr-ota-control-0.1.1-auto.zip`, sha256
+  `365500cbbc3a16574fb4a1e8465e4c42fa00a1c1a9c38dbcd4c3dbfc8f31a38e`; the host
+  suite passes (13 scenarios).
 
 ## 0.1.0 — 2026-10-13
 
