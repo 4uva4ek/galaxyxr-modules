@@ -1,30 +1,34 @@
 Patched platform libraries - Galaxy XR MV-HEVC Eye Fix (id gxr_mvhevc_eye_fix)
 
-File: bin/libstagefright.so (bound over /system/lib64/libstagefright.so)
+The patched libraries are generated on the device from the headset's own stock
+libraries and bind-mounted over them; they are never shipped in a package or a
+release. These records pin the exact edits and the verification hashes.
+
+Target: /system/lib64/libstagefright.so (patched copy generated on device)
 Source: /system/lib64/libstagefright.so from Galaxy XR (SM-I610), build I610UEU2AZF3.
         sha256 8db37c90c458e92faad1f0a6160d53e769da9759c6db14fb2cfedbcec1727490
-Patch:  one byte at file offset 0x1bbb20: cinc w23, w8, ne -> cinc w23, w8, eq
+Patch:  one byte at file offset 0x1bbb20 + 1: cinc w23, w8, ne -> cinc w23, w8, eq
         (flips the primary-eye computation of the MediaFormat converter:
         (B != A) ? 2 : 1  becomes  (B == A) ? 2 : 1).
 Patched sha256: 4e51540d13f50d94f6c8deabae1137158af826cff29c56cd30ce4963a9ef1973
 
-File: bin/libaplayer.so (bound over /system/lib64/libaplayer.so)
+Target: /system/lib64/libaplayer.so (patched copy generated on device)
 Source: /system/lib64/libaplayer.so from Galaxy XR (SM-I610), build I610UEU2AZF3.
         sha256 a1d055498e9bc9b09850748944f0605c7fd9052eec2050f027fa4724b449b047
 Patches:
-  1. one byte at file offset 0x233e18: cinc w23, w8, ne -> cinc w23, w8, eq
+  1. one byte at file offset 0x233e18 + 1: cinc w23, w8, ne -> cinc w23, w8, eq
      (libaplayer computes its own primary-eye value with the same inverted
      polarity; left-primary files then compute 1 instead of 2).
   2. four bytes at file offset 0xf568c: ldr w3, [sp, #0x24] -> mov w3, #1
      (APlayer::preparePlayback reports the value it read as SemMediaPlayer
-     onInfo(MEDIA_INFO_STEREO_PRIMARY_EYE = 10985, extra); this forces extra = 1
-     for the test build, independent of the upstream producer. Left-primary
-     content only.)
+     onInfo(MEDIA_INFO_STEREO_PRIMARY_EYE = 10985, extra); this forces extra = 1.
+     Left-primary content only.)
 Patched sha256: 017dc755311dfc9ff42d2501d4daa4c33ce92ec7d1d543c333a80c6f62d18ddd
 
 Verified: source hashes equal to the device files checked 2026-10-14 via
         adb shell sha256sum; every patch byte and disassembly verified with
-        capstone before and after.
+        capstone before and after; the generated results were re-verified
+        byte-for-byte against both patched hashes above.
 Effect: the app receives extra = 1 and keeps MULTIVIEW_LEFT_PRIMARY (stereo
         mode 4) instead of the inverted 2 that produced MULTIVIEW_RIGHT_PRIMARY
         (5) and swapped the eyes.

@@ -1,7 +1,8 @@
 #!/system/bin/sh
 # Galaxy XR MV-HEVC Eye Fix - control script. Runs as root; the KernelSU manager
 # executes it for the module Action button and for its replacement checks
-# (off, status); uninstall.sh and service.sh call it too.
+# (off, status); uninstall.sh and service.sh call it too. The patched libraries
+# are generated from the device's own stock libraries; no vendor binaries ship.
 #   (no argument)  manager Action / manual: apply if needed and report; on a disabled
 #                  or removing module, restore the stock libraries
 #   on             bind both patched libraries now
@@ -20,8 +21,49 @@ SF=/system/lib64/libstagefright.so
 AP=/system/lib64/libaplayer.so
 SF_HASH=8db37c90c458e92faad1f0a6160d53e769da9759c6db14fb2cfedbcec1727490
 AP_HASH=a1d055498e9bc9b09850748944f0605c7fd9052eec2050f027fa4724b449b047
+SF_PATCHED=4e51540d13f50d94f6c8deabae1137158af826cff29c56cd30ce4963a9ef1973
+AP_PATCHED=017dc755311dfc9ff42d2501d4daa4c33ce92ec7d1d543c333a80c6f62d18ddd
 
 log() { echo "$(date '+%Y-%m-%d %H:%M:%S') $*" >> "$LOG"; }
+
+# Builds $MODDIR/bin/$name from the stock library $1. The caller has verified the
+# stock hash, so the documented byte patches use fixed offsets (module/NOTICE.txt):
+# the primary-eye condition byte becomes 'cinc ..,eq' (0x15) in both libraries and
+# four bytes at 0xf568c become 'mov w3,#1' in libaplayer.so. The result must hash to
+# the pinned value $3, or nothing is kept.
+make_payload() {
+    src="$1"
+    name="$2"
+    want="$3"
+    pay="$MODDIR/bin/$name"
+    if [ -f "$pay" ] && [ "$(sha256sum "$pay" 2>/dev/null | cut -d' ' -f1)" = "$want" ]; then
+        return 0
+    fi
+    mkdir -p "$MODDIR/bin" 2>/dev/null || return 1
+    cp -f "$src" "$pay.gen" || return 1
+    case "$name" in
+    libstagefright.so)
+        # 0x1bbb20 + 1: cinc w23,w8,ne -> cinc w23,w8,eq
+        printf '\025' | dd of="$pay.gen" bs=1 seek=1817377 count=1 conv=notrunc 2>/dev/null || { rm -f "$pay.gen"; return 1; }
+        ;;
+    libaplayer.so)
+        # 0x233e18 + 1: cinc w23,w8,ne -> cinc w23,w8,eq
+        printf '\025' | dd of="$pay.gen" bs=1 seek=2309657 count=1 conv=notrunc 2>/dev/null || { rm -f "$pay.gen"; return 1; }
+        # 0xf568c: ldr w3,[sp,#0x24] -> mov w3,#1
+        printf '\043\000\200\122' | dd of="$pay.gen" bs=1 seek=1005196 count=4 conv=notrunc 2>/dev/null || { rm -f "$pay.gen"; return 1; }
+        ;;
+    *)
+        rm -f "$pay.gen"
+        return 1
+        ;;
+    esac
+    if [ "$(sha256sum "$pay.gen" 2>/dev/null | cut -d' ' -f1)" != "$want" ]; then
+        rm -f "$pay.gen"
+        return 1
+    fi
+    mv -f "$pay.gen" "$pay"
+    return 0
+}
 
 # Android tools are not BusyBox applets and BusyBox ash standalone mode does not
 # decide commands by PATH order, so `am` is resolved by absolute path first.
@@ -51,8 +93,12 @@ bound_now() { grep -qF " $1 " /proc/self/mountinfo; }
 apply_one() {
     src="$1"
     name="$2"
+    patched="$3"
     pay="$MODDIR/bin/$name"
-    if [ ! -f "$pay" ]; then echo "DISABLED - Error: $name payload missing; refuse"; return 1; fi
+    if ! make_payload "$src" "$name" "$patched"; then
+        echo "DISABLED - Error: $name payload generation failed or did not verify; refuse"
+        return 1
+    fi
     chown 0:0 "$pay" && chmod 0444 "$pay" && chcon u:object_r:system_lib_file:s0 "$pay" \
         || { echo "DISABLED - Error: $name cannot prepare payload"; return 1; }
     mount -o bind "$pay" "$src" || { echo "DISABLED - Error: $name bind mount failed"; return 1; }
@@ -109,8 +155,8 @@ apply_all() {
         s=$(sha256sum "$AP" | cut -d' ' -f1)
         [ "$s" = "$AP_HASH" ] || { echo "DISABLED - Error: unexpected libaplayer.so ($s)"; return 1; }
     fi
-    [ "$sf" = bound ] || apply_one "$SF" libstagefright.so || return 1
-    [ "$ap" = bound ] || apply_one "$AP" libaplayer.so || return 1
+    [ "$sf" = bound ] || apply_one "$SF" libstagefright.so "$SF_PATCHED" || return 1
+    [ "$ap" = bound ] || apply_one "$AP" libaplayer.so "$AP_PATCHED" || return 1
     stop_gallery
     return 0
 }

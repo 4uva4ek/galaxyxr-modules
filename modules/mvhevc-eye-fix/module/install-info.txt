@@ -1,13 +1,14 @@
-Galaxy XR MV-HEVC Eye Fix 0.3.3 (test build)
+Galaxy XR MV-HEVC Eye Fix 0.3.4
 Fixes the left/right eye inversion Samsung Gallery XR shows for MV-HEVC spatial
-videos. Three small patches in copies of libstagefright.so and libaplayer.so:
+videos. Three small patches to copies of libstagefright.so and libaplayer.so:
 the primary-eye computation is corrected (left-primary files then report 1, left,
 instead of the inverted 2, right), and the value SemMediaPlayer reports to the
-app (onInfo 10985, extra) is forced to 1 for this test build.
-Both patched libraries are bind-mounted over /system/lib64 by service.sh, guarded
-by exact stock-build hashes and module checksums. No boot image, partition or
-system file is modified. No telemetry and no network use; the only state written
-is the module's own last-run.log.
+app (onInfo 10985, extra) is forced to 1.
+The patched copies are generated on the device from the headset's own stock
+libraries, hash-checked before and after patching, and bind-mounted over
+/system/lib64 by service.sh. No vendor binaries ship in this package. No boot
+image, partition or system file is modified. No telemetry and no network use; the
+only state written is the module's own last-run.log.
 Ships disabled. Enable only after a clean install, then reboot.
 To test immediately without enabling or rebooting, press the module's Action
 button in the manager: it applies both mounts as root and restarts Gallery XR.
@@ -18,4 +19,4 @@ watcher reverts it within seconds), delete it, or reboot; Action on a disabled
 module reverts it too.
 Test: play an MV-HEVC video in Gallery immersive view
 (logcat line onStereoModeInfo mode: 1 instead of 2).
-Scope: left-primary MV-HEVC video, test build for the owner's headset only.
+Scope: left-primary MV-HEVC video.

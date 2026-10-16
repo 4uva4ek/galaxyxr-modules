@@ -1,25 +1,71 @@
 #!/system/bin/sh
 # Galaxy XR MV-HEVC Eye Fix - applied at the KernelSU service stage on every boot.
-# Bind-mounts the patched libstagefright.so and libaplayer.so over the stock
-# libraries only when this module is enabled. Fail-closed per library: refuses
-# a library if it is not the exact reviewed stock build or if module checksums
-# do not match.
+# Generates the patched libstagefright.so and libaplayer.so from the device's own
+# stock libraries and bind-mounts them over the stock paths, only when this module
+# is enabled. No vendor binaries ship in the package. Fail-closed per library:
+# refuses a library if it is not the exact reviewed stock build, if the generated
+# result does not hash to the pinned value, or if module checksums do not match.
 set -u
 MODDIR=${0%/*}
 LOG="$MODDIR/last-run.log"
 
 log() { echo "$(date '+%Y-%m-%d %H:%M:%S') $*" >> "$LOG"; }
 
+# Patched results are pinned in module/NOTICE.txt; generation is deterministic
+# because the exact stock build is verified before any byte is written.
+SF_PATCHED=4e51540d13f50d94f6c8deabae1137158af826cff29c56cd30ce4963a9ef1973
+AP_PATCHED=017dc755311dfc9ff42d2501d4daa4c33ce92ec7d1d543c333a80c6f62d18ddd
+
+# Builds $MODDIR/bin/$name from the stock library $1. The caller has verified the
+# stock hash, so the documented byte patches use fixed offsets (module/NOTICE.txt):
+# the primary-eye condition byte becomes 'cinc ..,eq' (0x15) in both libraries and
+# four bytes at 0xf568c become 'mov w3,#1' in libaplayer.so. The result must hash to
+# the pinned value $3, or nothing is kept.
+make_payload() {
+    src="$1"
+    name="$2"
+    want="$3"
+    pay="$MODDIR/bin/$name"
+    if [ -f "$pay" ] && [ "$(sha256sum "$pay" 2>/dev/null | cut -d' ' -f1)" = "$want" ]; then
+        return 0
+    fi
+    mkdir -p "$MODDIR/bin" 2>/dev/null || return 1
+    cp -f "$src" "$pay.gen" || return 1
+    case "$name" in
+    libstagefright.so)
+        # 0x1bbb20 + 1: cinc w23,w8,ne -> cinc w23,w8,eq
+        printf '\025' | dd of="$pay.gen" bs=1 seek=1817377 count=1 conv=notrunc 2>/dev/null || { rm -f "$pay.gen"; return 1; }
+        ;;
+    libaplayer.so)
+        # 0x233e18 + 1: cinc w23,w8,ne -> cinc w23,w8,eq
+        printf '\025' | dd of="$pay.gen" bs=1 seek=2309657 count=1 conv=notrunc 2>/dev/null || { rm -f "$pay.gen"; return 1; }
+        # 0xf568c: ldr w3,[sp,#0x24] -> mov w3,#1
+        printf '\043\000\200\122' | dd of="$pay.gen" bs=1 seek=1005196 count=4 conv=notrunc 2>/dev/null || { rm -f "$pay.gen"; return 1; }
+        ;;
+    *)
+        rm -f "$pay.gen"
+        return 1
+        ;;
+    esac
+    if [ "$(sha256sum "$pay.gen" 2>/dev/null | cut -d' ' -f1)" != "$want" ]; then
+        rm -f "$pay.gen"
+        return 1
+    fi
+    mv -f "$pay.gen" "$pay"
+    return 0
+}
+
 apply() {
     src="$1"
     name="$2"
     expect="$3"
+    patched="$4"
     pay="$MODDIR/bin/$name"
-    if [ ! -f "$pay" ]; then log "$name payload missing; refuse"; return 1; fi
     s=$(sha256sum "$src" 2>/dev/null | cut -d' ' -f1)
     p=$(sha256sum "$pay" 2>/dev/null | cut -d' ' -f1)
     if [ "$s" = "$p" ]; then log "$name already bound"; return 0; fi
     if [ "$s" != "$expect" ]; then log "$src stock mismatch ($s); refuse"; return 1; fi
+    if ! make_payload "$src" "$name" "$patched"; then log "$name payload generation failed or did not verify; refuse"; return 1; fi
     chown 0:0 "$pay" && chmod 0444 "$pay" && chcon u:object_r:system_lib_file:s0 "$pay" \
         || { log "$name cannot prepare payload"; return 1; }
     if mount -o bind "$pay" "$src"; then
@@ -80,7 +126,7 @@ fi
 (cd "$MODDIR" && sha256sum -c SHA256SUMS >/dev/null 2>&1) || { log 'module checksum mismatch; refuse'; exit 1; }
 
 rc=0
-apply /system/lib64/libstagefright.so libstagefright.so 8db37c90c458e92faad1f0a6160d53e769da9759c6db14fb2cfedbcec1727490 || rc=1
-apply /system/lib64/libaplayer.so libaplayer.so a1d055498e9bc9b09850748944f0605c7fd9052eec2050f027fa4724b449b047 || rc=1
+apply /system/lib64/libstagefright.so libstagefright.so 8db37c90c458e92faad1f0a6160d53e769da9759c6db14fb2cfedbcec1727490 "$SF_PATCHED" || rc=1
+apply /system/lib64/libaplayer.so libaplayer.so a1d055498e9bc9b09850748944f0605c7fd9052eec2050f027fa4724b449b047 "$AP_PATCHED" || rc=1
 start_watcher
 exit $rc

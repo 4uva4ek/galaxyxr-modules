@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+### 0.3.4
+
+- The patched libraries are generated on the device from the stock libraries at
+  first apply instead of shipping as packaged payloads. `service.sh` and `action.sh`
+  copy `/system/lib64/libstagefright.so` and `libaplayer.so`, apply the three
+  documented byte patches, verify the pinned patched hashes from `module/NOTICE.txt`
+  and only then bind-mount. No vendor binaries ship in the package or the repository;
+  the reviewed-stock hash check still precedes every apply, and a tampered generated
+  copy is regenerated and re-verified.
+- `build.py` now refuses to package `bin/` payloads (fail closed).
+- `tests/test_payload_patch.py` proves the generation offline against a synthetic
+  fixture and pins `make_payload()` in both scripts; `tests/verify_package.py`
+  rejects any packaged `bin/` payload.
+- Packaged artifact `gxr-mvhevc-eye-fix-0.3.4-auto.zip`, sha256 e0026359933b8948f3cc7187528164782c06cbcc094051f087d30a0f14a78da5.
+
 ### 0.3.3
 
 - Unticking the module now reverts by itself. KernelSU runs no script when a module
