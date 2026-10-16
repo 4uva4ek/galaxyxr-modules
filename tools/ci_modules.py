@@ -112,6 +112,9 @@ def build(names, ndk, inputs):
         elif name == 'ota-control':
             run(sys.executable, f'modules/{name}/build.py')
             run(sys.executable, f'modules/{name}/test_ota_ctl.py')
+        elif name == 'mvhevc-eye-fix':
+            run(sys.executable, f'modules/{name}/build.py')
+            run(sys.executable, f'modules/{name}/tests/verify_package.py')
         else:
             if name == 'controller-extrapolation':
                 run(sys.executable, 'modules/openxr-velocity-frame/prepare.py', '--ndk', ndk, '--runtime', runtime)

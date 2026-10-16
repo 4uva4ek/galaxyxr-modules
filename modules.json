@@ -49,6 +49,12 @@
       "name": "Galaxy XR OTA Control",
       "description": "Block Samsung firmware updates and restore the saved baseline. Changes persistent Android settings; installs disabled.",
       "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/ota-control.json"
+    },
+    {
+      "id": "gxr_mvhevc_eye_fix",
+      "name": "MV-HEVC Eye Fix",
+      "description": "Correct the left/right eye inversion Samsung Gallery XR shows for MV-HEVC spatial video. Patched libraries are generated on the device from the stock libraries.",
+      "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/mvhevc-eye-fix.json"
     }
   ]
 }
