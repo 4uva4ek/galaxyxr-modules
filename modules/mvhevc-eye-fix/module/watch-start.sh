@@ -15,6 +15,9 @@
 # reboot (the Manager's soft restart) resets sys.boot_completed to 0, sets
 # neither power property and sweeps module processes itself, so the checkbox is
 # left exactly as the user set it and the relaunched service stage re-applies.
+# Like the repository's autostart workers (Haptics MAIN), the watcher fails
+# closed: an unexpected non-zero exit disables the module and detaches both
+# mounts, so a dead watcher is never silently paired with a ticked checkbox.
 set -u
 MODDIR=${0%/*}
 
@@ -47,6 +50,19 @@ end_for_full_boot() {
     rm -f "$M/watcher.pid" 2>/dev/null
     exit 0
 }
+end_unexpected() {
+    code=$?
+    trap - EXIT
+    if [ "$code" != 0 ]; then
+        : > "$M/disable" 2>/dev/null
+        umount "$SF" 2>/dev/null || umount -l "$SF" 2>/dev/null
+        umount "$AP" 2>/dev/null || umount -l "$AP" 2>/dev/null
+        echo "$(date "+%Y-%m-%d %H:%M:%S") watcher: unexpected exit ($code); module disabled; enable and activate again to reapply" >> "$M/last-run.log" 2>/dev/null
+        rm -f "$M/watcher.pid" 2>/dev/null
+    fi
+    exit "$code"
+}
+trap end_unexpected EXIT
 trap "power_ending && end_for_full_boot; exit 0" HUP INT TERM
 while :; do
     if [ -f "$M/disable" ] || [ -f "$M/remove" ] || [ ! -d "$M" ]; then

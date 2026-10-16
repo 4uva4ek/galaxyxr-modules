@@ -18,6 +18,9 @@
     stage re-applies the patch and re-arms the watcher.
   - Rationale: with temporary root a cold boot leaves the patch off until a soft
     restart, so a ticked box after a cold boot was misleading.
+  - Fails closed like the repository's autostart workers (Haptics MAIN): an
+    unexpected non-zero watcher exit also writes the marker and detaches the
+    mounts, so a dead watcher is never silently paired with a ticked checkbox.
 - Packaged artifact `gxr-mvhevc-eye-fix-0.3.6-auto.zip`; the published asset hash
   is advanced by the pipeline in `updates/mvhevc-eye-fix.json`.
 
