@@ -16,6 +16,10 @@
   fixture and pins `make_payload()` in both scripts; `tests/verify_package.py`
   rejects any packaged `bin/` payload.
 - Packaged artifact `gxr-mvhevc-eye-fix-0.3.4-auto.zip`, sha256 e0026359933b8948f3cc7187528164782c06cbcc094051f087d30a0f14a78da5.
+- Re-checked on the owner's Galaxy XR (2026-10-16): the patched libraries were
+  generated on the device from the stock libraries, applied by the KernelSU service
+  stage, and Samsung Gallery XR shows left-primary MV-HEVC video with correct eyes
+  (owner confirmation of the physical effect).
 
 ### 0.3.3
 

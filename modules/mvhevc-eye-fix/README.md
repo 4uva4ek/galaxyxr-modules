@@ -9,8 +9,8 @@ binaries ship in the package.
 Author: **AngelDark92**. Status: **validated on the owner's Galaxy XR (2026-10-15)** — module
 enabled, both libraries applied by the KernelSU service stage, Samsung Gallery XR shows
 left-primary MV-HEVC spatial video with correct eyes (logcat `onStereoModeInfo mode: 1`,
-stereo mode 4). 0.3.4 generates the payloads on the device; the re-check of that build
-precedes publication.
+stereo mode 4). 0.3.4 generates the payloads on the device; that build was re-checked
+on the owner's Galaxy XR (2026-10-16).
 
 ## What it changes
 
