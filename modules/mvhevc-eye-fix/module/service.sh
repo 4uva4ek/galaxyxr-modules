@@ -30,28 +30,30 @@ make_payload() {
         return 0
     fi
     mkdir -p "$MODDIR/bin" 2>/dev/null || return 1
-    cp -f "$src" "$pay.gen" || return 1
+    tmp="$pay.gen.$$"
+    rm -f "$MODDIR/bin/$name.gen."* 2>/dev/null
+    cp -f "$src" "$tmp" || { rm -f "$tmp"; return 1; }
     case "$name" in
     libstagefright.so)
         # 0x1bbb20 + 1: cinc w23,w8,ne -> cinc w23,w8,eq
-        printf '\025' | dd of="$pay.gen" bs=1 seek=1817377 count=1 conv=notrunc 2>/dev/null || { rm -f "$pay.gen"; return 1; }
+        printf '\025' | dd of="$tmp" bs=1 seek=1817377 count=1 conv=notrunc 2>/dev/null || { rm -f "$tmp"; return 1; }
         ;;
     libaplayer.so)
         # 0x233e18 + 1: cinc w23,w8,ne -> cinc w23,w8,eq
-        printf '\025' | dd of="$pay.gen" bs=1 seek=2309657 count=1 conv=notrunc 2>/dev/null || { rm -f "$pay.gen"; return 1; }
+        printf '\025' | dd of="$tmp" bs=1 seek=2309657 count=1 conv=notrunc 2>/dev/null || { rm -f "$tmp"; return 1; }
         # 0xf568c: ldr w3,[sp,#0x24] -> mov w3,#1
-        printf '\043\000\200\122' | dd of="$pay.gen" bs=1 seek=1005196 count=4 conv=notrunc 2>/dev/null || { rm -f "$pay.gen"; return 1; }
+        printf '\043\000\200\122' | dd of="$tmp" bs=1 seek=1005196 count=4 conv=notrunc 2>/dev/null || { rm -f "$tmp"; return 1; }
         ;;
     *)
-        rm -f "$pay.gen"
+        rm -f "$tmp"
         return 1
         ;;
     esac
-    if [ "$(sha256sum "$pay.gen" 2>/dev/null | cut -d' ' -f1)" != "$want" ]; then
-        rm -f "$pay.gen"
+    if [ "$(sha256sum "$tmp" 2>/dev/null | cut -d' ' -f1)" != "$want" ]; then
+        rm -f "$tmp"
         return 1
     fi
-    mv -f "$pay.gen" "$pay"
+    mv -f "$tmp" "$pay" || { rm -f "$tmp"; return 1; }
     return 0
 }
 
@@ -62,55 +64,22 @@ apply() {
     patched="$4"
     pay="$MODDIR/bin/$name"
     s=$(sha256sum "$src" 2>/dev/null | cut -d' ' -f1)
-    p=$(sha256sum "$pay" 2>/dev/null | cut -d' ' -f1)
-    if [ "$s" = "$p" ]; then log "$name already bound"; return 0; fi
-    if [ "$s" != "$expect" ]; then log "$src stock mismatch ($s); refuse"; return 1; fi
+    if [ "$s" = "$patched" ]; then log "$name already bound"; return 0; fi
+    if [ -z "$s" ] || [ "$s" != "$expect" ]; then log "$src stock mismatch ($s); refuse"; return 1; fi
     if ! make_payload "$src" "$name" "$patched"; then log "$name payload generation failed or did not verify; refuse"; return 1; fi
     chown 0:0 "$pay" && chmod 0444 "$pay" && chcon u:object_r:system_lib_file:s0 "$pay" \
         || { log "$name cannot prepare payload"; return 1; }
     if mount -o bind "$pay" "$src"; then
-        log "$name bound over $src"
-        return 0
+        if [ "$(sha256sum "$src" 2>/dev/null | cut -d' ' -f1)" = "$patched" ]; then
+            log "$name bound over $src"
+            return 0
+        fi
+        umount "$src" 2>/dev/null || umount -l "$src" 2>/dev/null
+        log "$name mounted copy failed verification; unmounted; refuse"
+        return 1
     fi
     log "$name bind mount failed"
     return 1
-}
-
-# Restores the stock libraries when the module is turned off or removed while the
-# headset runs. KernelSU runs no script on untick, so this detached watcher is the
-# only path that can revert without a reboot. The loop lives in argv (sh -c), so it
-# keeps working after the module directory is deleted under it.
-start_watcher() {
-    if [ -f "$MODDIR/watcher.pid" ] && [ -r "/proc/$(cat "$MODDIR/watcher.pid" 2>/dev/null)/cmdline" ]; then
-        if tr '\0' ' ' < "/proc/$(cat "$MODDIR/watcher.pid")/cmdline" 2>/dev/null | grep -q gxr-watch; then
-            return 0
-        fi
-    fi
-    nohup /system/bin/sh -c '
-M="$1"; SF=/system/lib64/libstagefright.so; AP=/system/lib64/libaplayer.so
-echo $$ > "$M/watcher.pid" 2>/dev/null
-while :; do
-    if [ -f "$M/disable" ] || [ -f "$M/remove" ] || [ ! -d "$M" ]; then
-        /system/bin/am force-stop com.samsung.android.galleryxr 2>/dev/null
-        ok=0
-        n=0
-        while [ "$n" -lt 3 ]; do
-            umount "$SF" 2>/dev/null || umount -l "$SF" 2>/dev/null
-            umount "$AP" 2>/dev/null || umount -l "$AP" 2>/dev/null
-            ok=1
-            [ "$(sha256sum "$SF" 2>/dev/null | cut -d" " -f1)" = 8db37c90c458e92faad1f0a6160d53e769da9759c6db14fb2cfedbcec1727490 ] || ok=0
-            [ "$(sha256sum "$AP" 2>/dev/null | cut -d" " -f1)" = a1d055498e9bc9b09850748944f0605c7fd9052eec2050f027fa4724b449b047 ] || ok=0
-            [ "$ok" = 1 ] && break
-            n=$((n + 1))
-            sleep 1
-        done
-        echo "$(date "+%Y-%m-%d %H:%M:%S") watcher: module off or removed; stock libraries restored (ok=$ok)" >> "$M/last-run.log" 2>/dev/null
-        exit 0
-    fi
-    sleep 3
-done
-' gxr-watch "$MODDIR" >/dev/null 2>&1 &
-    log 'watcher started'
 }
 
 # KernelSU does not dispatch this stage for a disabled module, but the manager's
@@ -128,5 +97,7 @@ fi
 rc=0
 apply /system/lib64/libstagefright.so libstagefright.so 8db37c90c458e92faad1f0a6160d53e769da9759c6db14fb2cfedbcec1727490 "$SF_PATCHED" || rc=1
 apply /system/lib64/libaplayer.so libaplayer.so a1d055498e9bc9b09850748944f0605c7fd9052eec2050f027fa4724b449b047 "$AP_PATCHED" || rc=1
-start_watcher
+# Arms the detached revert watcher (module/watch-start.sh). KernelSU runs no
+# script on untick, so the watcher is the only revert path without a reboot.
+/system/bin/sh "$MODDIR/watch-start.sh" >/dev/null 2>&1
 exit $rc
