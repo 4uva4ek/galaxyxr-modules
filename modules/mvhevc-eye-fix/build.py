@@ -24,7 +24,7 @@ for path in sorted((HERE / 'module').rglob('*')):
     if path.suffix.lower() in TEXT_SUFFIXES and b'\r' in data:
         raise ValueError(f'{path}: source must use LF line endings')
     payload[path.relative_to(HERE / 'module').as_posix()] = data
-for required in ('module.prop', 'customize.sh', 'service.sh', 'action.sh', 'auto.sh', 'uninstall.sh', 'skip_mount', 'install-info.txt'):
+for required in ('module.prop', 'customize.sh', 'service.sh', 'action.sh', 'auto.sh', 'uninstall.sh', 'watch-start.sh', 'skip_mount', 'install-info.txt'):
     if required not in payload:
         raise ValueError(f'missing {required}')
 packaged_binaries = sorted(n for n in payload if n.startswith('bin/'))

@@ -2,6 +2,62 @@
 
 ## Unreleased
 
+### 0.3.6
+
+- The module now disables itself on a full shutdown/reboot, so the next boot
+  honestly shows it OFF until it is enabled and activated again; a soft restart
+  keeps the checkbox exactly as the user set it.
+  - The watcher now also watches the power state: when a real shutdown/reboot
+    begins (`sys.powerctl` or `sys.shutdown.requested` set while
+    `sys.boot_completed` is still 1 — the Manager power menu, button shutdowns and
+    adb reboots all set this) it writes the `disable` marker, lazily detaches both
+    mounts and exits; a HUP/INT/TERM trap runs the same check.
+  - KernelSU's emulated soft reboot (the manager's soft restart) resets
+    `sys.boot_completed` to 0 first, sets neither power property and sweeps module
+    processes itself, so the check never fires for it; the relaunched service
+    stage re-applies the patch and re-arms the watcher.
+  - Rationale: with temporary root a cold boot leaves the patch off until a soft
+    restart, so a ticked box after a cold boot was misleading.
+  - Fails closed like the repository's autostart workers (Haptics MAIN): an
+    unexpected non-zero watcher exit also writes the marker and detaches the
+    mounts, so a dead watcher is never silently paired with a ticked checkbox.
+- Packaged artifact `gxr-mvhevc-eye-fix-0.3.6-auto.zip`; the published asset hash
+  is advanced by the pipeline in `updates/mvhevc-eye-fix.json`.
+
+### 0.3.5
+
+- Cleanup fixes for the disable and delete paths:
+  - Every apply path arms the revert watcher: `service.sh` (boot and soft restart)
+    and both applying paths of `action.sh` (manager Action, `on`) start it through
+    `watch-start.sh`, a single launcher that keeps one instance, and they arm it
+    even after a partial apply. Previously only the service stage started it, so a
+    patch applied through the Action button without a boot or soft restart stayed
+    mounted after an untick or a delete until a reboot.
+  - Bound detection is pinned: `check`/`apply` compare the live library against the
+    pinned patched hash instead of the local payload copy, and every bind is
+    re-hashed after mounting (a mismatch unmounts and refuses). A payload whose
+    bytes are not the reviewed patched build can no longer be reported as applied
+    while the device serves stock.
+  - `make_payload` generates into a unique `*.gen.<pid>` temporary, sweeps stale
+    temporaries and treats a failed rename as a failure (previously unchecked), so
+    concurrent generations cannot corrupt a verified copy; only a verified result
+    is renamed into place.
+  - The watcher retries a busy unmount up to 10 times, logs an explicit failure line
+    instead of claiming restoration when it could not verify it, and removes its
+    `watcher.pid` on exit.
+- Documentation corrected to match: install-info test/restore steps, the state-file
+  list (`last-run.log`, `watcher.pid`, generated copies under `bin/`), the
+  reboot-as-restore wording in `README.md` and `module.prop`, and the 0.3.4 artifact
+  line below (the published CI-built asset, not the author-machine build).
+- Documented where a re-apply actually happens after a reboot: on KernelSU
+  temporary-root setups (the Galaxy XR flow) the service stage runs only after root
+  acquisition and the manager's soft restart, so a plain cold boot leaves the patch
+  off even with the module ticked; the README, install-info and module.prop wording
+  now says so instead of implying every reboot re-applies.
+- Packaged artifact `gxr-mvhevc-eye-fix-0.3.5-auto.zip`; local and CI ZIP bytes
+  differ, so the published asset hash is recorded by the pipeline in
+  `updates/mvhevc-eye-fix.json`.
+
 ### 0.3.4
 
 - The patched libraries are generated on the device from the stock libraries at
@@ -15,7 +71,7 @@
 - `tests/test_payload_patch.py` proves the generation offline against a synthetic
   fixture and pins `make_payload()` in both scripts; `tests/verify_package.py`
   rejects any packaged `bin/` payload.
-- Packaged artifact `gxr-mvhevc-eye-fix-0.3.4-auto.zip`, sha256 e0026359933b8948f3cc7187528164782c06cbcc094051f087d30a0f14a78da5.
+- Published artifact `gxr-mvhevc-eye-fix-0.3.4-auto.zip` (built by the release pipeline; the author-machine build hashes differently), sha256 b11e193455eafeb36992f45af9e7e254dacc0482c09a405d5b5ba06e17dd8bcf, recorded in `updates/mvhevc-eye-fix.json`.
 - Re-checked on the owner's Galaxy XR (2026-10-16): the patched libraries were
   generated on the device from the stock libraries, applied by the KernelSU service
   stage, and Samsung Gallery XR shows left-primary MV-HEVC video with correct eyes

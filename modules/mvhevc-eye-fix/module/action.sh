@@ -40,28 +40,30 @@ make_payload() {
         return 0
     fi
     mkdir -p "$MODDIR/bin" 2>/dev/null || return 1
-    cp -f "$src" "$pay.gen" || return 1
+    tmp="$pay.gen.$$"
+    rm -f "$MODDIR/bin/$name.gen."* 2>/dev/null
+    cp -f "$src" "$tmp" || { rm -f "$tmp"; return 1; }
     case "$name" in
     libstagefright.so)
         # 0x1bbb20 + 1: cinc w23,w8,ne -> cinc w23,w8,eq
-        printf '\025' | dd of="$pay.gen" bs=1 seek=1817377 count=1 conv=notrunc 2>/dev/null || { rm -f "$pay.gen"; return 1; }
+        printf '\025' | dd of="$tmp" bs=1 seek=1817377 count=1 conv=notrunc 2>/dev/null || { rm -f "$tmp"; return 1; }
         ;;
     libaplayer.so)
         # 0x233e18 + 1: cinc w23,w8,ne -> cinc w23,w8,eq
-        printf '\025' | dd of="$pay.gen" bs=1 seek=2309657 count=1 conv=notrunc 2>/dev/null || { rm -f "$pay.gen"; return 1; }
+        printf '\025' | dd of="$tmp" bs=1 seek=2309657 count=1 conv=notrunc 2>/dev/null || { rm -f "$tmp"; return 1; }
         # 0xf568c: ldr w3,[sp,#0x24] -> mov w3,#1
-        printf '\043\000\200\122' | dd of="$pay.gen" bs=1 seek=1005196 count=4 conv=notrunc 2>/dev/null || { rm -f "$pay.gen"; return 1; }
+        printf '\043\000\200\122' | dd of="$tmp" bs=1 seek=1005196 count=4 conv=notrunc 2>/dev/null || { rm -f "$tmp"; return 1; }
         ;;
     *)
-        rm -f "$pay.gen"
+        rm -f "$tmp"
         return 1
         ;;
     esac
-    if [ "$(sha256sum "$pay.gen" 2>/dev/null | cut -d' ' -f1)" != "$want" ]; then
-        rm -f "$pay.gen"
+    if [ "$(sha256sum "$tmp" 2>/dev/null | cut -d' ' -f1)" != "$want" ]; then
+        rm -f "$tmp"
         return 1
     fi
-    mv -f "$pay.gen" "$pay"
+    mv -f "$tmp" "$pay" || { rm -f "$tmp"; return 1; }
     return 0
 }
 
@@ -77,15 +79,15 @@ stop_gallery() {
     fi
 }
 
-# bound when the path serves our payload; stock in every other case, including a
-# missing payload (nothing can be served then). The mount table is consulted as
-# well, so a busy mount can never be mistaken for a restored library.
+# bound when the path serves the pinned patched build; stock in every other case,
+# including a missing or unverified payload (nothing reviewed can be served then).
+# The mount table is consulted as well, so a busy mount can never be mistaken for
+# a restored library.
 check() {
     src="$1"
-    name="$2"
+    patched="$2"
     s=$(sha256sum "$src" 2>/dev/null | cut -d' ' -f1)
-    p=$(sha256sum "$MODDIR/bin/$name" 2>/dev/null | cut -d' ' -f1)
-    if [ -n "$s" ] && [ "$s" = "$p" ]; then echo bound; else echo stock; fi
+    if [ -n "$s" ] && [ "$s" = "$patched" ]; then echo bound; else echo stock; fi
 }
 
 bound_now() { grep -qF " $1 " /proc/self/mountinfo; }
@@ -101,9 +103,17 @@ apply_one() {
     fi
     chown 0:0 "$pay" && chmod 0444 "$pay" && chcon u:object_r:system_lib_file:s0 "$pay" \
         || { echo "DISABLED - Error: $name cannot prepare payload"; return 1; }
-    mount -o bind "$pay" "$src" || { echo "DISABLED - Error: $name bind mount failed"; return 1; }
-    log "$name bound (action)"
-    return 0
+    if mount -o bind "$pay" "$src"; then
+        if [ "$(sha256sum "$src" 2>/dev/null | cut -d' ' -f1)" = "$patched" ]; then
+            log "$name bound (action)"
+            return 0
+        fi
+        umount "$src" 2>/dev/null || umount -l "$src" 2>/dev/null
+        echo "DISABLED - Error: $name mounted copy failed verification; unmounted"
+        return 1
+    fi
+    echo "DISABLED - Error: $name bind mount failed"
+    return 1
 }
 
 # Unbind one library. A busy mount is retried, then detached lazily; success
@@ -111,31 +121,31 @@ apply_one() {
 # stock file.
 unbind_one() {
     src="$1"
-    name="$2"
+    patched="$2"
     tries=0
     while [ "$tries" -lt 3 ]; do
-        if [ "$(check "$src" "$name")" != bound ] && ! bound_now "$src"; then
+        if [ "$(check "$src" "$patched")" != bound ] && ! bound_now "$src"; then
             return 0
         fi
         umount "$src" 2>/dev/null || umount -l "$src" 2>/dev/null || sleep 1
         tries=$((tries + 1))
     done
     if bound_now "$src"; then return 1; fi
-    [ "$(check "$src" "$name")" = stock ]
+    [ "$(check "$src" "$patched")" = stock ]
 }
 
 unbind_all() {
-    sf=$(check "$SF" libstagefright.so)
-    ap=$(check "$AP" libaplayer.so)
+    sf=$(check "$SF" "$SF_PATCHED")
+    ap=$(check "$AP" "$AP_PATCHED")
     if [ "$sf" = bound ] || [ "$ap" = bound ] || bound_now "$SF" || bound_now "$AP"; then
         stop_gallery
     fi
     rc=0
-    if ! unbind_one "$SF" libstagefright.so; then
+    if ! unbind_one "$SF" "$SF_PATCHED"; then
         echo 'DISABLED - Error: libstagefright.so is still bound over the stock library; reboot to finish.'
         rc=1
     fi
-    if ! unbind_one "$AP" libaplayer.so; then
+    if ! unbind_one "$AP" "$AP_PATCHED"; then
         echo 'DISABLED - Error: libaplayer.so is still bound over the stock library; reboot to finish.'
         rc=1
     fi
@@ -145,8 +155,8 @@ unbind_all() {
 
 apply_all() {
     (cd "$MODDIR" && sha256sum -c SHA256SUMS >/dev/null 2>&1) || { echo 'DISABLED - Error: module checksum mismatch; refuse'; return 1; }
-    sf=$(check "$SF" libstagefright.so)
-    ap=$(check "$AP" libaplayer.so)
+    sf=$(check "$SF" "$SF_PATCHED")
+    ap=$(check "$AP" "$AP_PATCHED")
     if [ "$sf" = stock ]; then
         s=$(sha256sum "$SF" | cut -d' ' -f1)
         [ "$s" = "$SF_HASH" ] || { echo "DISABLED - Error: unexpected libstagefright.so ($s)"; return 1; }
@@ -162,8 +172,8 @@ apply_all() {
 }
 
 report() {
-    sf=$(check "$SF" libstagefright.so)
-    ap=$(check "$AP" libaplayer.so)
+    sf=$(check "$SF" "$SF_PATCHED")
+    ap=$(check "$AP" "$AP_PATCHED")
     if [ "$sf" = bound ] && [ "$ap" = bound ]; then
         echo "ENABLED - patched libstagefright.so and libaplayer.so are bound"
     elif [ "$sf" = stock ] && [ "$ap" = stock ] && ! bound_now "$SF" && ! bound_now "$AP"; then
@@ -177,7 +187,12 @@ report() {
 case "${1:-}" in
 status) report ;;
 on)
-    apply_all && report
+    # Arm the revert watcher on every apply, including a partial one: KernelSU
+    # runs no script on untick, so the watcher is the only revert path without a
+    # reboot; it must exist wherever a mount can exist.
+    if apply_all; then rc=0; else rc=1; fi
+    /system/bin/sh "$MODDIR/watch-start.sh" >/dev/null 2>&1
+    [ "$rc" = 0 ] && report
     ;;
 off)
     if ! unbind_all; then
@@ -198,6 +213,8 @@ off)
         echo 'GXR_UPDATE_STATE=STOCK'
     else
         apply_all
+        # Same arming as the explicit on command above.
+        /system/bin/sh "$MODDIR/watch-start.sh" >/dev/null 2>&1
         report
     fi
     ;;
