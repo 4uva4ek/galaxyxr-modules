@@ -10,7 +10,9 @@ libraries, hash-checked before and after patching, and bind-mounted over
 image, partition or system file is modified. No telemetry and no network use; the
 only files written stay inside the module directory (last-run.log, watcher.pid,
 generated copies under bin/).
-Ships disabled. Enable only after a clean install, then reboot.
+Ships disabled. Enable only after a clean install; the patch applies at the
+KernelSU service stage (after a reboot, or after root + a soft restart on
+temporary-root setups).
 To test immediately, enable the module in the manager and press its Action button:
 it applies both mounts as root and stops Gallery XR so the next launch loads the
 new libraries.
@@ -19,7 +21,8 @@ Control (root shell):
 Restore: action.sh off (verified against the stock hashes), untick the module (the
 watcher reverts it within seconds), delete it, or disable it and reboot; Action on
 a disabled module reverts it too, and a reboot while the module stays ticked
-re-applies the patch.
+re-applies the patch when the KernelSU service stage runs (after root and a soft
+restart on temporary-root setups).
 Test: play an MV-HEVC video in Gallery immersive view
 (logcat line onStereoModeInfo mode: 1 instead of 2).
 Scope: left-primary MV-HEVC video.

@@ -77,7 +77,8 @@ manager's installed-lifecycle verification.
   services exist: the bind mounts do not survive a boot, so it has nothing to
   unmount and needs no Android service. Live removal is covered by the watcher; a
   reboot with the module disabled or removed restores the stock libraries (while it
-  stays ticked the service stage re-applies at every boot).
+  stays ticked the service stage re-applies when it next runs — on temporary-root
+  setups, after root acquisition and the manager's soft restart).
 - `auto.sh status|on|off` is the lifecycle entry required by the manager; it
   delegates to `action.sh`.
 - No boot image, partition or system file is modified. Nothing stays mounted while
@@ -88,8 +89,9 @@ manager's installed-lifecycle verification.
 ## Install
 
 Manager (GXR installer ≥ gxr-v1.0.6): install `gxr-mvhevc-eye-fix-0.3.5-auto.zip` from
-`/sdcard/Download/`; it arrives disabled. Enable only after a clean install, then
-reboot (service stage).
+`/sdcard/Download/`; it arrives disabled. Enable after a clean install, then bring up
+the KernelSU service stage: reboot on persistent-root setups; on the temporary-root
+flow, after root acquisition and the manager's soft restart.
 
 Direct deployment (root shell) if the Manager refuses the package:
 
@@ -113,8 +115,9 @@ logcat `onStereoModeInfo mode: 1` (previously `2`) and surface stereo mode 4
 
 `sh action.sh off` (live; verified against the stock hashes), untick the module (the
 watcher reverts within seconds), or delete it. A reboot clears everything with the
-module disabled or removed; while it stays ticked the service stage re-applies at
-boot. Abort at boot: KernelSU safe mode (hold Volume-Down), then remove the module.
+module disabled or removed; while it stays ticked the service stage re-applies when
+it next runs (on temporary-root setups, after root acquisition and a soft restart).
+Abort at boot: KernelSU safe mode (hold Volume-Down), then remove the module.
 No Knox state, no partition writes.
 
 ## Build / host checks

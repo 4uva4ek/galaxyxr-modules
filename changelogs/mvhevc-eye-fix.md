@@ -27,6 +27,11 @@
   list (`last-run.log`, `watcher.pid`, generated copies under `bin/`), the
   reboot-as-restore wording in `README.md` and `module.prop`, and the 0.3.4 artifact
   line below (the published CI-built asset, not the author-machine build).
+- Documented where a re-apply actually happens after a reboot: on KernelSU
+  temporary-root setups (the Galaxy XR flow) the service stage runs only after root
+  acquisition and the manager's soft restart, so a plain cold boot leaves the patch
+  off even with the module ticked; the README, install-info and module.prop wording
+  now says so instead of implying every reboot re-applies.
 - Packaged artifact `gxr-mvhevc-eye-fix-0.3.5-auto.zip`; local and CI ZIP bytes
   differ, so the published asset hash is recorded by the pipeline in
   `updates/mvhevc-eye-fix.json`.
