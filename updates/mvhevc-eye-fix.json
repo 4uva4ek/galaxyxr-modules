@@ -1,7 +1,7 @@
 {
-  "version": "0.3.4",
-  "versionCode": 9,
-  "zipUrl": "https://github.com/4uva4ek/galaxyxr-modules/releases/download/mvhevc-eye-fix/v0.3.4/gxr-mvhevc-eye-fix-0.3.4-auto.zip",
+  "version": "0.3.6",
+  "versionCode": 11,
+  "zipUrl": "https://github.com/4uva4ek/galaxyxr-modules/releases/download/mvhevc-eye-fix/v0.3.6/gxr-mvhevc-eye-fix-0.3.6-auto.zip",
   "changelog": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/changelogs/mvhevc-eye-fix.md",
-  "sha256": "b11e193455eafeb36992f45af9e7e254dacc0482c09a405d5b5ba06e17dd8bcf"
+  "sha256": "a03026fa98257b08e1e4d9b2a21685f9e265e437490c1818f4de079a7d0c5d97"
 }
