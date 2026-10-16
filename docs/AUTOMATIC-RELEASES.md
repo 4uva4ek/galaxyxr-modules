@@ -31,7 +31,9 @@ requires explicit distribution authorization and lifecycle/installer review.
 3. Upload only disabled automatic ZIPs, SHA-256 sidecars and the build manifest.
 4. A separate job with repository write permission creates version tags and
    draft releases, verifies uploaded bytes, then publishes them. Existing tags
-   and assets cannot be overwritten; a conflicting version fails closed.
+   and assets cannot be overwritten; a conflicting version fails closed. A
+   freshly created draft can be absent from the release listings for a few
+   seconds; the job retries the lookup instead of failing the run.
 5. Advance the update feeds after verifying the published archives. Feed jobs
    are serialized; a concurrent source push is rebased without force-pushing.
 

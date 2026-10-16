@@ -10,6 +10,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import time
 import zipfile
 
 from update_feed import MODULES, ROOT, REPO, validate, promote
@@ -20,6 +21,10 @@ INPUTS = {
     'runtime': ('GXR_RUNTIME_', 27, 'libopenxr_android.so', 'a7dabaa1030cc7979efe987f212488c61b61e8afb9aa3add59f7ae4fbeff4c92'),
     'scene': ('GXR_SCENE_', 24, 'libvrlink_scene.so', 'a1f1907ee91dc30dcdb4e3924cf3cff6e78302131fa835d9eb40f3fd4946ebde'),
 }
+# A freshly created draft release can be missing from the release listings
+# for a few seconds; publication retries the lookup instead of failing the run.
+RELEASE_LOOKUP_ATTEMPTS = 6
+RELEASE_LOOKUP_DELAY_SECONDS = 10
 
 
 def run(*args, capture=False, check=True):
@@ -167,6 +172,16 @@ def release_info(tag):
     raise RuntimeError('Cannot query release; refusing to assume it is absent')
 
 
+def visible_release(tag):
+    for attempt in range(RELEASE_LOOKUP_ATTEMPTS):
+        release=release_info(tag)
+        if release is not None:
+            return release
+        if attempt+1<RELEASE_LOOKUP_ATTEMPTS:
+            time.sleep(RELEASE_LOOKUP_DELAY_SECONDS)
+    return None
+
+
 def verify_download(item):
     archive = ROOT/item['archive']
     with tempfile.TemporaryDirectory() as temp:
@@ -209,7 +224,7 @@ def publish(manifest_path):
                 f'\nBuilt from `{commit}` using Android NDK {NDK_VERSION}. CI verifies software/package checks; it is not a physical headset test.\n'+
                 f'\nZIP SHA-256: `{item["sha256"]}`\n')
             run('gh','release','create',item['tag'],'--repo',REPO,'--verify-tag','--draft','--title',name+' '+item['version'],'--notes-file',notes)
-            existing=release_info(item['tag'])
+            existing=visible_release(item['tag'])
             if existing is None:
                 raise RuntimeError('Created release is not visible; retry publication later')
         if existing['draft']:

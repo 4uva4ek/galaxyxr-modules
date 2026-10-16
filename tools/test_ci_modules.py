@@ -88,7 +88,7 @@ class ReleaseLookup(unittest.TestCase):
 
 
 class Publication(unittest.TestCase):
-    def exercise(self, existing=None, tag_commit=None, verify_error=False):
+    def exercise(self, existing=None, tag_commit=None, verify_error=False, lookup=None):
         calls=[]
         commit='a'*40
         item={'version':'1.2.4','versionCode':11,'tag':'one/v1.2.4',
@@ -107,7 +107,7 @@ class Publication(unittest.TestCase):
                 return SimpleNamespace(returncode=0)
 
             result=SimpleNamespace(returncode=0 if tag_commit else 1,stdout=(tag_commit or '')+'\n')
-            responses=[existing] if existing else [None,{'draft':True,'assets':[]}]
+            responses=lookup if lookup is not None else ([existing] if existing else [None,{'draft':True,'assets':[]}])
             with patch.object(ci,'ROOT',root),patch.object(ci,'MODULES',{'one':'gxr_one'}), \
                  patch.dict(os.environ,{'GITHUB_SHA':commit}),patch.object(ci,'run',side_effect=fake_run), \
                  patch.object(ci.subprocess,'run',return_value=result), \
@@ -116,7 +116,7 @@ class Publication(unittest.TestCase):
                  patch.object(ci,'promote') as promote:
                 error=None
                 try: ci.publish(manifest)
-                except ValueError as e:error=str(e)
+                except (ValueError,RuntimeError) as e:error=str(e)
                 return calls,promote.called,error
 
     def test_new_draft_verified_before_publication_and_feed(self):
@@ -139,6 +139,21 @@ class Publication(unittest.TestCase):
                 calls,promoted,error=self.exercise(**kwargs)
                 self.assertIsNotNone(error);self.assertFalse(promoted)
                 self.assertFalse(any(c[:3]==('gh','release','edit') for c in calls))
+
+    def test_created_release_becomes_visible_after_retry(self):
+        with patch.object(ci.time,'sleep') as sleep:
+            calls,promoted,error=self.exercise(lookup=[None,None,{'draft':True,'assets':[]}])
+        self.assertIsNone(error);self.assertTrue(promoted)
+        self.assertEqual(sleep.call_count,1)
+        self.assertTrue(any(c[:3]==('gh','release','edit') for c in calls))
+
+    def test_created_release_never_visible_stops_after_bounded_retries(self):
+        with patch.object(ci.time,'sleep') as sleep:
+            calls,promoted,error=self.exercise(lookup=[None]+[None]*ci.RELEASE_LOOKUP_ATTEMPTS)
+        self.assertEqual(error,'Created release is not visible; retry publication later')
+        self.assertFalse(promoted)
+        self.assertEqual(sleep.call_count,ci.RELEASE_LOOKUP_ATTEMPTS-1)
+        self.assertFalse(any(c[:3]==('gh','release','edit') for c in calls))
 
 
 if __name__=='__main__':unittest.main(verbosity=2)
