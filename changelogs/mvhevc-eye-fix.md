@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+### 0.3.6
+
+- The module now disables itself on a full shutdown/reboot, so the next boot
+  honestly shows it OFF until it is enabled and activated again; a soft restart
+  keeps the checkbox exactly as the user set it.
+  - The watcher now also watches the power state: when a real shutdown/reboot
+    begins (`sys.powerctl` or `sys.shutdown.requested` set while
+    `sys.boot_completed` is still 1 — the Manager power menu, button shutdowns and
+    adb reboots all set this) it writes the `disable` marker, lazily detaches both
+    mounts and exits; a HUP/INT/TERM trap runs the same check.
+  - KernelSU's emulated soft reboot (the manager's soft restart) resets
+    `sys.boot_completed` to 0 first, sets neither power property and sweeps module
+    processes itself, so the check never fires for it; the relaunched service
+    stage re-applies the patch and re-arms the watcher.
+  - Rationale: with temporary root a cold boot leaves the patch off until a soft
+    restart, so a ticked box after a cold boot was misleading.
+- Packaged artifact `gxr-mvhevc-eye-fix-0.3.6-auto.zip`; the published asset hash
+  is advanced by the pipeline in `updates/mvhevc-eye-fix.json`.
+
 ### 0.3.5
 
 - Cleanup fixes for the disable and delete paths:

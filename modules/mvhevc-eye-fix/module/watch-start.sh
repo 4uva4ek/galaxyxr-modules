@@ -8,6 +8,13 @@
 # is deleted under it: it reacts to the disable/remove markers or a missing
 # module directory, force-stops Gallery XR, unbinds both libraries, verifies the
 # stock hashes, logs the verified result, removes its pid file and exits.
+# It also watches the power state. A real shutdown/reboot (sys.powerctl or
+# sys.shutdown.requested set while sys.boot_completed is still 1) ends the
+# session: the watcher writes the disable marker so the next boot shows the
+# module OFF until it is enabled and activated again. KernelSU's emulated soft
+# reboot (the Manager's soft restart) resets sys.boot_completed to 0, sets
+# neither power property and sweeps module processes itself, so the checkbox is
+# left exactly as the user set it and the relaunched service stage re-applies.
 set -u
 MODDIR=${0%/*}
 
@@ -21,6 +28,26 @@ fi
 nohup /system/bin/sh -c '
 M="$1"; SF=/system/lib64/libstagefright.so; AP=/system/lib64/libaplayer.so
 echo $$ > "$M/watcher.pid" 2>/dev/null
+# True while a real shutdown/reboot is in flight. sys.boot_completed=0 means a
+# userspace/emulated soft reboot instead (KernelSU resets it first), and a
+# userspace reason in either power property is never a full boot.
+power_ending() {
+    [ "$(/system/bin/getprop sys.boot_completed 2>/dev/null)" = 0 ] && return 1
+    pctl=$(/system/bin/getprop sys.powerctl 2>/dev/null)
+    sreq=$(/system/bin/getprop sys.shutdown.requested 2>/dev/null)
+    case "$pctl" in ""|*userspace*) ;; *) return 0 ;; esac
+    case "$sreq" in ""|*userspace*) ;; *) return 0 ;; esac
+    return 1
+}
+end_for_full_boot() {
+    : > "$M/disable" 2>/dev/null
+    umount "$SF" 2>/dev/null || umount -l "$SF" 2>/dev/null
+    umount "$AP" 2>/dev/null || umount -l "$AP" 2>/dev/null
+    echo "$(date "+%Y-%m-%d %H:%M:%S") watcher: full reboot/shutdown detected (powerctl=$pctl shutdown.requested=$sreq); module disabled; enable and activate again to reapply" >> "$M/last-run.log" 2>/dev/null
+    rm -f "$M/watcher.pid" 2>/dev/null
+    exit 0
+}
+trap "power_ending && end_for_full_boot; exit 0" HUP INT TERM
 while :; do
     if [ -f "$M/disable" ] || [ -f "$M/remove" ] || [ ! -d "$M" ]; then
         /system/bin/am force-stop com.samsung.android.galleryxr 2>/dev/null
@@ -43,6 +70,9 @@ while :; do
         fi
         rm -f "$M/watcher.pid" 2>/dev/null
         exit 0
+    fi
+    if power_ending; then
+        end_for_full_boot
     fi
     sleep 3
 done

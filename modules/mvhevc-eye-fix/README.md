@@ -12,6 +12,8 @@ left-primary MV-HEVC spatial video with correct eyes (logcat `onStereoModeInfo m
 stereo mode 4). 0.3.4 generates the payloads on the device; that build was re-checked
 on the owner's Galaxy XR (2026-10-16). 0.3.5 hardens the disable/delete cleanup
 paths (watcher arming on every apply, pinned bound checks, atomic generation).
+0.3.6 adds the power-state behavior: a full reboot/shutdown disables the module,
+a soft restart keeps the checkbox as set.
 
 ## What it changes
 
@@ -72,13 +74,17 @@ manager's installed-lifecycle verification.
   module directory itself: on untick, removal, or a deleted directory it stops
   Gallery XR, unbinds both libraries with the same retry/lazy-detach/verify logic,
   logs the verified result and exits. Disabling therefore reverts within seconds,
-  without a reboot; the watcher is one-shot and is re-armed by the next apply.
+  without a reboot; the watcher is one-shot and is re-armed by the next apply. It
+  also watches the power state: a full reboot/shutdown (`sys.powerctl` or
+  `sys.shutdown.requested` set while `sys.boot_completed` is still 1) makes it
+  disable the module so the next boot shows it off; a soft restart resets
+  `sys.boot_completed` instead and leaves the checkbox exactly as set.
 - `uninstall.sh` (KernelSU removal entry) runs in post-fs-data, before Android
   services exist: the bind mounts do not survive a boot, so it has nothing to
   unmount and needs no Android service. Live removal is covered by the watcher; a
-  reboot with the module disabled or removed restores the stock libraries (while it
-  stays ticked the service stage re-applies when it next runs — on temporary-root
-  setups, after root acquisition and the manager's soft restart).
+  reboot with the module disabled or removed restores the stock libraries; a soft
+  restart keeps the checkbox as set and the service stage re-applies when it runs
+  (on temporary-root setups, after root acquisition).
 - `auto.sh status|on|off` is the lifecycle entry required by the manager; it
   delegates to `action.sh`.
 - No boot image, partition or system file is modified. Nothing stays mounted while
@@ -88,17 +94,19 @@ manager's installed-lifecycle verification.
 
 ## Install
 
-Manager (GXR installer ≥ gxr-v1.0.6): install `gxr-mvhevc-eye-fix-0.3.5-auto.zip` from
-`/sdcard/Download/`; it arrives disabled. Enable after a clean install, then bring up
-the KernelSU service stage: reboot on persistent-root setups; on the temporary-root
-flow, after root acquisition and the manager's soft restart.
+Manager (GXR installer ≥ gxr-v1.0.6): install `gxr-mvhevc-eye-fix-0.3.6-auto.zip` from
+`/sdcard/Download/`; it arrives disabled. Enable after a clean install, then
+activate it — press Action, or bring up the KernelSU service stage (root
+acquisition + the manager's soft restart on the temporary-root flow). While the
+patch is active, a full reboot/shutdown turns the module off again: enable and
+activate it anew to reapply.
 
 Direct deployment (root shell) if the Manager refuses the package:
 
 ```sh
 mkdir -p /data/adb/modules/gxr_mvhevc_eye_fix
 cd /data/adb/modules/gxr_mvhevc_eye_fix
-unzip -o /sdcard/Download/gxr-mvhevc-eye-fix-0.3.5-auto.zip
+unzip -o /sdcard/Download/gxr-mvhevc-eye-fix-0.3.6-auto.zip
 chmod 755 action.sh service.sh customize.sh auto.sh
 rm -f disable
 reboot        # or: sh action.sh on   (applies now, no reboot)
@@ -114,11 +122,11 @@ logcat `onStereoModeInfo mode: 1` (previously `2`) and surface stereo mode 4
 ## Rollback
 
 `sh action.sh off` (live; verified against the stock hashes), untick the module (the
-watcher reverts within seconds), or delete it. A reboot clears everything with the
-module disabled or removed; while it stays ticked the service stage re-applies when
-it next runs (on temporary-root setups, after root acquisition and a soft restart).
-Abort at boot: KernelSU safe mode (hold Volume-Down), then remove the module.
-No Knox state, no partition writes.
+watcher reverts within seconds), or delete it. A reboot clears everything: with the
+module disabled or removed it stays stock, and with the patch active the watcher
+disables the module as the machine goes down, so the next boot shows it off — a
+soft restart instead keeps the checkbox as set. Abort at boot: KernelSU safe mode
+(hold Volume-Down), then remove the module. No Knox state, no partition writes.
 
 ## Build / host checks
 
