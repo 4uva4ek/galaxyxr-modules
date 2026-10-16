@@ -1,7 +1,7 @@
 id=gxr_mvhevc_eye_fix
 name=Galaxy XR MV-HEVC Eye Fix
-version=0.3.3
-versionCode=8
+version=0.3.4
+versionCode=9
 author=AngelDark92
-description=Test build. Corrects the left/right eye inversion Samsung Gallery XR shows for MV-HEVC spatial videos. Patched copies of libstagefright.so and libaplayer.so are bind-mounted over the stock libraries: the primary-eye computation is corrected from inverted (left-primary files report 2, right) to correct (report 1, left), and the value SemMediaPlayer reports to the app is forced to 1 for the test build. Gallery XR then keeps its MULTIVIEW_LEFT_PRIMARY surface instead of switching to MULTIVIEW_RIGHT_PRIMARY and swapping the eyes. No boot image or partition changes, no telemetry, no network use. Ships disabled; action.sh off, unticking the module (its watcher reverts within seconds), or deleting the module restores the stock libraries, and a reboot always does.
+description=Corrects the left/right eye inversion Samsung Gallery XR shows for MV-HEVC spatial videos. The patched copies of libstagefright.so and libaplayer.so are generated on the device from the installed stock libraries (hash-verified before and after patching) and bind-mounted over them: the primary-eye computation is corrected from inverted (left-primary files report 2, right) to correct (report 1, left), and the value SemMediaPlayer reports to the app is forced to 1. Gallery XR then keeps its MULTIVIEW_LEFT_PRIMARY surface instead of switching to MULTIVIEW_RIGHT_PRIMARY and swapping the eyes. No vendor binaries ship in the package. No boot image or partition changes, no telemetry, no network use. Ships disabled; action.sh off, unticking the module (its watcher reverts within seconds), or deleting the module restores the stock libraries, and a reboot always does.
 updateJson=https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/mvhevc-eye-fix.json

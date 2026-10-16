@@ -2,12 +2,15 @@
 
 KernelSU module for Galaxy XR (SM-I610). Corrects the left/right eye inversion that
 Samsung Gallery XR shows for MV-HEVC spatial videos by bind-mounting patched copies of
-`libstagefright.so` and `libaplayer.so` over the stock libraries in `/system/lib64`.
+`libstagefright.so` and `libaplayer.so` over the stock libraries in `/system/lib64`. The
+patched copies are generated on the device from its own stock libraries; no vendor
+binaries ship in the package.
 
 Author: **AngelDark92**. Status: **validated on the owner's Galaxy XR (2026-10-15)** — module
 enabled, both libraries applied by the KernelSU service stage, Samsung Gallery XR shows
 left-primary MV-HEVC spatial video with correct eyes (logcat `onStereoModeInfo mode: 1`,
-stereo mode 4). Not published; no update feed.
+stereo mode 4). 0.3.4 generates the payloads on the device; that build was re-checked
+on the owner's Galaxy XR (2026-10-16).
 
 ## What it changes
 
@@ -29,27 +32,31 @@ video displays correctly. The third patch forces `extra = 1` for this test build
 independent of the upstream producer.
 
 - Source binaries and patched hashes: `module/NOTICE.txt`. Stock hashes are checked by
-  `service.sh`; the module refuses if a device library is not the reviewed build.
-- Scope: left-primary MV-HEVC video only (test build forces left).
-- Verified scope: the two payloads differ from the stock libraries by exactly the
+  `service.sh`; the module refuses if a device library is not the reviewed build. The
+  patched copies are generated on the device from those stock libraries (fixed byte
+  patches, result hash-verified) and are never shipped in a package.
+- Scope: left-primary MV-HEVC video only (the patch forces left).
+- Verified scope: the generated payloads differ from the stock libraries by exactly the
   three patch sites below and nothing else (byte diff against the headset files), and
   the module writes no state outside its own directory: no telemetry, no network use.
 
 ## Package layout (GXR installer contract)
 
-Root files plus one `bin/` payload directory: `module.prop`, `install-info.txt`,
+Root files only, with no vendor payloads: `module.prop`, `install-info.txt`,
 `NOTICE.txt`, `SHA256SUMS`, `customize.sh`, `service.sh`, `action.sh`, `auto.sh`,
-`uninstall.sh`, empty `disable` and `skip_mount` markers, `bin/libstagefright.so`,
-`bin/libaplayer.so`.
+`uninstall.sh`, empty `disable` and `skip_mount` markers. `build.py` fails closed when
+a `bin/` payload is present.
 `SHA256SUMS` lists `action.sh`, `auto.sh` and `module.prop` as required by the
 manager's installed-lifecycle verification.
 
 ## How it is applied
 
 - `service.sh` (KernelSU service stage, every boot while enabled) verifies
-  `SHA256SUMS`, prepares both payloads (`chown 0:0`, `chmod 0444`,
+  `SHA256SUMS`, generates the patched payloads from the stock libraries when they are
+  missing or tampered (fixed byte patches, result checked against the pinned patched
+  hashes in `module/NOTICE.txt`), prepares both payloads (`chown 0:0`, `chmod 0444`,
   `chcon u:object_r:system_lib_file:s0`) and bind-mounts them over the stock
-  libraries. Fail-closed per library on hash mismatch.
+  libraries. Fail-closed per library on any hash mismatch.
 - `action.sh status|on|off` (root) applies or removes both mounts immediately —
   restart Gallery XR afterwards. The no-argument run (manager Action) applies if
   needed and reports while the module is enabled; on a disabled or removing module it
@@ -75,7 +82,7 @@ manager's installed-lifecycle verification.
 
 ## Install
 
-Manager (GXR installer ≥ gxr-v1.0.6): install `gxr-mvhevc-eye-fix-0.3.3-auto.zip` from
+Manager (GXR installer ≥ gxr-v1.0.6): install `gxr-mvhevc-eye-fix-0.3.4-auto.zip` from
 `/sdcard/Download/`; it arrives disabled. Enable only after a clean install, then
 reboot (service stage).
 
@@ -84,7 +91,7 @@ Direct deployment (root shell) if the Manager refuses the package:
 ```sh
 mkdir -p /data/adb/modules/gxr_mvhevc_eye_fix
 cd /data/adb/modules/gxr_mvhevc_eye_fix
-unzip -o /sdcard/Download/gxr-mvhevc-eye-fix-0.3.3-auto.zip
+unzip -o /sdcard/Download/gxr-mvhevc-eye-fix-0.3.4-auto.zip
 chmod 755 action.sh service.sh customize.sh auto.sh
 rm -f disable
 reboot        # or: sh action.sh on   (applies now, no reboot)
@@ -106,12 +113,15 @@ No Knox state, no partition writes.
 
 ## Build / host checks
 
-The builder includes the patched payloads when `module/bin/` holds them (they are
-not published); without them it produces the metadata-only package that the
-repository's contract check builds in CI.
+The package never contains vendor payloads; the device generates them at apply time.
+A local `module/bin/` is rejected by the builder, and `verify_package.py` rejects any
+packaged `bin/` payload. `tests/test_payload_patch.py` runs the real generation function
+against a synthetic fixture, pins `make_payload()` across the two scripts and checks the
+fail-closed path.
 
 ```sh
 python modules/mvhevc-eye-fix/build.py
+python modules/mvhevc-eye-fix/tests/test_payload_patch.py
 python modules/mvhevc-eye-fix/tests/verify_package.py   # replays the GXR installer's validation
 python tools/check_module_layout.py --module mvhevc-eye-fix
 python tools/check_catalogue.py

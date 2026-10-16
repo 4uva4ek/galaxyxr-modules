@@ -1,12 +1,12 @@
-"""Build the experimental, installed-disabled MV-HEVC eye fix package.
+"""Build the installed-disabled MV-HEVC eye fix package.
 
 Overlay-only module: no NDK, no native build. Usage from the repository root:
 
     python modules/mvhevc-eye-fix/build.py
 
 Produces dist/mvhevc-eye-fix/gxr-mvhevc-eye-fix-VERSION-auto.zip and its .zip.sha256.
-Payload layout follows the GXR package contract: root files, bin/ payload only
-(no system overlays, no payload/ directory).
+Root files only: the patched libraries are generated on the device from the stock
+libraries, so no vendor binaries are ever packaged; a bin/ directory is rejected.
 """
 import hashlib
 import zipfile
@@ -27,11 +27,10 @@ for path in sorted((HERE / 'module').rglob('*')):
 for required in ('module.prop', 'customize.sh', 'service.sh', 'action.sh', 'auto.sh', 'uninstall.sh', 'skip_mount', 'install-info.txt'):
     if required not in payload:
         raise ValueError(f'missing {required}')
-missing_payloads = [n for n in ('bin/libstagefright.so', 'bin/libaplayer.so') if n not in payload]
-if missing_payloads:
-    print('note: binary payloads not present (' + ', '.join(missing_payloads) + ');')
-    print('note: building the metadata-only package that the repository contract check validates (CI).')
-    print('note: the full package needs the patched payloads in module/bin; see module/NOTICE.txt.')
+packaged_binaries = sorted(n for n in payload if n.startswith('bin/'))
+if packaged_binaries:
+    raise ValueError('binary payloads must not be packaged (' + ', '.join(packaged_binaries)
+                     + '); the device generates them from the stock libraries; see module/NOTICE.txt')
 if payload['skip_mount'] != b'':
     raise ValueError('skip_mount marker must be empty')
 bad_dirs = [n for n in payload if '/' in n and not n.startswith('bin/')]

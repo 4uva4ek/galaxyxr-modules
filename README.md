@@ -46,6 +46,13 @@ unticking the checkbox only stops future reapplication. Run the module's
 host-tested, **not yet validated on a headset**.
 [Controls, recovery and validation limits](modules/ota-control/README.md).
 
+### MV-HEVC Eye Fix (`gxr_mvhevc_eye_fix`)
+Corrects the **left/right eye inversion** Samsung Gallery XR shows for MV-HEVC
+spatial videos. The patched `libstagefright.so` and `libaplayer.so` are generated
+on the device from the installed stock libraries — hash-checked before and after
+patching — and bind-mounted over them; no vendor binaries ship in the package.
+Left-primary MV-HEVC video only. [Patches and validation](modules/mvhevc-eye-fix/README.md).
+
 ### Deprecated and retired
 **Framebuffer10** (10-bit SDR output with corrected camera colors) is deprecated and source-only — its payload contains vendor code and is not distributed. Earlier tracking experiments (Bracket, IMU Time, HAL 360, native copy) are retired and kept locally; they are not distributed here.
 
