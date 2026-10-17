@@ -45,12 +45,15 @@ struct Lock {
 };
 struct Context {
  pid_t pid;std::string stamp,identity,boot,disk;Map m;
- Context(pid_t p,const std::string& s):pid(p),stamp(s){
+ Context(pid_t p,const std::string& s,bool requireBootReady):pid(p),stamp(s){
   require(geteuid()==0,"Root required");require(sysconf(_SC_PAGESIZE)==4096,"Only4KiB pages supported");
   struct statfs fs{};require(statfs("/dev",&fs)==0&&fs.f_type==0x01021994,"/dev must be tmpfs");
   char model[PROP_VALUE_MAX]{},complete[PROP_VALUE_MAX]{};
   __system_property_get("ro.product.model",model);__system_property_get("sys.boot_completed",complete);
-  require(!strcmp(model,"SM-I610")&&!strcmp(complete,"1"),"Wrong model or boot incomplete");
+  require(!strcmp(model,"SM-I610"),"Wrong model");
+  // Read-only status and restoration must work during planned Android restart.
+  // Activation and calibration preflight still require completed boot.
+  if(requireBootReady)require(!strcmp(complete,"1"),"Boot incomplete");
   identity=read(proc(pid,"cmdline"));require(std::string(identity.c_str())==SERVICE,"Wrong target executable");
   require(starttime(pid)==stamp,"Target start identity differs");boot=read("/proc/sys/kernel/random/boot_id");
   m=mapping(pid);require(hash(m.file)==SHA,"Original libsctrl SHA mismatch");disk=read(m.file);
@@ -289,7 +292,7 @@ int main(int argc,char** argv){
   char* end=nullptr;long p=strtol(argv[1],&end,10);require(end&&!*end&&p>1&&p<INT32_MAX,"Invalid PID");
   std::string stamp=starttime(static_cast<pid_t>(p));require(!stamp.empty()&&std::all_of(stamp.begin(),stamp.end(),[](char c){return c>='0'&&c<='9';}),"Invalid START");
   std::string mode=argv[2];require(mode=="status"||mode=="preflight"||mode=="off"||mode=="hold"||mode=="run","Unknown mode");
-  require((mode=="run")== (argc==4),"Seconds only with run");Context c(static_cast<pid_t>(p),stamp);
+  require((mode=="run")== (argc==4),"Seconds only with run");Context c(static_cast<pid_t>(p),stamp,mode!="status"&&mode!="off");
   if(mode=="status"||mode=="preflight"){status(c,mode=="preflight");return 0;}
   if(mode=="off"){Lock owner("orion-qc-projection-run-v1");Lock whiteOwner("gxr-whitening-run-v1");return restore(c)?0:2;}
   int seconds=0;if(mode=="run"){long n=strtol(argv[3],&end,10);require(end&&!*end&&n>=1&&n<=180,"Duration1..180");seconds=static_cast<int>(n);}

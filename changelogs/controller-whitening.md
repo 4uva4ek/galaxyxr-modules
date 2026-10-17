@@ -1,5 +1,11 @@
 ## 0.2.0 — 2026-10-17
 
+## 0.2.1 — 2026-10-17
+
+- Allow guarded status and restoration while Android boot-completed is zero during a planned soft reboot. Activation and preflight still require completed boot.
+- Preserve Qc/Whitening corrections, exact identity, hash, RX validation and interruption guards.
+- Automatic-only update installed disabled; no reboot or activation as part of installation.
+
 - Reject failed camera projections instead of using undefined pixel/Jacobian results; skip invalid observations in four consumers.
 - Keep the existing covariance whitening fix, firmware/calibration guards, recovery guardian and disabled automatic packaging.
 - Use a separately mapped private RX page; preserve original vendor files. Reuse a verified retained page when reactivating.
