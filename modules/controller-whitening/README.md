@@ -158,3 +158,7 @@ Output: `dist/controller-whitening/gxr-controller-whitening-0.2.0-auto.zip` and
 its SHA-256 file. Only the automatic variant is built or distributed. The ZIP
 contains `disable`; building and verifying it never connects to the headset.
 Samsung binaries and device calibration are not included.
+
+### 0.2.1 soft-reboot recovery
+
+Status and restoration can verify the original code while Android reports boot incomplete. Activation and calibration preflight still require boot completion. All model, PID/start, library hash and full-RX guards remain. Build/package checks only; no extra reboot or runtime activation test.
