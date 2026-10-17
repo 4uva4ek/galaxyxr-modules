@@ -55,6 +55,12 @@
       "name": "MV-HEVC Eye Fix",
       "description": "Correct the left/right eye inversion Samsung Gallery XR shows for MV-HEVC spatial video. Patched libraries are generated on the device from the stock libraries.",
       "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/mvhevc-eye-fix.json"
+    },
+    {
+      "id": "gxr_stream_cpu_relief",
+      "name": "Galaxy XR Stream CPU Relief",
+      "description": "Guarded KXR LogLevel=0 in the controller HAL and nice -20 for Steam Link pipeline threads. Installs disabled.",
+      "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/stream-cpu-relief.json"
     }
   ]
 }

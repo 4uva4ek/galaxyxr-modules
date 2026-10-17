@@ -1,0 +1,3 @@
+Author: 4uva4ek. Runtime target and performance evidence: Claude (CLD), 2026-10-17.
+Native helper is project code; Android NDK runtime attribution is in NDK-NOTICE.txt.
+Samsung and KXR libraries are not distributed or modified on disk.
