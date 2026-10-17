@@ -120,9 +120,9 @@ report() {
    fi ;;
   WHITENING_ACTIVE\ *)
    if load_lease && [ "$LB" = "$BOOT" ] && [ "$LP:$LS" = "$TP:$TS" ] && native_alive "$LO" "$LOS" && worker_alive && [ "$LW:$LWS" = "$WP:$WS" ]; then
-    if allowed; then echo 'ENABLED - Module-owned whitening patch verified'; else echo 'DISABLED - Stopping: owned patch is still active; restoration pending'; fi
+    if allowed; then echo 'ENABLED - Module-owned whitening and projection and projection patch verified'; else echo 'DISABLED - Stopping: owned patch is still active; restoration pending'; fi
    else
-    echo 'DISABLED - External or unowned whitening patch is ACTIVE; it was not adopted or restored'
+    echo 'DISABLED - External or unowned whitening and projection and projection patch is ACTIVE; it was not adopted or restored'
     echo 'Stop the standalone experiment before enabling this module; if ownership is uncertain, reboot with the module disabled'
    fi ;;
   *) echo 'DISABLED - Error: partial or unknown runtime patch; leave disabled and reboot'; printf '%s\n' "$result"; return 1 ;;
@@ -251,7 +251,7 @@ case "$MODE" in
   EXPECTED_TARGET=$TP:$TS
   restart_requested && exit 0
   before=$(query "$TP" preflight 2>&1) || { printf '%s\n' "$before"; fail 'Guarded preflight failed'; exit 1; }
-  printf '%s\n' "$before" | grep -q '^STOCK ' || { fail 'External whitening patch is active; stop the standalone experiment before enabling'; exit 1; }
+  printf '%s\n' "$before" | grep -q '^STOCK ' || { fail 'External whitening and projection patch is active; stop the standalone experiment before enabling'; exit 1; }
   mkdir "$STATE/launch" || { fail 'Concurrent launch transaction'; exit 1; }
   LAUNCH_LOCK=1
   allowed || exit 0

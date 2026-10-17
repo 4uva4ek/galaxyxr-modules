@@ -1,4 +1,12 @@
-# Controller Whitening 0.1.7
+# Controller Whitening 0.2.0
+
+Version 0.2.0 adds camera-projection failure rejection to the existing whitening correction. Both changes are applied/restored by one owner. Ten instruction edits and 184 bytes of guard code are identical to the manually tested ORION patch. The user reported a strong improvement on October 17; this is subjective feedback, not proof of fault incidence or physical accuracy.
+
+A separate private RX mapping of an original vendor-library page supplies the guards. Only copy-on-write RAM is modified; the original file is unchanged. The helper retains this page after restoration for in-flight returns and verifies/reuses it on later activation. Unsupported layout, firmware or unknown bytes cause refusal. Failed activation disables the module through its existing lifecycle. Installing the automatic ZIP leaves it disabled. An existing external trial is reported without being adopted or stopped.
+
+Native math/ABI evidence and the live temporary activation are reused; repeated test suites were not run for this release at the user's request. Build/archive integrity checks only. Automatic startup of this new version has not yet been exercised on the headset.
+
+## Previous release history
 
 Current release **0.1.7** includes a stable `updateJson` feed for Manager updates. See [installation from Sources or ZIP](../../docs/INSTALLING-MODULES.md). The package remains automatic-only and installs **DISABLED**.
 
@@ -139,14 +147,14 @@ and the disabled module preserve the stock reboot path.
 
 ## Build
 
-From the repository root, using Android NDK **28.2.13676358**:
+From the repository root, using Android NDK **29.0.14206865**:
 
 ```sh
 python tools/build.py controller-whitening --ndk /path/to/android-ndk
 python modules/controller-whitening/tests/verify_package.py
 ```
 
-Output: `dist/controller-whitening/gxr-controller-whitening-0.1.3-auto.zip` and
+Output: `dist/controller-whitening/gxr-controller-whitening-0.2.0-auto.zip` and
 its SHA-256 file. Only the automatic variant is built or distributed. The ZIP
 contains `disable`; building and verifying it never connects to the headset.
 Samsung binaries and device calibration are not included.

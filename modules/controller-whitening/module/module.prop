@@ -1,7 +1,7 @@
 id=gxr_controller_whitening
 name=Galaxy XR Controller Whitening
-version=0.1.7
-versionCode=8
+version=0.2.0
+versionCode=9
 author=4uva4ek
-description=Correct controller process covariance whitening in private service memory. Installed disabled; Action reports state and recovery.
+description=Correct controller covariance whitening and invalid camera projection handling in private service memory. Installed disabled; Action reports state and recovery.
 updateJson=https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/controller-whitening.json

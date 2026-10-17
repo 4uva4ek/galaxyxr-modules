@@ -17,7 +17,7 @@
     {
       "id": "gxr_controller_whitening",
       "name": "Controller Whitening",
-      "description": "Correct process covariance whitening in the controller service.",
+      "description": "Correct covariance whitening and reject invalid camera projections in the controller service.",
       "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/controller-whitening.json"
     },
     {

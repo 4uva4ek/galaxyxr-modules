@@ -33,7 +33,7 @@ binary = output/config['binary']
 ext = '.exe' if os.name == 'nt' else ''
 driver = [str(toolchain/'bin'/('clang++'+ext)), '-ccc-install-dir', str(toolchain/'bin'),
           f'--target=aarch64-linux-android{config["api"]}', f'--sysroot={toolchain/"sysroot"}',
-          '-resource-dir', str(toolchain/'lib/clang/19')]
+          '-resource-dir', subprocess.check_output([str(toolchain/'bin'/('clang++'+ext)), '-print-resource-dir'], text=True).strip()]
 subprocess.run(driver + ['-std=c++17', '-O2', '-Wall', '-Wextra', '-Werror',
                 '-c', str(source/'native/main.cpp'), '-o', str(output/'main.o')], check=True)
 subprocess.run(driver + [f'--ld-path={toolchain/"bin"/("ld.lld"+ext)}', '-static-libstdc++',

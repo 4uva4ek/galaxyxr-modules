@@ -1,3 +1,10 @@
+## 0.2.0 — 2026-10-17
+
+- Reject failed camera projections instead of using undefined pixel/Jacobian results; skip invalid observations in four consumers.
+- Keep the existing covariance whitening fix, firmware/calibration guards, recovery guardian and disabled automatic packaging.
+- Use a separately mapped private RX page; preserve original vendor files. Reuse a verified retained page when reactivating.
+- User reported a strong improvement during the temporary RAM trial. Reused existing math/ABI evidence; automatic module lifecycle is not yet device-tested.
+
 # controller-whitening
 
 ## 0.1.7
