@@ -1,0 +1,7 @@
+id=gxr_controller_log_relief
+name=Controller HAL Log Relief
+version=0.1.0
+versionCode=1
+author=4uva4ek
+description=Guarded controller HAL LogLevel=0. Internal Controller Suite component.
+updateJson=https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/controller-log-relief.json

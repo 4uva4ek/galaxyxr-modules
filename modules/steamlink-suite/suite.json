@@ -4,7 +4,7 @@
   "components": [
     "openxr-velocity-frame",
     "steamlink-pose-time",
-    "stream-cpu-relief",
+    "openxr-priority",
     "controller-extrapolation"
   ],
   "replaces": [

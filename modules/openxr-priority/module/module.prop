@@ -1,0 +1,7 @@
+id=gxr_openxr_priority
+name=OpenXR App Priority
+version=0.1.0
+versionCode=1
+author=4uva4ek
+description=Profile-based priority for visible third-party OpenXR apps. Internal suite component.
+updateJson=https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/openxr-priority.json

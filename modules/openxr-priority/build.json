@@ -1,0 +1,24 @@
+{
+  "artifact": "gxr-openxr-priority",
+  "binary": "gxr-openxr-priority",
+  "ndk": "28.2.13676358",
+  "api": 34,
+  "files": [
+    "action.sh",
+    "customize.sh",
+    "module.prop",
+    "skip_mount",
+    "uninstall.sh"
+  ],
+  "variants": [
+    "auto"
+  ],
+  "auto_files": [
+    "auto.sh",
+    "service.sh"
+  ],
+  "auto_shared_files": [
+    "cold-boot-reset.sh"
+  ],
+  "shared_files": []
+}

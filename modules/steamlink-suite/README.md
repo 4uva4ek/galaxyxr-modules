@@ -1,8 +1,8 @@
 # Galaxy XR Steam Link Suite
 
-Author: 4uva4ek. Release 0.1.1. Requires KernelSU GXR 1.0.11 or later for reviewed migration.
+Author: 4uva4ek. Local candidate 0.1.2 (public release remains 0.1.1). Requires KernelSU GXR 1.0.11 or later for reviewed migration.
 
-Components: openxr-velocity-frame, steamlink-pose-time, stream-cpu-relief, controller-extrapolation.
+Components: openxr-velocity-frame, steamlink-pose-time, openxr-priority, controller-extrapolation.
 
 Automatic-only, installed disabled. KernelSU is the master activation preference.
 WebUI saves explicit tuning; it never activates a disabled suite.
@@ -29,3 +29,13 @@ device inspection after user installation confirmed the seven replaced modules
 were absent. Combined-suite physical tracking quality and long-term lifecycle
 behavior are not established by these checks. Publication was authorized by the
 user on 2026-10-18; no new device activation is part of publication.
+
+## Local 0.1.2 migration
+
+Update both suites while disabled before enabling either. Controller Suite now owns
+the HAL-wide LogLevel=0 gate. Steam Link Suite no longer changes HAL memory; its
+priority component discovers visible third-party OpenXR applications, verifies UID
+and runtime mapping, and applies only a known thread profile. The initial profile
+is Steam Link; unknown apps are reported and unchanged. Generic Thread-9 is excluded.
+Priorities restore on background/sleep, exit or disable; realtime policies are untouched.
+This does not request OpenXR CPU/GPU BOOST. New live behavior is not yet validated.

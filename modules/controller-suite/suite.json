@@ -2,6 +2,7 @@
   "id": "gxr_controller_suite",
   "name": "Galaxy XR Controller Suite",
   "components": [
+    "controller-log-relief",
     "controller-whitening",
     "controller-timestamp-precision",
     "hal-cache-bypass",

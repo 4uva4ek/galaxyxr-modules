@@ -1,5 +1,12 @@
 # Galaxy XR Steam Link Suite
 
+## 0.1.2 (local candidate)
+
+- Move HAL-wide LogLevel=0 ownership to Controller Suite.
+- Split app priority management into a visible-OpenXR profile mechanism; Steam Link is the initial supported profile.
+- Restore priorities on background/sleep and exclude ambiguous Thread-9.
+- Update both suites disabled before enabling; live validation pending.
+
 ## 0.1.1 - 2026-10-18
 
 - First public suite release, consolidating the existing components under one activation preference and WebUI.
