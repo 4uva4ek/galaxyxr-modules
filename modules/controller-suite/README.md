@@ -1,6 +1,6 @@
 # Galaxy XR Controller Suite
 
-Author: 4uva4ek. Local candidate 0.1.2 (public release remains 0.1.1). Requires KernelSU GXR 1.0.11 or later for reviewed migration.
+Author: 4uva4ek. Version 0.1.2. Requires KernelSU GXR 1.0.11 or later for reviewed migration.
 
 Components: controller-log-relief, controller-whitening, controller-timestamp-precision, hal-cache-bypass, tail-velocity.
 
@@ -30,7 +30,7 @@ were absent. Combined-suite physical tracking quality and long-term lifecycle
 behavior are not established by these checks. Publication was authorized by the
 user on 2026-10-18; no new device activation is part of publication.
 
-## Local 0.1.2 migration
+## 0.1.2 migration
 
 Update both suites while disabled before enabling either. Controller Suite now owns
 the HAL-wide LogLevel=0 gate. Steam Link Suite no longer changes HAL memory; its
@@ -38,4 +38,6 @@ priority component discovers visible third-party OpenXR applications, verifies U
 and runtime mapping, and applies only a known thread profile. The initial profile
 is Steam Link; unknown apps are reported and unchanged. Generic Thread-9 is excluded.
 Priorities restore on background/sleep, exit or disable; realtime policies are untouched.
-This does not request OpenXR CPU/GPU BOOST. New live behavior is not yet validated.
+This does not request OpenXR CPU/GPU BOOST. Device checks after a soft restart verified
+HAL LogLevel=0, the existing live hooks, and six owned Steam Link threads at nice=-20.
+See [validation](../../docs/SUITES-0.1.2-VALIDATION.md) for scope and limits.
