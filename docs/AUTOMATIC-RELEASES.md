@@ -78,4 +78,7 @@ Controller Suite and Steam Link Suite 0.1.1 were built from a clean source archi
 with their documented Windows NDK 28/29 builder and published through the reviewed
 manual path. The Linux automatic builder does not yet build suites; use
 `docs/RELEASING.md` for future suite releases until that builder is integrated.
-Existing published suite feeds require no automatic build.
+Existing published suite feeds require no automatic build. `tools/ci_modules.py`
+never plans suites (`LOCAL_SUITES`), so a suite version bump pushed before its
+manual release does not fail the build workflow; publishing the release advances
+the suite feed through `update-feed.yml`.

@@ -31,6 +31,14 @@ class Selection(unittest.TestCase):
             self.assertEqual(ci.plan(),['one','two'])
             with self.assertRaises(ValueError):ci.plan(selection='framebuffer10')
 
+    def test_local_suites_never_planned(self):
+        with patch.object(ci,'MODULES',{'one':'gxr_one','steamlink-suite':'gxr_steamlink_suite','controller-suite':'gxr_controller_suite'}), \
+             patch.object(ci,'pending',return_value=True):
+            self.assertEqual(ci.plan(publish=True),['one'])
+            self.assertEqual(ci.plan(),['one'])
+            for suite in ('steamlink-suite','controller-suite'):
+                with self.subTest(suite=suite), self.assertRaises(ValueError):ci.plan(selection=suite)
+
     def test_every_push_compares_to_published_feed(self):
         with tempfile.TemporaryDirectory() as directory, patch.object(ci,'ROOT',Path(directory)), \
              patch.object(ci,'MODULES',{'one':'gxr_one'}):

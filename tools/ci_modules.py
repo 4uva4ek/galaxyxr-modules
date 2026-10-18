@@ -17,6 +17,9 @@ from update_feed import MODULES, ROOT, REPO, validate, promote
 
 NDK_VERSION = '28.2.13676358'
 RUNTIME_MODULES = {'controller-extrapolation', 'openxr-velocity-frame', 'steamlink-pose-time'}
+# Built with the Windows NDK 28/29 suite builder and released manually; the published
+# release then advances their feed through update-feed.yml. Never built here.
+LOCAL_SUITES = {'controller-suite', 'steamlink-suite'}
 INPUTS = {
     'runtime': ('GXR_RUNTIME_', 27, 'libopenxr_android.so', 'a7dabaa1030cc7979efe987f212488c61b61e8afb9aa3add59f7ae4fbeff4c92'),
     'scene': ('GXR_SCENE_', 24, 'libvrlink_scene.so', 'a1f1907ee91dc30dcdb4e3924cf3cff6e78302131fa835d9eb40f3fd4946ebde'),
@@ -69,7 +72,9 @@ def pending(name):
 def plan(selection='all', publish=False):
     if selection != 'all' and selection not in MODULES:
         raise ValueError('Module is not in the approved public catalogue')
-    selected = sorted(MODULES) if selection == 'all' else [selection]
+    if selection in LOCAL_SUITES:
+        raise ValueError('Suites are built locally and released manually; see docs/AUTOMATIC-RELEASES.md')
+    selected = sorted(set(MODULES) - LOCAL_SUITES) if selection == 'all' else [selection]
     if publish:
         selected = [name for name in selected if pending(name)]
     return selected
