@@ -5,3 +5,4 @@ versionCode=1
 author=4uva4ek
 description=Guarded KXR LogLevel=0 and Steam Link pipeline nice -20. Installed disabled; Action reports runtime and recovery.
 updateJson=https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/stream-cpu-relief.json
+gxrDeprecatedBy=gxr_steamlink_suite

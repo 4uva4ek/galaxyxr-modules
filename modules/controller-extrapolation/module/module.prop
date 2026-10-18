@@ -5,3 +5,4 @@ versionCode=8
 author=4uva4ek
 description=Enable stock controller extrapolation in Steam Link process memory. Automatic package, installed disabled. Action reports runtime state.
 updateJson=https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/controller-extrapolation.json
+gxrDeprecatedBy=gxr_steamlink_suite

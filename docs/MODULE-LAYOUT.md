@@ -80,3 +80,19 @@ Replay the installer's checks host-side before pushing anything to a headset:
 `modules/mvhevc-eye-fix/tests/verify_package.py` mirrors read_archive,
 validate_payload, install_notes and verify_installed with the installer's own
 error strings.
+
+## Declarative replacement conditions
+
+A module declares `gxrReplaces=id1,id2` in its own `module.prop` when listed
+installed modules must be removed before installation. Use
+`gxrRequiresDisabled=id3` when disabling and restoring is sufficient. Lists
+are optional, ordered, disjoint, and contain at most 16 unique GXR IDs.
+The Manager reads the ZIP metadata, offers the declared actions, and binds
+consent to that ZIP. Failed restoration blocks installation. There is no
+module-name registry in KernelSU. This requires the unreleased dependency-aware
+Manager; existing Managers do not implement these conditions.
+
+Use `gxrDeprecatedBy=successor_id` on an old module, or `deprecatedBy` in its
+update feed, for a retirement hint. Source edits do not alter published ZIPs.
+For native packages, invoke the verifier with `ZIP --contract-only`; omitting
+that option retains the MV-HEVC-specific prohibition on shipped binaries.

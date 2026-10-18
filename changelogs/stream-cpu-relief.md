@@ -8,3 +8,7 @@ Author: **4uva4ek**
 - Exact HAL identity/data guards, original per-thread priorities, ownership journal, restoration and same-boot containment.
 - English Action status and recovery; no properties, realtime scheduling or original system file changes.
 - Build/package checks only at user request; lifecycle/device validation pending.
+
+## Deprecated - 2026-10-18
+
+- Standalone component superseded by `gxr_steamlink_suite`; existing release ZIPs remain immutable.

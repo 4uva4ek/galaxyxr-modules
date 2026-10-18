@@ -5,3 +5,4 @@ versionCode=305
 author=4uva4ek
 description=Correct controller velocity coordinates in third-party apps using the supported OpenXR runtime. No system processes or added prediction.
 updateJson=https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/openxr-velocity-frame.json
+gxrDeprecatedBy=gxr_steamlink_suite

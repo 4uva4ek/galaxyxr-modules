@@ -5,3 +5,4 @@ versionCode=107
 author=4uva4ek
 description=Forwards the consumed controller pose epoch in Steam Link packets as slot label minus a compensation set in the WebUI (0-30 ms, default 15; 28.82 = measured original label lead). Requires Velocity Frame and Steam Link 2.0.20. App-private RAM only; ships disabled. Action reports live status and recovery.
 updateJson=https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/steamlink-pose-time.json
+gxrDeprecatedBy=gxr_steamlink_suite

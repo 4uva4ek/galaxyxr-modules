@@ -1,5 +1,7 @@
 # OpenXR controller velocity frame correction
 
+> **Deprecated:** included in [steamlink-suite](../steamlink-suite/README.md). Update to KernelSU GXR 1.0.11 or later and install the suite. Removed from Sources; historical releases remain available.
+
 Current release **0.3.5** includes a stable `updateJson` feed for Manager updates. See [installation from Sources or ZIP](../../docs/INSTALLING-MODULES.md). The package remains automatic-only and installs **DISABLED**.
 
 Includes the 0.3.4 app-exit/PID-identity lifecycle fixes. Correction math and compatibility remain unchanged; enabled app-exit/relaunch validation on the headset is still pending.

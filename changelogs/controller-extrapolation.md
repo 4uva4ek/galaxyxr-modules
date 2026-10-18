@@ -17,3 +17,7 @@ The old module must stop and restore successfully before replacement. The replac
 [Release notes](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/controller-extrapolation/v0.4.3)
 
 Previous public version: 0.4.2.
+
+## Deprecated - 2026-10-18
+
+- Standalone component superseded by `gxr_steamlink_suite`; existing release ZIPs remain immutable.

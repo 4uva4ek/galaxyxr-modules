@@ -1,0 +1,18 @@
+{
+  "id": "gxr_controller_suite",
+  "name": "Galaxy XR Controller Suite",
+  "components": [
+    "controller-whitening",
+    "controller-timestamp-precision",
+    "hal-cache-bypass",
+    "tail-velocity"
+  ],
+  "replaces": [
+    "gxr_controller_whitening",
+    "gxr_controller_timestamp_precision",
+    "gxr_hal_cache_bypass"
+  ],
+  "defaults": {
+    "TAIL_GAIN_MILLI": 1000
+  }
+}

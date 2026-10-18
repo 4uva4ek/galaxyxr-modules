@@ -1,0 +1,20 @@
+{
+  "id": "gxr_steamlink_suite",
+  "name": "Galaxy XR Steam Link Suite",
+  "components": [
+    "openxr-velocity-frame",
+    "steamlink-pose-time",
+    "stream-cpu-relief",
+    "controller-extrapolation"
+  ],
+  "replaces": [
+    "gxr_steamlink_pose_time",
+    "gxr_controller_extrapolation",
+    "gxr_stream_cpu_relief",
+    "gxr_openxr_velocity_frame"
+  ],
+  "defaults": {
+    "POSE_TIME_US": 0,
+    "EXTRAPOLATION": 0
+  }
+}

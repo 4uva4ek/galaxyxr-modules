@@ -1,5 +1,7 @@
 # HAL Cache Bypass 0.1.1
 
+> **Deprecated:** included in [controller-suite](../controller-suite/README.md). Update to KernelSU GXR 1.0.11 or later and install the suite. Removed from Sources; historical releases remain available.
+
 Author: **4uva4ek**.
 
 [Release and automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/hal-cache-bypass/v0.1.1).

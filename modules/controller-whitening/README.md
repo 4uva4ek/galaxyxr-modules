@@ -1,5 +1,7 @@
 # Controller Whitening 0.2.0
 
+> **Deprecated:** included in [controller-suite](../controller-suite/README.md). Update to KernelSU GXR 1.0.11 or later and install the suite. Removed from Sources; historical releases remain available.
+
 Version 0.2.0 adds camera-projection failure rejection to the existing whitening correction. Both changes are applied/restored by one owner. Ten instruction edits and 184 bytes of guard code are identical to the manually tested ORION patch. The user reported a strong improvement on October 17; this is subjective feedback, not proof of fault incidence or physical accuracy.
 
 A separate private RX mapping of an original vendor-library page supplies the guards. Only copy-on-write RAM is modified; the original file is unchanged. The helper retains this page after restoration for in-flight returns and verifies/reuses it on later activation. Unsupported layout, firmware or unknown bytes cause refusal. Failed activation disables the module through its existing lifecycle. Installing the automatic ZIP leaves it disabled. An existing external trial is reported without being adopted or stopped.

@@ -43,3 +43,7 @@ The old module must stop and restore successfully before replacement. The replac
 [Release notes](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/controller-whitening/v0.1.4)
 
 Previous public version: 0.1.3.
+
+## Deprecated - 2026-10-18
+
+- Standalone component superseded by `gxr_controller_suite`; existing release ZIPs remain immutable.

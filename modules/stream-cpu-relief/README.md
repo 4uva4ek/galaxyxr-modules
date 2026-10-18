@@ -1,5 +1,7 @@
 # Galaxy XR Stream CPU Relief
 
+> **Deprecated:** included in [steamlink-suite](../steamlink-suite/README.md). Update to KernelSU GXR 1.0.11 or later and install the suite. Removed from Sources; historical releases remain available.
+
 Author: **4uva4ek**. 0.1.0 is published in the stable update feed; the automatic package installs DISABLED.
 
 Combines CLD's 17 October 2026 runtime findings: KXR LogLevel=0 in controller HAL private writable memory and nice -20 for Steam Link SCHED_OTHER threads named SVLRXThreadUDP, SVLMediaThread, NDK MediaCodec_, CodecLooper and Thread-9. Other scheduling policies, CPU affinity, system properties, Velocity Frame, Pose Time and Whitening are untouched. Thread-9 is the observed historical pipeline name; its semantic role is not guaranteed in future Steam Link versions. No claim of proven controller smoothness improvement.

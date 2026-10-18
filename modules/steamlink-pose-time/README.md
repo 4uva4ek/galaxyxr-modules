@@ -1,5 +1,7 @@
 # Steam Link Pose Time
 
+> **Deprecated:** included in [steamlink-suite](../steamlink-suite/README.md). Update to KernelSU GXR 1.0.11 or later and install the suite. Removed from Sources; historical releases remain available.
+
 Author: **4uva4ek**. Version **0.1.7**. Requires the update-aware KernelSU GXR Manager (1.0.6 or later).
 
 Preserves the epoch of the controller pose actually consumed by Steam Link.

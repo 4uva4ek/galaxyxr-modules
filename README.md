@@ -13,23 +13,21 @@ For memory patches after installation: tick the module's checkbox, then use the 
 ### Haptic MAIN (`gxr_haptic_main`)
 Routes standard controller haptics to the **grip (MAIN) motor** instead of the trigger motor, with retuned pulse timing. Works with any app.
 
-### OpenXR Velocity Frame (`gxr_openxr_velocity_frame`)
-Corrects controller **linear and angular velocity coordinates** handed to third-party OpenXR apps such as Steam Link. Fixes wrong throw directions; no added prediction or smoothing.
+### Controller Suite (`gxr_controller_suite`)
+Combines Whitening, Timestamp Precision, HAL Cache Bypass and tail-velocity
+correction. One activation preference and English/Russian WebUI.
+[Components and migration](modules/controller-suite/README.md).
 
-### Steam Link Pose Time (`gxr_steamlink_pose_time`)
-Forwards the **real timestamp of each controller pose** to the PC inside Steam Link's packets, so SteamVR stops guessing when the pose was sampled. Steadier PCVR controller motion. Requires Steam Link 2.0.20 and Velocity Frame.
+### Steam Link Suite (`gxr_steamlink_suite`)
+Combines Velocity Frame, Pose Time, Stream CPU Relief and optional Controller
+Extrapolation. Pose-time compensation defaults to 0; extrapolation defaults OFF.
+[Components and migration](modules/steamlink-suite/README.md).
 
-### Controller Extrapolation (`gxr_controller_extrapolation`)
-Enables the stock Android XR **consumer-side controller extrapolation** inside the Steam Link process (a runtime flag Samsung ships disabled). Experimental; not for use together with Pose Time.
-
-### Controller Whitening (`gxr_controller_whitening`)
-Corrects a **process-covariance whitening** defect in Samsung's controller tracking service. Subtle; affects all apps.
-
-### Controller Timestamp Precision (`gxr_controller_timestamp_precision`)
-Keeps controller pose **request timestamps at integer precision** inside the controller HAL instead of a lossy float conversion. Affects all apps.
-
-### HAL Cache Bypass (`gxr_hal_cache_bypass`)
-Makes the controller HAL **recompute each requested pose** instead of returning its predictor cache. Experimental; the stock predictor's other filters remain.
+Update **KernelSU GXR to 1.0.11 or later** before installing these suites.
+The Manager asks to restore/remove replaced standalone modules; the suites install
+disabled. Enable the desired suites, then use the Manager soft restart. Haptic MAIN
+remains separate. Replaced standalone modules are deprecated and removed from Sources; their
+existing update feeds retain retirement notices.
 
 ### OpenXR QUALITY (`gxr_openxr_quality`)
 Holds the camera tracking **QUALITY** request during visible OpenXR sessions.

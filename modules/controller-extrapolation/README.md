@@ -1,5 +1,7 @@
 # Controller extrapolation 0.4.3
 
+> **Deprecated:** included in [steamlink-suite](../steamlink-suite/README.md). Update to KernelSU GXR 1.0.11 or later and install the suite. Removed from Sources; historical releases remain available.
+
 Current release **0.4.3** includes a stable `updateJson` feed for Manager updates. See [installation from Sources or ZIP](../../docs/INSTALLING-MODULES.md). The package remains automatic-only and installs **DISABLED**.
 
 Native patch behavior and runtime scripts are unchanged from the previous public release. This is a distribution/metadata update.

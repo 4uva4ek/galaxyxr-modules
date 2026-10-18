@@ -16,3 +16,7 @@ The old module must stop and restore successfully before replacement. The replac
 [Release notes](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/openxr-velocity-frame/v0.3.5)
 
 Previous public version: 0.3.3.
+
+## Deprecated - 2026-10-18
+
+- Standalone component superseded by `gxr_steamlink_suite`; existing release ZIPs remain immutable.

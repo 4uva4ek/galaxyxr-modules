@@ -1,0 +1,3 @@
+This suite replaces its listed standalone modules.
+KernelSU must confirm removal and verify restoration before migration.
+Installed disabled. Haptic Main remains separate.

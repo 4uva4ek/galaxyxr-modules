@@ -61,3 +61,7 @@ installed build.
 
 0.1.1: installed disabled after user approval of full-epoch RAM experiment.
 0.1.0: centered-epoch preparation, never installed.
+
+## Deprecated - 2026-10-18
+
+- Standalone component superseded by `gxr_steamlink_suite`; existing release ZIPs remain immutable.

@@ -5,3 +5,4 @@ versionCode=10
 author=4uva4ek
 description=Correct controller covariance whitening and invalid camera projection handling in private service memory. Installed disabled; Action reports state and recovery.
 updateJson=https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/controller-whitening.json
+gxrDeprecatedBy=gxr_controller_suite

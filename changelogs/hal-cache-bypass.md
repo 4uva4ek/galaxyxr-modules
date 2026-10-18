@@ -39,3 +39,7 @@ The native binary matches the previously device-tested build. Local gate and
 lifecycle tests pass. This is not a claim of universally smoother tracking,
 removal of every predictor cache, sustained 360 Hz source poses, or validated
 native throwing. See [validation and limits](../docs/HAL-CACHE-BYPASS-2026-10-12.md).
+
+## Deprecated - 2026-10-18
+
+- Standalone component superseded by `gxr_controller_suite`; existing release ZIPs remain immutable.

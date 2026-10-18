@@ -119,7 +119,7 @@ def check_module(name, files, problems):
         if label not in text:
             problems.append(f'{name}: the module never reports {label}; see docs/ACTION-REPORT.md')
     service_calls(source, 'uninstall.sh', problems)
-    if (module / 'build.py').is_file() and config is None and not (module / 'native').is_dir():
+    if (module / 'build.py').is_file() and config is None and not (module / 'native').is_dir() and not (module / 'suite.json').is_file():
         check_package(name, module, problems)
 
 
