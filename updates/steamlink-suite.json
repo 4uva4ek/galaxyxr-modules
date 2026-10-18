@@ -1,7 +1,7 @@
 {
-  "version": "0.1.2",
-  "versionCode": 3,
-  "zipUrl": "https://github.com/4uva4ek/galaxyxr-modules/releases/download/steamlink-suite/v0.1.2/gxr-steamlink-suite-0.1.2-auto.zip",
+  "version": "0.1.4",
+  "versionCode": 5,
+  "zipUrl": "https://github.com/4uva4ek/galaxyxr-modules/releases/download/steamlink-suite/v0.1.4/gxr-steamlink-suite-0.1.4-auto.zip",
   "changelog": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/changelogs/steamlink-suite.md",
-  "sha256": "ce68d05cd7c06bb4bab63819672215e6722dfe06a8ef11422889a28911a684da"
+  "sha256": "d9e5ae4b1c1e97fba55c56f1ffa3dfffad59ad9a6345a94d235a1a5217848a16"
 }
