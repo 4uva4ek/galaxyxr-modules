@@ -13,7 +13,7 @@ Build: `python modules/steamlink-suite/build.py --ndk28 PATH --ndk29 PATH --runt
 
 Replaces: gxr_openxr_velocity_frame, gxr_steamlink_pose_time, gxr_stream_cpu_relief, gxr_controller_extrapolation. Haptic Main is separate.
 
-WebUI language follows the headset locale (English fallback), with System / English / Russian selection. Version 0.1.1 changes the UI only; existing tuning and native behavior are unchanged.
+WebUI language follows the headset locale (English fallback), with System / English / Russian selection. Version 0.1.1 added language selection; version 0.1.2 changes HAL log ownership and app priority management as described below.
 
 ## Installation and migration
 
@@ -27,8 +27,7 @@ Validation: source/package contracts, checksums, settings bounds and EN/RU
 language behavior passed. The Manager migration path passed 19 installer tests;
 device inspection after user installation confirmed the seven replaced modules
 were absent. Combined-suite physical tracking quality and long-term lifecycle
-behavior are not established by these checks. Publication was authorized by the
-user on 2026-10-18; no new device activation is part of publication.
+behavior are not established by these checks. Device validation for 0.1.2 is described below.
 
 ## 0.1.2 migration
 

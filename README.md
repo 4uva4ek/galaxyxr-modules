@@ -14,13 +14,16 @@ For memory patches after installation: tick the module's checkbox, then use the 
 Routes standard controller haptics to the **grip (MAIN) motor** instead of the trigger motor, with retuned pulse timing. Works with any app.
 
 ### Controller Suite (`gxr_controller_suite`)
-Combines Whitening, Timestamp Precision, HAL Cache Bypass and tail-velocity
-correction. One activation preference and English/Russian WebUI.
+Combines Whitening, Timestamp Precision, HAL Cache Bypass, tail-velocity
+correction and HAL-wide LogLevel=0 control. One activation preference and English/Russian WebUI.
 [Components and migration](modules/controller-suite/README.md).
 
 ### Steam Link Suite (`gxr_steamlink_suite`)
-Combines Velocity Frame, Pose Time, Stream CPU Relief and optional Controller
-Extrapolation. Pose-time compensation defaults to 0; extrapolation defaults OFF.
+Combines Velocity Frame, Pose Time, OpenXR app priority profiles and optional
+Controller Extrapolation. The initial priority profile targets selected Steam Link
+threads at nice=-20 while the app is visible and the headset is awake. Other apps
+remain unchanged until a profile is added. Pose-time compensation defaults to 0;
+extrapolation defaults OFF.
 [Components and migration](modules/steamlink-suite/README.md).
 
 Update **KernelSU GXR to 1.0.11 or later** before installing these suites.
@@ -28,6 +31,12 @@ The Manager asks to restore/remove replaced standalone modules; the suites insta
 disabled. Enable the desired suites, then use the Manager soft restart. Haptic MAIN
 remains separate. Replaced standalone modules are deprecated and removed from Sources; their
 existing update feeds retain retirement notices.
+
+**Updating to 0.1.2:** disable both suites, update both, then enable them and use
+the Manager soft restart. Update both before enabling either: HAL LogLevel=0
+ownership moved from Steam Link Suite to Controller Suite. Do not enable a mixed
+0.1.1/0.1.2 pair. Startup and active Steam Link checks passed on a headset;
+see [validation and limits](docs/SUITES-0.1.2-VALIDATION.md).
 
 ### OpenXR QUALITY (`gxr_openxr_quality`)
 Holds the camera tracking **QUALITY** request during visible OpenXR sessions.
@@ -78,8 +87,9 @@ docs/                Installation, deployment, compatibility and validation reco
 ## Building
 
 Raising both `version` and `versionCode` in a public module's `module.prop` and
-pushing to `main` now builds, checks and publishes its disabled ZIP automatically.
-No manual archive upload is needed. See [automatic releases](docs/AUTOMATIC-RELEASES.md)
+pushing to `main` builds, checks and publishes its disabled ZIP automatically for
+modules supported by the CI builder. The two suites currently require their
+dedicated local builders and reviewed release uploads. See [automatic releases](docs/AUTOMATIC-RELEASES.md)
 for build-only runs, private inputs, validation requirements and recovery.
 
 Python 3.10+ and Android NDK **28.2.13676358**. Build commands never connect to the headset.
