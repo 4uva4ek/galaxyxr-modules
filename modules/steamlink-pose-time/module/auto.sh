@@ -34,7 +34,10 @@ case "${1:-status}" in
   done
   [ ! -f "$MODDIR/disable" ] && [ ! -f "$MODDIR/remove" ] || exit 0
   (cd "$MODDIR" && sha256sum -c SHA256SUMS) > "$STATE/checksums.log" || fail 'Package checksum failure.'
-  "$MODDIR/bin/gxr-steamlink-pose-time" worker || fail 'Worker failed; inspect auto.log.'
+  rc=0
+  "$MODDIR/bin/gxr-steamlink-pose-time" worker || rc=$?
+  # 3 = planned KernelSU restart: hooks restored, preference kept, no failure guard.
+  [ "$rc" = 0 ] || [ "$rc" = 3 ] || fail 'Worker failed; inspect auto.log.'
   ;;
  disable)
   : > "$MODDIR/disable"

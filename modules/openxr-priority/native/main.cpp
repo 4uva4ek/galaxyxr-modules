@@ -4,6 +4,7 @@
 #include <sys/file.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
+#include <sys/system_properties.h>
 #include <sched.h>
 #include <dirent.h>
 #include <cstdio>
@@ -19,6 +20,12 @@ static volatile sig_atomic_t stopping = 0;
 static void stop(int) { stopping = 1; }
 static void need(bool ok, const std::string& reason) { if (!ok) throw std::runtime_error(reason); }
 static bool exists(const std::string& path) { return access(path.c_str(), F_OK) == 0; }
+// A KernelSU soft restart creates busy, then resets sys.boot_completed before stopping
+// Android. While it runs, framework queries (dumpsys power/cpm, package) fail by design.
+static bool android_restarting() {
+    char boot[PROP_VALUE_MAX]{}; __system_property_get("sys.boot_completed", boot);
+    return strcmp(boot, "1") != 0 || exists("/dev/ksu-restart-stage/busy");
+}
 static std::string proc(int pid, const std::string& leaf) { return "/proc/" + std::to_string(pid) + "/" + leaf; }
 static std::string readfile(const std::string& path) {
     std::ifstream input(path); need(bool(input), "Cannot read " + path);
@@ -211,12 +218,21 @@ int main(int argc, char** argv) {
         Journal journal; journal.owner = {getpid(), starttime(getpid())};
         signal(SIGTERM, stop); signal(SIGINT, stop); signal(SIGHUP, stop);
         save(mod + "/state/active.lease", readfile("/proc/sys/kernel/random/boot_id")); record(journal);
-        int code = 0;
+        int code = 0; bool handoff = false;
         try {
-            while (allowed() && !stopping) { verify(journal); tune(journal); sleep(2); }
-            if (stopping) failure("Worker interrupted; disabled pending review");
-        } catch (const std::exception& error) { failure(error.what()); code = 1; }
-        if (!restore(journal)) { failure("Restoration incomplete; leave disabled and fully power-cycle"); code = 1; }
+            while (allowed() && !stopping) {
+                if (android_restarting()) { handoff = true; break; }
+                verify(journal); tune(journal); sleep(2);
+            }
+            if (stopping && !handoff) failure("Worker interrupted; disabled pending review");
+        } catch (const std::exception& error) {
+            // A query failing because Android is restarting is a planned handoff, not a fault.
+            if (android_restarting()) handoff = true;
+            else { failure(error.what()); code = 1; }
+        }
+        if (!restore(journal)) { failure("Restoration incomplete; leave disabled and fully power-cycle"); return 1; }
+        // Exit 3: planned KernelSU restart; priorities restored, no failure guard.
+        if (handoff && code == 0) { puts("DISABLED - Planned restart: owned priorities restored; preference preserved"); return 3; }
         return code;
     } catch (const std::exception& error) {
         fprintf(stderr, "DISABLED - Error: %s\n", error.what());

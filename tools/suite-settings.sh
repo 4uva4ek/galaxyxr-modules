@@ -11,7 +11,7 @@ case "${1:-get}" in
    value=$(sed -n "s/^$key=//p" "$MODDIR/settings.conf" 2>/dev/null || true)
    case "$key" in
     TAIL_GAIN_MILLI) default=1000 ;;
-    POSE_TIME_US|EXTRAPOLATION) default=0 ;;
+    POSE_TIME_US) default=0 ;;
     *) exit 1 ;;
    esac
    [ -n "$value" ] || value=$default
@@ -23,7 +23,7 @@ case "${1:-get}" in
   case " $SETTING_KEYS " in *" $key "*) ;; *) echo 'Unknown setting'; exit 1;; esac
   case "$value" in ''|*[!0-9]*) echo 'Expected an unsigned integer'; exit 1;; esac
   [ "${#value}" -le 5 ] || exit 1
-  case "$key" in TAIL_GAIN_MILLI) max=1000;; POSE_TIME_US) max=30000;; EXTRAPOLATION) max=1;; *) exit 1;; esac
+  case "$key" in TAIL_GAIN_MILLI) max=1000;; POSE_TIME_US) max=30000;; *) exit 1;; esac
   [ "$value" -le "$max" ] || { echo 'Setting outside supported limits'; exit 1; }
   # Atomic, serialized update. Never source user-editable configuration as shell.
   [ ! -L "$MODDIR/settings.conf" ] || exit 1

@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <array>
 #include <sys/file.h>
+#include <sys/system_properties.h>
 static constexpr char STATE[]="/dev/gxr_steamlink_pose_time/target";
 static constexpr char ROOTSTATE[]="/dev/gxr_steamlink_pose_time";
 static constexpr char MODULE[]="/data/adb/modules/gxr_steamlink_pose_time";
@@ -203,17 +204,25 @@ static void nativeStatus(){
  Target t=saved();if(!targetAlive(t)){puts("DISABLED - Waiting: recorded Steam Link process exited.");return;}
  health(t);puts("ENABLED - Live app hooks verified. Wire epoch = slot label - compensation (see lead_us); no mean subtraction or duration limit.");status(t);
 }
+// A KernelSU soft restart creates busy, resets sys.boot_completed and force-stops
+// Steam Link before stopping Android; target and package queries then fail by design.
+static bool androidRestarting(){
+ char boot[PROP_VALUE_MAX]{};__system_property_get("sys.boot_completed",boot);
+ return strcmp(boot,"1")!=0||access("/dev/ksu-restart-stage/busy",F_OK)==0;
+}
+// Exit 3: planned KernelSU restart; hooks restored (or their process exited), no failure guard.
 static int worker(){
  checkState();int lease=open((std::string(ROOTSTATE)+"/lease").c_str(),O_RDWR|O_CREAT|O_NOFOLLOW|O_CLOEXEC,0600);
  require(lease>=0&&flock(lease,LOCK_EX|LOCK_NB)==0,"Worker already running");
  signal(SIGINT,stop);signal(SIGTERM,stop);signal(SIGHUP,stop);
  const std::string pending=std::string(MODULE)+"/auto.pending";
- Target active{};T checked=0,lead=-1;std::string previous,unknownKey;T unknownSince=0;
+ Target active{};T checked=0,lead=-1;std::string previous,unknownKey;T unknownSince=0;bool handoff=false;
  putFile(std::string(ROOTSTATE)+"/pid",std::to_string(getpid())+" "+starttime(getpid())+"\n");
  try{
   // A previous worker's app hook must be recovered before beginning a new session.
   restoreIfPresent();
   while(!stopping&&requested()){
+   if(androidRestarting()){handoff=true;break;}
    if(active.pid){
     if(!targetAlive(active)){unlink(STATE);active={};previous.clear();}
     else if(monotonic()>=checked){
@@ -254,8 +263,19 @@ static int worker(){
    }
    usleep(2000000);
   }
-  restoreIfPresent();unlink((std::string(ROOTSTATE)+"/pid").c_str());close(lease);puts("DISABLED - Worker stopped; owned app hooks restored.");return 0;
+  restoreIfPresent();unlink((std::string(ROOTSTATE)+"/pid").c_str());close(lease);
+  if(handoff){puts("DISABLED - Planned restart: owned app hooks restored; preference preserved.");return 3;}
+  puts("DISABLED - Worker stopped; owned app hooks restored.");return 0;
  }catch(const std::exception& e){
+  if(androidRestarting()){
+   // The restart force-stops Steam Link. Hand off only once the hook is verified
+   // restored or its process is gone; otherwise this remains a failure below.
+   try{
+    restoreIfPresent();if(access(STATE,F_OK)!=0)unlink(pending.c_str());
+    unlink((std::string(ROOTSTATE)+"/pid").c_str());close(lease);
+    printf("DISABLED - Planned restart: stopped on '%s'; owned app hooks restored; preference preserved.\n",e.what());return 3;
+   }catch(const std::exception&){}
+  }
   putFile(std::string(MODULE)+"/disable","");putFile(std::string(ROOTSTATE)+"/failed",e.what());
   try{restoreIfPresent();}catch(const std::exception& restoreError){fprintf(stderr,"RESTORE FAILED: %s; leave disabled and restart Steam Link.\n",restoreError.what());}
   unlink((std::string(ROOTSTATE)+"/pid").c_str());close(lease);throw;

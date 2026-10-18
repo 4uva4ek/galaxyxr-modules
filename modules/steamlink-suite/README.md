@@ -1,13 +1,15 @@
 # Galaxy XR Steam Link Suite
 
-Author: 4uva4ek. Version 0.1.4. Requires KernelSU GXR 1.0.11 or later for reviewed migration.
+Author: 4uva4ek. Version 0.1.6. Requires KernelSU GXR 1.0.11 or later for reviewed migration.
 
-Components: openxr-velocity-frame, steamlink-pose-time, openxr-priority, controller-extrapolation.
+Components: openxr-velocity-frame, steamlink-pose-time, openxr-priority. Controller
+Extrapolation was removed in 0.1.6; the suite still replaces (restores and removes)
+the standalone `gxr_controller_extrapolation` module during migration.
 
 Targets (0.1.3): packages starting with `com.valvesoftware.steamlinkvr` (Steam Link
 and renamed copies such as `.x_23`) and `dev.chronolink.client` (ChronoLink); other
-apps are never patched. Velocity Frame and Controller Extrapolation act on the pinned
-OpenXR runtime in both clients. Pose Time is Steam Link only, with scene profiles for
+apps are never patched. Velocity Frame acts on the pinned OpenXR runtime in both
+clients. Pose Time is Steam Link only, with scene profiles for
 2.0.20 and 2.0.23 selected by live code bytes. App priorities have a Steam Link profile; ChronoLink is reported
 unchanged until its threads are profiled.
 
@@ -47,3 +49,15 @@ Priorities restore on background/sleep, exit or disable; realtime policies are u
 This does not request OpenXR CPU/GPU BOOST. Device checks after a soft restart verified
 HAL LogLevel=0, the existing live hooks, and six owned Steam Link threads at nice=-20.
 See [validation](../../docs/SUITES-0.1.2-VALIDATION.md) for scope and limits.
+
+## Soft-restart handoff (0.1.5 source, first released in 0.1.6)
+
+A KernelSU soft restart stops Android and force-stops Steam Link. Up to 0.1.4 App
+Priorities kept querying the framework during that window, failed ("Wakefulness
+unavailable") and the supervisor quarantined the whole suite. Since 0.1.5 the
+supervisor treats the restart gate (`busy` or a new generation) as a planned
+handoff. Components restore their state and exit with a handoff code when
+`busy` exists or `sys.boot_completed` is reset. The suite clears `auto.pending`
+without a failure guard, and the service stage after the restart starts it again.
+Errors outside a restart still quarantine the suite. Device validation of an
+active-to-restart cycle is pending.

@@ -43,18 +43,30 @@ start_component() {
  rm -f "$v/disable"
  sh "$v/auto.sh" resume
 }
+# A KernelSU soft restart writes a new generation, creates busy, removes ready and
+# resets sys.boot_completed. Read-only; no ksud call. START_GEN is the verified
+# generation this worker activated under (Controller Suite only).
+restart_pending() {
+ stage=/dev/ksu-restart-stage
+ [ "$(getprop sys.boot_completed)" = 1 ] || return 0
+ [ ! -e "$stage/busy" ] && [ ! -e "$stage/error" ] || return 0
+ [ "$(cat "$stage/ready" 2>/dev/null)" = ready ] || return 0
+ [ "$(cat "$stage/generation" 2>/dev/null)" = "$START_GEN" ] || return 0
+ return 1
+}
+# Any suite: ksud creates busy and writes a new generation first. BOOT_GEN is the
+# generation present when this worker started (empty without the coordinator).
+restart_started() {
+ [ ! -e /dev/ksu-restart-stage/busy ] || return 0
+ [ "$(cat /dev/ksu-restart-stage/generation 2>/dev/null)" = "$BOOT_GEN" ] || return 0
+ return 1
+}
 settings() { sh "$MODDIR/settings.sh" get; }
 tune() {
  current=$(settings) || return 1
  if [ "$SUITE_ID" = gxr_steamlink_suite ]; then
   lead=$(printf '%s\n' "$current" | sed -n 's/^POSE_TIME_US=//p')
   "$VIEWS/steamlink-pose-time/bin/gxr-steamlink-pose-time" lead set "$lead" >/dev/null || return 1
-  want=$(printf '%s\n' "$current" | sed -n 's/^EXTRAPOLATION=//p')
-  if [ "$want" != "$EXTRAPOLATION_RUNNING" ]; then
-   if [ "$want" = 1 ]; then start_component controller-extrapolation || return 1
-   else stop_component controller-extrapolation || return 1; fi
-   EXTRAPOLATION_RUNNING=$want
-  fi
  fi
 }
 report() {
@@ -99,19 +111,29 @@ case "${1:-status}" in
  resume)
   sh "$MODDIR/cold-boot-reset.sh" "$MODDIR" "$STATE" || exit 1
   allowed || exit 0
+  # A previous worker may still be finishing a planned-restart handoff. Wait for
+  # it (bounded); a worker that remains is a live session, not a failure.
+  count=0
+  while [ -d "$STATE/worker" ] && [ "$count" -lt 30 ]; do count=$((count+1)); sleep 1; done
+  [ ! -d "$STATE/worker" ] || { echo 'Suite worker already running; nothing started'; exit 0; }
   [ ! -f "$MODDIR/auto.pending" ] && [ ! -f "$MODDIR/state/failure" ] || { fail 'Interrupted or failed suite; reviewed recovery required'; exit 1; }
   mkdir "$STATE/worker" 2>/dev/null || exit 0
   nohup sh "$MODDIR/auto.sh" _run > "$STATE/worker.log" 2>&1 < /dev/null & ;;
  _run)
   cleanup() {
    result=$?; trap - EXIT HUP INT TERM
-   [ "$result" = 0 ] || fail 'Suite worker failed; automatic retry blocked'
+   # Keep the first recorded reason (for example which component failed).
+   if [ "$result" != 0 ]; then
+    if [ -f "$MODDIR/state/failure" ]; then : > "$MODDIR/disable"; else fail 'Suite worker failed; automatic retry blocked'; fi
+   fi
    if stop_all; then rm -f "$MODDIR/auto.pending"; else result=1; fi
    rmdir "$STATE/worker" 2>/dev/null || true
    exit "$result"
   }
   trap cleanup EXIT
   trap 'exit 1' HUP INT TERM
+  START_GEN=
+  BOOT_GEN=$(cat /dev/ksu-restart-stage/generation 2>/dev/null || true)
   stamp=$(sed 's/.*) //' "/proc/$$/stat" | awk '{print $20}')
   nohup sh "$MODDIR/auto.sh" _guard "$$" "$stamp" > "$STATE/guardian.log" 2>&1 < /dev/null &
   for old in $REPLACES; do
@@ -131,23 +153,29 @@ case "${1:-status}" in
     echo "DISABLED - Waiting: $GATE_REASON"
     sleep 2
    done
+   START_GEN=$GATE_GEN
   else
    lead=$(settings | sed -n 's/^POSE_TIME_US=//p')
    "$VIEWS/steamlink-pose-time/bin/gxr-steamlink-pose-time" lead set "$lead" >/dev/null || exit 1
   fi
   : > "$MODDIR/auto.pending"
-  EXTRAPOLATION_RUNNING=0
   for component in $START_ORDER; do
-   [ "$component" != controller-extrapolation ] || continue
    allowed || exit 0
    start_component "$component" || exit 1
   done
   last=
   while allowed; do
+   # Checked before component markers: components stop on the same restart.
+   # Clean exit restores all components and clears auto.pending without a failure
+   # guard, so the service stage after the restart starts the suite again.
+   # A controller service exit/restart remains a component failure.
+   if restart_started || { [ -n "$START_GEN" ] && restart_pending; }; then
+    echo 'DISABLED - Planned restart: KernelSU restart started; restoring components; preference preserved'
+    exit 0
+   fi
    current=$(settings) || exit 1
    if [ "$current" != "$last" ]; then tune || exit 1; last=$current; fi
    for component in $START_ORDER; do
-    [ "$component" != controller-extrapolation ] || [ "$EXTRAPOLATION_RUNNING" = 1 ] || continue
     [ ! -f "$VIEWS/$component/disable" ] || { fail "Component $component failed"; exit 1; }
    done
    sleep 1

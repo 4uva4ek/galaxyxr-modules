@@ -1,5 +1,14 @@
 # Galaxy XR Steam Link Suite
 
+## 0.1.6 - 2026-10-19
+
+- Remove Controller Extrapolation from the suite (component, `EXTRAPOLATION` setting and WebUI switch). The standalone `gxr_controller_extrapolation` module is still restored and removed during migration. This also removes the update refusal when two clients had the OpenXR runtime loaded.
+- A KernelSU soft restart while the suite is active is now a planned handoff instead of a suite failure. The supervisor stops on the restart gate (`busy` or a new generation), restores all components and clears its pending marker without a failure guard; the service stage after the restart starts the suite again with the checkbox unchanged.
+- App Priorities no longer fails with "Wakefulness unavailable" (or another framework query error) while Android is restarting: it restores owned priorities and exits as a handoff. Outside a restart the same errors still quarantine it.
+- Pose Time stops as a handoff when the restart begins and tolerates the force-stop race only after its hook is verified restored or its process is gone.
+- The suite keeps the first failure reason (for example the failing component) instead of overwriting it with a generic worker message.
+- 0.1.5 was not published separately; its changes ship in 0.1.6. Device validation of an active-to-soft-restart cycle is pending.
+
 ## 0.1.4 - 2026-10-19
 
 - Pose Time supports Steam Link 2.0.20 and 2.0.23 through per-version scene profiles (GetControllerState, SubmitMessage and vendor clock locations), selected by live code bytes. Renamed and patched copies such as `.x_23` match when those functions are unchanged.

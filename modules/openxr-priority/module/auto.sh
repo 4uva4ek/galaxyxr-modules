@@ -31,7 +31,8 @@ case "${1:-status}" in
   (cd "$MODDIR" && sha256sum -c SHA256SUMS) || fail 'Package checksum mismatch'
   "$BIN" "$MODDIR" run
   result=$?
-  [ "$result" = 0 ] || [ "$result" = 2 ] || fail 'Worker failed; see worker.log and Action status'
+  # 3 = planned KernelSU restart: priorities restored, preference kept.
+  [ "$result" = 0 ] || [ "$result" = 2 ] || [ "$result" = 3 ] || fail 'Worker failed; see worker.log and Action status'
   ;;
  *) fail 'Expected resume, disable or status' ;;
 esac
