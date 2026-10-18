@@ -11,7 +11,7 @@ def loads(blob):
  off=struct.unpack_from('<Q',blob,32)[0];size,count=struct.unpack_from('<HH',blob,54);assert size==56
  return [h for i in range(count) if (h:=struct.unpack_from('<IIQQQQQQ',blob,off+i*size))[0]==1]
 
-def build(ndk,runtime):
+def build(ndk,runtime,clients_only=False):
  assert 'Pkg.Revision = 28.2.13676358' in (ndk/'source.properties').read_text()
  host={'Windows':'windows-x86_64','Linux':'linux-x86_64','Darwin':'darwin-x86_64'}[platform.system()]
  tc=ndk/'toolchains/llvm/prebuilt'/host;bin=tc/'bin';ext='.exe' if os.name=='nt' else ''
@@ -89,9 +89,9 @@ gxr_enabled: .word 0
  contract+='static constexpr unsigned char GXR_PAYLOAD[]='+arr(payload)+';\n'
  contract+=f'static constexpr unsigned GXR_ENABLED={enabled};\n'
  (HERE/'native/compatibility.generated.h').write_text(contract,newline='\n')
- subprocess.run(driver+['-std=c++17','-O2','-Wall','-Wextra','-Werror','-I',str(out),'-c',str(HERE/'native/main.cpp'),'-o',str(out/'main.o')],check=True)
+ subprocess.run(driver+['-std=c++17','-O2','-Wall','-Wextra','-Werror','-I',str(out)]+(['-DGXR_STREAMING_CLIENTS_ONLY=1'] if clients_only else [])+['-c',str(HERE/'native/main.cpp'),'-o',str(out/'main.o')],check=True)
  subprocess.run(driver+[f'--ld-path={tool("ld.lld")}','-static-libstdc++','-Wl,-z,max-page-size=16384',str(out/'main.o'),'-o',str(out/'gxr-openxr-velocity')],check=True)
- plan={'status':'OFFLINE_CANDIDATE','runtime_sha256':sha,'payload_bytes':len(payload),'capacity':end-cave,'enabled_offset':enabled,'hooks':[hex(x) for x in sites],'cave':hex(cave),'rollback':'off restores call, retains inert payload for in-flight returns; app exit clears private mapping; no autostart','scope':'Third-party main app processes using pinned runtime; package/UID independently verified; exact firmware hash required'}
+ plan={'status':'OFFLINE_CANDIDATE','runtime_sha256':sha,'payload_bytes':len(payload),'capacity':end-cave,'enabled_offset':enabled,'hooks':[hex(x) for x in sites],'cave':hex(cave),'rollback':'off restores call, retains inert payload for in-flight returns; app exit clears private mapping; no autostart','scope':('Steam Link/ChronoLink packages (com.valvesoftware.steamlinkvr[.*], dev.chronolink.client[.*]) among ' if clients_only else '')+'Third-party main app processes using pinned runtime; package/UID independently verified; exact firmware hash required'}
  (out/'plan.json').write_text(json.dumps(plan,indent=2)+'\n');print(json.dumps(plan,indent=2))
 if __name__=='__main__':
  parser=argparse.ArgumentParser(description=__doc__)

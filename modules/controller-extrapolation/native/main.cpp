@@ -20,8 +20,8 @@
 #include <chrono>
 #include "expected.h"
 #include "../../openxr-velocity-frame/native/compatibility.h"
+#include "../../openxr-velocity-frame/native/steamlink_package.h"
 
-static constexpr char PACKAGE[] = "com.valvesoftware.steamlinkvr";
 static constexpr char LIBRARY[] = "/system/lib64/libopenxr_android.so";
 static constexpr uintptr_t FUNCTION = 0x1b359c, SITE = 0x1b3860;
 static constexpr uint32_t STOCK = 0x3400038a, EXTRAPOLATION = 0xd503201f;
@@ -109,7 +109,8 @@ int main(int argc, char** argv) {
         char* end=nullptr; long number=strtol(argv[1],&end,10);
         require(end && !*end && number>1 && number<INT32_MAX,"Invalid PID"); pid_t pid=number;
         std::string mode=argv[2]; require(mode=="status"||mode=="on"||mode=="off"||mode=="toggle","Invalid mode");
-        require(read(proc(pid,"cmdline")).c_str()==std::string(PACKAGE),"Wrong target process");
+        const std::string name=read(proc(pid,"cmdline")).c_str();
+        require(streamingClientPackage(name)&&mainProcess(name),"Target is not a Steam Link or ChronoLink process");
         auto disk=read(LIBRARY);
         require(disk.size()==2862448 && !memcmp(disk.data()+FUNCTION,EXPECTED,sizeof(EXPECTED)),"Disk runtime function mismatch");
         uintptr_t base=mapping(pid); Memory mem(pid); uint32_t before=validate(mem,base);

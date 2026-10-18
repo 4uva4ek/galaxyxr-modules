@@ -20,7 +20,13 @@ int main() {
     assert(selected("com.valvesoftware.steamlinkvr", "CodecLooper"));
     assert(!selected("com.valvesoftware.steamlinkvr", "Thread-9"));
     assert(!selected("com.unknown.game", "CodecLooper"));
-    assert(!selected("com.valvesoftware.steamlinkvr.clone", "SVLMediaThread"));
+    assert(selected("com.valvesoftware.steamlinkvr.x_23", "SVLMediaThread"));
+    assert(selected("com.valvesoftware.steamlinkvr.test", "CodecLooper"));
+    assert(!selected("com.valvesoftware.steamlinkvr.x_23", "Thread-9"));
+    assert(selected("com.valvesoftware.steamlinkvrx", "SVLMediaThread"));
+    assert(!selected("com.valvesoftware.steamlink", "SVLMediaThread"));
+    assert(!selected("org.com.valvesoftware.steamlinkvr", "SVLMediaThread"));
+    assert(!selected("dev.chronolink.client", "SVLMediaThread")); // No ChronoLink thread profile yet.
     assert(runtime_loaded("1000-2000 r-xp 0 00:00 1 /system/lib64/libopenxr_android.so\n"));
     assert(!runtime_loaded("1000-2000 rw-p 0 00:00 1 /system/lib64/libopenxr_android.so\n"));
     assert(!runtime_loaded("1000-2000 r-xp 0 00:00 1 /tmp/system/lib64/libopenxr_android.so\n"));
@@ -49,5 +55,5 @@ int main() {
     assert(refused && owned.size() == 1 && ops.value == -10); // External conflict retains evidence.
     ops.living = false; int before = ops.writes; release_inactive(owned, {}, ops);
     assert(owned.empty() && ops.writes == before); // Exit/PID reuse never writes to replacement.
-    std::cout << "PASS: profile/UID/runtime/session guards, write-ahead ownership, background restore, external conflict, RT, exit/reuse and post-write failure recovery\n";
+    std::cout << "PASS: Steam Link copy profile/UID/runtime/session guards, write-ahead ownership, background restore, external conflict, RT, exit/reuse and post-write failure recovery\n";
 }

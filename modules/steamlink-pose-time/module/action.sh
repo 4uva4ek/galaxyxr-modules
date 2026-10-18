@@ -13,7 +13,7 @@ if [ "$MODE" = report ]; then
  echo 'Use the KernelSU checkbox, then the documented KernelSU soft reboot to start.'
  echo 'Disable to restore live hooks; if restoration fails, leave disabled and restart Steam Link.'
  echo 'Full reboot clears app RAM; an enabled module can reapply.'
- echo 'Requires Velocity Frame and the supported Steam Link 2.0.20 main package.'
+ echo 'Requires Velocity Frame and Steam Link 2.0.20 or 2.0.23 (any com.valvesoftware.steamlinkvr copy) in suite builds.'
 fi
 if [ "$MODE" = report ]; then
  "$MODDIR/bin/gxr-steamlink-pose-time" lead get 2>/dev/null | sed -n 's/^LEAD_MS=/Compensation (ms, 0-30; 28.82 = original label lead): /p'

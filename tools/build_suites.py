@@ -88,11 +88,14 @@ def build(args):
             continue
         d = staging / 'modules' / component
         if component == 'openxr-velocity-frame':
-            run(sys.executable, d / 'build_module.py', '--ndk', args.ndk28, '--runtime', args.runtime)
+            # The Steam Link suite corrects only Steam Link, ChronoLink and their renamed copies.
+            scope = ['--streaming-clients-only'] if args.suite == 'steamlink-suite' else []
+            run(sys.executable, d / 'build_module.py', '--ndk', args.ndk28, '--runtime', args.runtime, *scope)
         elif component == 'steamlink-pose-time':
             # Current source default stays 15 ms; suite writes its explicit 0 ms setting
             # before starting the component, preserving the original payload semantics.
-            run(sys.executable, d / 'build.py', '--ndk', args.ndk28, '--runtime', args.runtime, '--scene', args.scene)
+            run(sys.executable, d / 'build.py', '--ndk', args.ndk28, '--runtime', args.runtime,
+                *[x for scene in args.scene for x in ('--scene', scene)])
         else:
             config = json.loads((d / 'build.json').read_text())
             ndk = args.ndk29 if config['ndk'].startswith('29.') else args.ndk28
@@ -138,6 +141,8 @@ def build(args):
 if __name__ == '__main__':
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('suite', choices=['controller-suite', 'steamlink-suite'])
-    for name in ('ndk28', 'ndk29', 'runtime', 'scene'):
+    for name in ('ndk28', 'ndk29', 'runtime'):
         p.add_argument('--' + name, type=Path, required=True)
+    p.add_argument('--scene', type=Path, action='append', required=True,
+                   help='Clean libvrlink_scene.so per supported Steam Link version (repeat)')
     build(p.parse_args())

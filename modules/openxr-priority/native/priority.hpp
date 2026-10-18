@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include "session_policy.hpp"
+#include "../../openxr-velocity-frame/native/steamlink_package.h"
 
 namespace xrpriority {
 struct Identity {
@@ -16,7 +17,8 @@ struct Identity {
 struct Thread { Identity app, tid; int original = 0; };
 constexpr int target = -20;
 
-inline bool profiled(const std::string& package) { return package == "com.valvesoftware.steamlinkvr"; }
+// One thread profile covers Steam Link and its renamed copies.
+inline bool profiled(const std::string& package) { return steamLinkPackage(package); }
 inline bool selected(const std::string& package, const std::string& name) {
     // Generic Thread-N names do not reliably identify a pipeline role.
     return profiled(package) && (name == "SVLRXThreadUDP" || name == "SVLMediaThread" ||

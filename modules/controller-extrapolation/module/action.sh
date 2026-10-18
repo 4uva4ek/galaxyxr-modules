@@ -48,9 +48,17 @@ fi
 (cd "$MODDIR" && sha256sum -c SHA256SUMS) > "$STATE/checksums.log" || fail 'Module checksum failure'
 RUNTIME=/system/lib64/libopenxr_android.so
 [ "$(sha256sum "$RUNTIME" | cut -d ' ' -f 1)" = a7dabaa1030cc7979efe987f212488c61b61e8afb9aa3add59f7ae4fbeff4c92 ] || fail 'Unsupported OpenXR runtime'
-TARGET=$(pidof com.valvesoftware.steamlinkvr || true)
+. "$MODDIR/stream-clients.sh"
+TARGET=$(stream_client_pids)
+if [ "$MODE" = status ] || [ "$MODE" = off ]; then
+  # A client that has not loaded the OpenXR runtime cannot hold this patch.
+  MAPPED=
+  for pid in $TARGET; do grep -Fq "$RUNTIME" "/proc/$pid/maps" 2>/dev/null && MAPPED="$MAPPED${MAPPED:+ }$pid"; done
+  if [ -n "$TARGET" ] && [ -z "$MAPPED" ]; then echo 'WAITING: no streaming client has the OpenXR runtime loaded; no live patch'; exit 0; fi
+  TARGET=$MAPPED
+fi
 if [ -z "$TARGET" ] && { [ "$MODE" = status ] || [ "$MODE" = off ]; }; then echo 'WAITING: target not running; no live patch'; exit 0; fi
-case "$TARGET" in ''|*[!0-9]*) fail 'Expected exactly one running Steam Link process';; esac
+case "$TARGET" in ''|*[!0-9]*) fail 'Expected exactly one running Steam Link or ChronoLink process';; esac
 if [ -n "$AUTO_ID" ]; then
   STARTED=$(sed 's/.*) //' "/proc/$TARGET/stat" | awk '{print $20}')
   [ "$TARGET:$STARTED" = "$AUTO_ID" ] || fail 'Target changed before automatic activation'

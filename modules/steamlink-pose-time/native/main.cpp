@@ -1,6 +1,7 @@
 // Identity-bound app-only RAM module; KernelSU preference owns lifecycle.
 #include "app_process.h"
 #include "../../openxr-velocity-frame/native/compatibility.h"
+#include "../../openxr-velocity-frame/native/steamlink_package.h"
 #include "contract.h"
 #include "generated.h"
 #include <sys/mman.h>
@@ -15,39 +16,37 @@ struct Waiting:std::runtime_error{using std::runtime_error::runtime_error;};
 static constexpr char UNKNOWN_CODE[]="Velocity Frame consumer code unknown or changing; waiting";
 static constexpr T UNKNOWN_LIMIT=30000000000LL; // same app process; longer means a foreign hook or incompatible Velocity Frame
 #include "process_helpers.h"
+// Steam Link and its copies (packages starting com.valvesoftware.steamlinkvr). The scene
+// profile (SCENES, generated per supported version) is selected by live code bytes.
 static constexpr char PACKAGE[]="com.valvesoftware.steamlinkvr";
-struct Target{pid_t pid;std::string start;uintptr_t runtime,scene,address;};
+struct Target{pid_t pid;std::string start;uintptr_t runtime,scene,address;std::string package;const SceneProfile* profile=nullptr;};
+static std::string supportedVersions(){std::string v;for(const auto& p:SCENES)v+=(v.empty()?"":", ")+std::string(p.name);return v;}
+static const SceneProfile* profileNamed(const std::string& name){for(const auto& p:SCENES)if(name==p.name)return &p;return nullptr;}
 static bool equal(Memory& mem,uintptr_t a,const unsigned char* b,size_t n){return mem.bytes(a,n)==std::vector<unsigned char>(b,b+n);}
-static uintptr_t scene(pid_t pid,Memory& mem){
- uintptr_t found=0;std::istringstream lines(read(proc(pid,"maps")));std::string line;
+static uintptr_t scene(pid_t pid,Memory& mem,const SceneProfile*& profile){
+ uintptr_t found=0;profile=nullptr;std::istringstream lines(read(proc(pid,"maps")));std::string line;
  while(std::getline(lines,line)){
   unsigned long lo,hi,off;char perm[5]{};int used=0;
   if(sscanf(line.c_str(),"%lx-%lx %4s %lx %*s %*s %n",&lo,&hi,perm,&off,&used)!=4||strcmp(perm,"r-xp"))continue;
   auto path=line.substr(used);if(path.find(PACKAGE)==std::string::npos&&path.find("libvrlink_scene.so")==std::string::npos)continue;
   if(hi-lo>32*1024*1024)continue;auto b=mem.bytes(lo,hi-lo);
-  for(size_t i=0;i+32<b.size();i+=4)if(!memcmp(b.data()+i,STATE_CODE,32)){
-   uintptr_t base=lo+i-0x1070cc;
-   if(equal(mem,base+0xf4e74,SEND_CODE,sizeof(SEND_CODE))){require(!found,"Ambiguous scene");found=base;}
+  for(const auto& p:SCENES)for(size_t i=0;i+32<b.size();i+=4)if(!memcmp(b.data()+i,p.stateCode,32)&&lo+i>=p.state){
+   uintptr_t base=lo+i-p.state;
+   if(equal(mem,base+p.send,p.sendCode,p.sendLen)){require(!found,"Ambiguous scene");found=base;profile=&p;}
   }
  }
- if(!found)throw Waiting("Steam Link VR library not loaded; connect to SteamVR");return found;
+ if(!found)throw Waiting(("Steam Link VR library not loaded or unsupported version (supported: "+supportedVersions()+"); connect to SteamVR").c_str());return found;
 }
-static std::array<uintptr_t,3> sites(const Target& t){return {t.runtime+0x28b520,t.scene+0x21ba70,t.scene+0x21b130};}
-static std::array<uintptr_t,3> originals(const Target& t){return {t.runtime+0x1b359c,t.scene+0x1070cc,t.scene+0x15a43c};}
+static std::array<uintptr_t,3> sites(const Target& t){return {t.runtime+0x28b520,t.scene+t.profile->stateGot,t.scene+t.profile->submitGot};}
+static std::array<uintptr_t,3> originals(const Target& t){return {t.runtime+0x1b359c,t.scene+t.profile->state,t.scene+t.profile->submit};}
 static std::array<uintptr_t,3> replacements(const Target& t){return {t.address+CONSUME_ENTRY,t.address+STATE_ENTRY,t.address+SUBMIT_ENTRY};}
-static Target current(){
- DIR* d=opendir("/proc");require(d,"proc unavailable");pid_t found=0;
- while(auto* e=readdir(d)){pid_t p=atoi(e->d_name);if(p<=1)continue;try{if(std::string(read(proc(p,"cmdline")).c_str())==PACKAGE){require(!found,"Multiple app processes");found=p;}}catch(const ProcessAccessError&){}catch(const ProcessGone&){} }
- closedir(d);if(!found)throw Waiting("Steam Link is not running");require(thirdParty(found,PACKAGE,thirdPartyApps()),"Not third-party app UID");
- return {found,starttime(found),0,0,0};
-}
 static void verify(Target& t,Memory& mem){
- verifyIdentity(t.pid,t.start);require(std::string(read(proc(t.pid,"cmdline")).c_str())==PACKAGE,"Package changed");
+ verifyIdentity(t.pid,t.start);require(std::string(read(proc(t.pid,"cmdline")).c_str())==t.package,"Package changed");
  if(read(proc(t.pid,"maps")).find("/system/lib64/libopenxr_android.so")==std::string::npos)throw Waiting("Steam Link OpenXR runtime not loaded");
  auto m=mapping(t.pid);require(hash(m.file)=="a7dabaa1030cc7979efe987f212488c61b61e8afb9aa3add59f7ae4fbeff4c92","Runtime hash changed");
- t.runtime=m.base;t.scene=scene(t.pid,mem);
- require(equal(mem,t.scene+0x1070cc,STATE_CODE,sizeof(STATE_CODE)),"Controller writer changed");
- require(equal(mem,t.scene+0x155bf4,CLOCK_CODE,sizeof(CLOCK_CODE)),"Vendor clock changed");
+ t.runtime=m.base;t.scene=scene(t.pid,mem,t.profile);
+ require(equal(mem,t.scene+t.profile->state,t.profile->stateCode,t.profile->stateLen),"Controller writer changed");
+ require(equal(mem,t.scene+t.profile->clock,t.profile->clockCode,t.profile->clockLen),"Vendor clock changed");
  // Velocity Frame writes its correction without this module's lock, so a partial write
  // can be observed here. Unknown code is a transient wait (bounded by the worker), and a
  // known state must hold across a second read before it counts.
@@ -58,6 +57,27 @@ static void verify(Target& t,Memory& mem){
  usleep(20000);
  if(gxr_consumer_state(mem.bytes(t.runtime+0x1b359c,sizeof(GXR_CONSUMER)).data())!=1)throw Waiting(UNKNOWN_CODE);
  require(gxr_payload_valid(mem.bytes(t.runtime+0x272ae0,0x520).data(),true),"Velocity Frame payload changed");
+}
+// With several Steam Link copies running, only one may carry the supported scene
+// code; the others are read-only candidates and are never written.
+static Target current(){
+ DIR* d=opendir("/proc");require(d,"proc unavailable");std::vector<std::pair<pid_t,std::string>> found;
+ while(auto* e=readdir(d)){pid_t p=atoi(e->d_name);if(p<=1)continue;try{std::string name=read(proc(p,"cmdline")).c_str();if(steamLinkPackage(name)&&mainProcess(name))found.push_back({p,name});}catch(const ProcessAccessError&){}catch(const ProcessGone&){} }
+ closedir(d);if(found.empty())throw Waiting("Steam Link is not running");
+ const auto apps=thirdPartyApps();
+ for(const auto& f:found)require(thirdParty(f.first,f.second,apps),"Not third-party app UID");
+ if(found.size()==1)return {found[0].first,starttime(found[0].first),0,0,0,found[0].second};
+ std::vector<Target> ready;std::string waiting;
+ for(const auto& f:found){
+  Target t{f.first,"",0,0,0,f.second};
+  try{t.start=starttime(t.pid);Memory mem(t.pid);verify(t,mem);ready.push_back(t);}
+  catch(const Waiting& e){if(waiting.empty())waiting=e.what();}
+  catch(const ProcessGone&){}
+  catch(const ProcessAccessError&){if(!t.start.empty()&&readProcessIdentity(proc(t.pid,"stat"),t.start).state!=ProcessState::Gone)throw;}
+ }
+ if(ready.size()>1)throw Waiting("Several supported Steam Link copies are running; close all but one");
+ if(ready.empty())throw Waiting(waiting.empty()?"Steam Link is not running":waiting);
+ return ready[0];
 }
 // Compensation preference: "LEAD_US=<0..30000>" in the module directory. Missing or
 // invalid content means the default; the file is only ever written through "lead set".
@@ -81,7 +101,8 @@ static void leadCommand(int argc,char** argv){
  const T lead=leadSetting();
  printf("LEAD_US=%lld\nLEAD_MS=%.2f\nDEFAULT_US=%lld\nORIGINAL_US=%lld\nMIN_US=0\nMAX_US=%lld\n",(long long)(lead/1000),lead/1e6,(long long)(DEFAULT_LEAD_NS/1000),(long long)(ORIGINAL_LEAD_NS/1000),(long long)(MAX_LEAD_NS/1000));
 }
-static Target saved(){Target t{};std::istringstream s(read(STATE));s>>t.pid>>t.start>>t.runtime>>t.scene>>t.address;require(t.pid>1&&decimalIdentity(t.start)&&t.address>=0x10000,"Bad recovery identity");return t;}
+// Records written before scene profiles (five fields) belong to the 2.0.20 layout.
+static Target saved(){Target t{};std::istringstream s(read(STATE));std::string name;s>>t.pid>>t.start>>t.runtime>>t.scene>>t.address;if(!(s>>name))name="2.0.20";t.profile=profileNamed(name);require(t.pid>1&&decimalIdentity(t.start)&&t.address>=0x10000&&t.profile,"Bad recovery identity");return t;}
 // Live compensation update. Writing the control block uses PTRACE_POKETEXT, which
 // requires this worker to be the tracer, so the target is frozen first exactly as in
 // apply(). Never fatal: a failed update leaves the current value live, is retried next
@@ -100,7 +121,7 @@ static bool writeLead(const Target& t,T want){
 static void status(Target t){
  verifyIdentity(t.pid,t.start);Memory mem(t.pid);Control c{};mem.get(t.address+DATA,&c,sizeof(c));require(c.magic==MAGIC,"Payload identity mismatch");
  bool hooked=true;auto a=sites(t),v=replacements(t);for(unsigned i=0;i<3;++i){uintptr_t x;mem.get(a[i],&x,8);hooked&=x==v[i];}
- printf("PID=%d start=%s hooks=%d enabled=%u lead_us=%lld packets=%llu scopes=%llu consume=%llu invalid=%llu conflicts=%llu faults=%llu\n",t.pid,t.start.c_str(),hooked,c.enabled,(long long)(c.lead/1000),(unsigned long long)c.packets,(unsigned long long)c.scopes,(unsigned long long)c.calls,(unsigned long long)c.invalid,(unsigned long long)c.conflicts,(unsigned long long)c.faults);
+ printf("PID=%d start=%s scene=%s hooks=%d enabled=%u lead_us=%lld packets=%llu scopes=%llu consume=%llu invalid=%llu conflicts=%llu faults=%llu\n",t.pid,t.start.c_str(),t.profile->name,hooked,c.enabled,(long long)(c.lead/1000),(unsigned long long)c.packets,(unsigned long long)c.scopes,(unsigned long long)c.calls,(unsigned long long)c.invalid,(unsigned long long)c.conflicts,(unsigned long long)c.faults);
  for(unsigned i=0;i<2;++i){auto& h=c.hand[i];printf("hand=%u epoch=content samples=%u ready=%u anchor_ns=%lld matched=%llu unmatched=%llu relabelled=%llu applied=%llu changed=%u last_offset_us=%d source_ns=%lld\n",i,h.count,h.calibrated,(long long)h.anchor,(unsigned long long)h.matched,(unsigned long long)h.unmatched,(unsigned long long)h.ambiguous,(unsigned long long)h.applied,h.changed,h.lastOffset,(long long)h.lastStamp);}
 }
 static void restore(){
@@ -120,9 +141,9 @@ static Target apply(){
  auto a=sites(t),o=originals(t);for(U i=0;i<3;++i){uintptr_t x;mem.get(a[i],&x,8);require(x==o[i],"Already hooked or foreign GOT");}
  uintptr_t svc=syscallSite(t.pid,mem);t.address=remoteSyscall(t.pid,svc,222,{0,ALLOCATION,PROT_READ|PROT_WRITE,MAP_PRIVATE|MAP_ANONYMOUS,uint64_t(-1),0});
  require(t.address>=0x10000&&t.address<0x1000000000000ULL&&(t.address&0xfff)==0,"mmap refused");
- mem.put(t.address,PAYLOAD,sizeof(PAYLOAD));Control c{};c.magic=MAGIC;c.consume=o[0];c.state=o[1];c.submit=o[2];c.clock=t.scene+0x155bf4;c.lead=leadSetting();
+ mem.put(t.address,PAYLOAD,sizeof(PAYLOAD));Control c{};c.magic=MAGIC;c.consume=o[0];c.state=o[1];c.submit=o[2];c.clock=t.scene+t.profile->clock;c.lead=leadSetting();
  mem.put(t.address+DATA,&c,sizeof(c));require(remoteSyscall(t.pid,svc,226,{t.address,DATA,PROT_READ|PROT_EXEC,0,0,0})==0,"RX refused");
- putFile(STATE,std::to_string(t.pid)+" "+t.start+" "+std::to_string(t.runtime)+" "+std::to_string(t.scene)+" "+std::to_string(t.address)+"\n");
+ putFile(STATE,std::to_string(t.pid)+" "+t.start+" "+std::to_string(t.runtime)+" "+std::to_string(t.scene)+" "+std::to_string(t.address)+" "+t.profile->name+"\n");
  auto v=replacements(t);
  try{for(U i=0;i<3;++i)mem.put(a[i],&v[i],8);U on=1;mem.put(t.address+DATA+offsetof(Control,enabled),&on,4);}
  catch(...){for(U i=0;i<3;++i)try{mem.put(a[i],&o[i],8);}catch(...){fprintf(stderr,"Restore failed; close Steam Link\n");}throw;}
@@ -164,7 +185,7 @@ static void checkState(){
 static bool targetAlive(const Target& t){return readProcessIdentity(proc(t.pid,"stat"),t.start).state!=ProcessState::Gone;}
 static void health(const Target& t){
  verifyIdentity(t.pid,t.start);Memory mem(t.pid);Control c{};mem.get(t.address+DATA,&c,sizeof(c));auto o=originals(t),a=sites(t),v=replacements(t);
- require(c.magic==MAGIC&&c.consume==o[0]&&c.state==o[1]&&c.submit==o[2]&&c.clock==t.scene+0x155bf4&&c.enabled==1&&c.lead>=0&&c.lead<=MAX_LEAD_NS,"Control health check failed");
+ require(c.magic==MAGIC&&c.consume==o[0]&&c.state==o[1]&&c.submit==o[2]&&c.clock==t.scene+t.profile->clock&&c.enabled==1&&c.lead>=0&&c.lead<=MAX_LEAD_NS,"Control health check failed");
  require(equal(mem,t.address,PAYLOAD,sizeof(PAYLOAD)),"Payload health check failed");
  for(U i=0;i<3;++i){uintptr_t value;mem.get(a[i],&value,8);require(value==v[i],"Live hook health check failed");}
  require(gxr_consumer_state(mem.bytes(t.runtime+0x1b359c,sizeof(GXR_CONSUMER)).data())==1&&gxr_payload_valid(mem.bytes(t.runtime+0x272ae0,0x520).data(),true),"Velocity Frame dependency changed; restoring pose-time hooks");

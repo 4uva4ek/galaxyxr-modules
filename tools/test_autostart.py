@@ -210,6 +210,7 @@ set -- resume
                     work = Path(temp)
                     # Cold-reset boundary is covered with all six real entries in test_cold_boot_reset.py.
                     (work/'cold-boot-reset.sh').write_text('exit 0\n', newline='\n')
+                    (work/'stream-clients.sh').write_bytes((ROOT/'tools/stream-clients.sh').read_bytes())
                     (work/'state/auto.worker').mkdir(parents=True)
                     (work/'autostart').mkdir()
                     (work/'auto.sh').touch()
@@ -219,9 +220,10 @@ set -- resume
                     (work/'proc/123').mkdir(parents=True)
                     (work/'proc/mounts').write_text('tmpfs /dev tmpfs rw 0 0\n')
                     (work/'proc/123/stat').write_text('123 (app) ' + '0 '*19 + '99\n')
-                    (work/'proc/123/maps').write_text('/system/lib64/libsecxrcontrollerservice_jni.xrcontroller.samsung.so\n')
+                    (work/'proc/123/maps').write_text('/system/lib64/libsecxrcontrollerservice_jni.xrcontroller.samsung.so\n/system/lib64/libopenxr_android.so\n')
                     script = '''id() { echo 0; }
 pidof() { echo 123; }
+ps() { echo '123 com.valvesoftware.steamlinkvr'; echo '124 com.valvesoftware.steamlinkvr:remote'; }
 getprop() { echo 1; }
 sh() { echo disabled > manual; rm -f state/auto.enabled autostart/enabled; }
 sha256sum() {

@@ -30,6 +30,7 @@ struct Profile {
 #include "profiles.generated.h"
 #include "compatibility.h"
 #include "package_query.h"
+#include "steamlink_package.h"
 #include "process_identity.h"
 static void require(bool ok,const char* msg) { if(!ok) throw std::runtime_error(msg); }
 static void requireProcess(bool ok,const char* msg) { if(!ok) throw ProcessAccessError(msg); }
@@ -159,6 +160,13 @@ static bool thirdParty(pid_t pid,const std::string& name,const std::vector<App>&
     unsigned long uid=strtoul(status.c_str()+pos+4,nullptr,10);
     return std::any_of(apps.begin(),apps.end(),[&](const App& a){return a.package==name&&a.uid==uid;});
 }
+// Suite builds limit discovery and activation to Steam Link and ChronoLink
+// copies; the standalone module keeps covering every third-party OpenXR app.
+#ifdef GXR_STREAMING_CLIENTS_ONLY
+static bool inScope(const std::string& package){return streamingClientPackage(package);}
+#else
+static bool inScope(const std::string&){return true;}
+#endif
 static void noLegacyHook(pid_t pid,Memory& mem) {
     // Conflict detection only: unknown APK versions do not select runtime offsets.
     std::istringstream lines(read(proc(pid,"maps")));std::string line;
@@ -210,7 +218,7 @@ int main(int argc,char**argv) {
             const auto apps=thirdPartyApps();DIR* d=opendir("/proc");require(d,"Cannot list processes");
             while(auto* e=readdir(d)){pid_t pid=atoi(e->d_name);if(pid<=1)continue;
                 try{std::string name=read(proc(pid,"cmdline")).c_str();
-                    if(!thirdParty(pid,name,apps))continue;
+                    if(!inScope(name)||!thirdParty(pid,name,apps))continue;
                     const auto maps=read(proc(pid,"maps"));
                     if(maps.find("/system/lib64/libopenxr_android.so")!=std::string::npos)
                         printf("%d %s %s\n",pid,starttime(pid).c_str(),name.c_str());
@@ -230,7 +238,8 @@ int main(int argc,char**argv) {
         const bool eligible=thirdParty(pid,package,thirdPartyApps());
         verifyIdentity(pid,expected);
         require(eligible,"Target is not a verified third-party main app process");
-        if(mode=="on"&&package=="com.valvesoftware.steamlinkvr"){
+        require(mode!="on"||inScope(package),"Target is not a Steam Link or ChronoLink package");
+        if(mode=="on"&&steamLinkPackage(package)){
             require((access("/data/adb/modules/gxr_controller_velocity_frame",F_OK)!=0||
                     access("/data/adb/modules/gxr_controller_velocity_frame/disable",F_OK)==0)&&
                     access("/dev/gxr_controller_velocity_frame/worker",F_OK)!=0,"Disable old module and wait for worker exit first");

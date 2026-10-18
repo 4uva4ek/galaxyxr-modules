@@ -21,6 +21,7 @@
     "cold-boot-reset.sh"
   ],
   "shared_files": [
-    "action-report.sh"
+    "action-report.sh",
+    "stream-clients.sh"
   ]
 }

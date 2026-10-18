@@ -2,6 +2,8 @@
 set -eu
 CONFIG=$MODDIR/autostart
 SOFT_RESTART_AWARE=${SOFT_RESTART_AWARE:-0}
+# A module may define target_pids for a package family; default is exact PACKAGE.
+command -v target_pids > /dev/null 2>&1 || target_pids() { pidof "$PACKAGE" || true; }
 TARGET_READY_TIMEOUT=${TARGET_READY_TIMEOUT:-0}
 fail() {
   echo "$*"
@@ -104,7 +106,7 @@ case "${1:-status}" in
           echo 'KernelSU soft restart completed; checking target identity'
         fi
       fi
-      pid=$(pidof "$PACKAGE" || true)
+      pid=$(target_pids)
       identity=
       case "$pid" in
         ''|*[!0-9]*) ;;

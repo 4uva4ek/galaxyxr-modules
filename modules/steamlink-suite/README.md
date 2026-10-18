@@ -1,15 +1,22 @@
 # Galaxy XR Steam Link Suite
 
-Author: 4uva4ek. Version 0.1.2. Requires KernelSU GXR 1.0.11 or later for reviewed migration.
+Author: 4uva4ek. Version 0.1.4. Requires KernelSU GXR 1.0.11 or later for reviewed migration.
 
 Components: openxr-velocity-frame, steamlink-pose-time, openxr-priority, controller-extrapolation.
+
+Targets (0.1.3): packages starting with `com.valvesoftware.steamlinkvr` (Steam Link
+and renamed copies such as `.x_23`) and `dev.chronolink.client` (ChronoLink); other
+apps are never patched. Velocity Frame and Controller Extrapolation act on the pinned
+OpenXR runtime in both clients. Pose Time is Steam Link only, with scene profiles for
+2.0.20 and 2.0.23 selected by live code bytes. App priorities have a Steam Link profile; ChronoLink is reported
+unchanged until its threads are profiled.
 
 Automatic-only, installed disabled. KernelSU is the master activation preference.
 WebUI saves explicit tuning; it never activates a disabled suite.
 Native/vendor compatibility signatures and child recovery owners are preserved.
 A suite supervisor coordinates dependency order and stops the whole suite on failure.
 
-Build: `python modules/steamlink-suite/build.py --ndk28 PATH --ndk29 PATH --runtime FILE --scene FILE`.
+Build: `python modules/steamlink-suite/build.py --ndk28 PATH --ndk29 PATH --runtime FILE --scene SCENE_2_0_20 --scene SCENE_2_0_23` (clean `libvrlink_scene.so` of each supported version).
 
 Replaces: gxr_openxr_velocity_frame, gxr_steamlink_pose_time, gxr_stream_cpu_relief, gxr_controller_extrapolation. Haptic Main is separate.
 

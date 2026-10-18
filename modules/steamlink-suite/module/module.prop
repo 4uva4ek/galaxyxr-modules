@@ -1,7 +1,7 @@
 id=gxr_steamlink_suite
 name=Galaxy XR Steam Link Suite
-version=0.1.2
-versionCode=3
+version=0.1.4
+versionCode=5
 author=4uva4ek
 description=Unified guarded controller patches with parameter WebUI. Installed disabled; Action reports live component status.
 updateJson=https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/steamlink-suite.json

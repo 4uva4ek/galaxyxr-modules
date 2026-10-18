@@ -3,8 +3,8 @@ import argparse,hashlib,json,platform,zipfile
 from pathlib import Path
 from prepare import build,HERE
 
-def package(ndk,runtime):
- build(ndk,runtime)
+def package(ndk,runtime,clients_only=False):
+ build(ndk,runtime,clients_only)
  out=HERE.parents[1]/'dist/openxr-velocity-frame'
  host={'Windows':'windows-x86_64','Linux':'linux-x86_64','Darwin':'darwin-x86_64'}[platform.system()]
  props=dict(l.split('=',1) for l in (HERE/'module/module.prop').read_text().splitlines() if '=' in l)
@@ -38,4 +38,5 @@ def package(ndk,runtime):
 
 if __name__=='__main__':
  p=argparse.ArgumentParser(description=__doc__);p.add_argument('--ndk',type=Path,required=True);p.add_argument('--runtime',type=Path,required=True)
- args=p.parse_args();package(args.ndk.resolve(),args.runtime.resolve())
+ p.add_argument('--streaming-clients-only',action='store_true',help='Limit targets to Steam Link and ChronoLink packages and their copies')
+ args=p.parse_args();package(args.ndk.resolve(),args.runtime.resolve(),args.streaming_clients_only)

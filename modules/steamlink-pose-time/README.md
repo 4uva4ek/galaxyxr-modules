@@ -34,7 +34,9 @@ out-of-range value to the default; the health check rejects it. Saving does not
 enable the module. Reviewed deployment preserves `compensation.conf` like
 `guard-boot-id`; removing the module removes the setting.
 
-Requires the supported **Steam Link 2.0.20 main package** and **Velocity Frame**.
+Requires **Velocity Frame** and a supported Steam Link scene profile. The standalone
+release is built for **2.0.20**; Steam Link Suite builds include **2.0.20 and 2.0.23**
+and accept any package starting with `com.valvesoftware.steamlinkvr`.
 Other versions and renamed copies are excluded. Controller Extrapolation and
 foreign hooks are rejected. The source epoch is paired with the synchronous
 native call and exact final pose bytes, never a later independent slot read.
