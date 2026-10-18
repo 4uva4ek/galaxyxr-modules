@@ -1,7 +1,7 @@
 {
-  "version": "0.1.2",
-  "versionCode": 3,
-  "zipUrl": "https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-suite/v0.1.2/gxr-controller-suite-0.1.2-auto.zip",
+  "version": "0.1.4",
+  "versionCode": 5,
+  "zipUrl": "https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-suite/v0.1.4/gxr-controller-suite-0.1.4-auto.zip",
   "changelog": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/changelogs/controller-suite.md",
-  "sha256": "2b852f807346610b3e89e157ae27aff8fd920ed5926165935a108b0980c984a3"
+  "sha256": "8b9f55fb266a72005e987bd189d10654546fc3be38ff227d190cfaefe57363c2"
 }
