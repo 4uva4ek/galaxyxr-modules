@@ -3,5 +3,6 @@
   "versionCode": 8,
   "zipUrl": "https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-extrapolation/v0.4.3/gxr-controller-extrapolation-0.4.3-auto.zip",
   "changelog": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/changelogs/controller-extrapolation.md",
-  "sha256": "dc5415aa3a318697935178cff89644675f05e2f3702eea3846225677d3ba018a"
+  "sha256": "dc5415aa3a318697935178cff89644675f05e2f3702eea3846225677d3ba018a",
+  "deprecatedBy": "gxr_steamlink_suite"
 }

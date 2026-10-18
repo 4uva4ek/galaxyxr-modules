@@ -70,3 +70,11 @@ packages still install disabled. CI success verifies software/package checks;
 it does not replace physical testing, establish tracking quality or validate
 native throwing. Existing unpublished QUALITY 0.1.0 still needs the migration
 described in its module README.
+
+## Suite releases
+
+Controller Suite and Steam Link Suite 0.1.1 were built from a clean source archive
+with their documented Windows NDK 28/29 builder and published through the reviewed
+manual path. The Linux automatic builder does not yet build suites; use
+`docs/RELEASING.md` for future suite releases until that builder is integrated.
+Existing published suite feeds require no automatic build.

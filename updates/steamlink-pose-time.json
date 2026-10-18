@@ -3,5 +3,6 @@
   "versionCode": 107,
   "zipUrl": "https://github.com/4uva4ek/galaxyxr-modules/releases/download/steamlink-pose-time/v0.1.7/gxr-steamlink-pose-time-0.1.7-auto.zip",
   "changelog": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/changelogs/steamlink-pose-time.md",
-  "sha256": "ca02af606c3936bb29d056fdc35d474720bf9f629428e3f1c5441ef880fbb4d2"
+  "sha256": "ca02af606c3936bb29d056fdc35d474720bf9f629428e3f1c5441ef880fbb4d2",
+  "deprecatedBy": "gxr_steamlink_suite"
 }

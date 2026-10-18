@@ -3,5 +3,6 @@
   "versionCode": 4,
   "zipUrl": "https://github.com/4uva4ek/galaxyxr-modules/releases/download/controller-timestamp-precision/v0.1.3/gxr-controller-timestamp-precision-0.1.3-auto.zip",
   "changelog": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/changelogs/controller-timestamp-precision.md",
-  "sha256": "8a7b2a2fff23ff285b69f127b869adde61bb7ac0de32b296e65a8933dd154e50"
+  "sha256": "8a7b2a2fff23ff285b69f127b869adde61bb7ac0de32b296e65a8933dd154e50",
+  "deprecatedBy": "gxr_controller_suite"
 }

@@ -9,36 +9,6 @@
       "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/haptic-main.json"
     },
     {
-      "id": "gxr_openxr_velocity_frame",
-      "name": "OpenXR Velocity Frame",
-      "description": "Correct controller velocity coordinates in supported third-party apps.",
-      "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/openxr-velocity-frame.json"
-    },
-    {
-      "id": "gxr_controller_whitening",
-      "name": "Controller Whitening",
-      "description": "Correct covariance whitening and reject invalid camera projections in the controller service.",
-      "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/controller-whitening.json"
-    },
-    {
-      "id": "gxr_controller_timestamp_precision",
-      "name": "Controller Timestamp Precision",
-      "description": "Preserve integer request timestamps in the controller HAL.",
-      "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/controller-timestamp-precision.json"
-    },
-    {
-      "id": "gxr_hal_cache_bypass",
-      "name": "HAL Cache Bypass",
-      "description": "Recompute controller poses instead of reusing the normal HAL predictor cache.",
-      "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/hal-cache-bypass.json"
-    },
-    {
-      "id": "gxr_steamlink_pose_time",
-      "name": "Steam Link Pose Time",
-      "description": "Forward controller slot timestamps to PCVR. Requires Steam Link 2.0.20 and Velocity Frame.",
-      "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/steamlink-pose-time.json"
-    },
-    {
       "id": "gxr_openxr_quality",
       "name": "OpenXR QUALITY",
       "description": "Experimental QUALITY camera request during visible OpenXR sessions, with thermal and session guards.",
@@ -57,10 +27,16 @@
       "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/mvhevc-eye-fix.json"
     },
     {
-      "id": "gxr_stream_cpu_relief",
-      "name": "Galaxy XR Stream CPU Relief",
-      "description": "Guarded KXR LogLevel=0 in the controller HAL and nice -20 for Steam Link pipeline threads. Installs disabled.",
-      "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/stream-cpu-relief.json"
+      "id": "gxr_controller_suite",
+      "name": "Galaxy XR Controller Suite",
+      "description": "Controller tracking fixes with EN/RU WebUI. Requires KernelSU GXR 1.0.11; replaces standalone controller modules.",
+      "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/controller-suite.json"
+    },
+    {
+      "id": "gxr_steamlink_suite",
+      "name": "Galaxy XR Steam Link Suite",
+      "description": "PCVR velocity, pose timing and CPU relief with EN/RU WebUI. Requires KernelSU GXR 1.0.11; replaces standalone Steam Link modules.",
+      "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/steamlink-suite.json"
     }
   ]
 }
