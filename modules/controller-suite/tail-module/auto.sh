@@ -33,6 +33,9 @@ case "${1:-status}" in
   : > "$MODDIR/auto.pending"
   "$BIN" "$pid" module-hold "$boot" "$stamp"
   rc=$?
+  # 3 = KernelSU restart handoff: the entry is restored (or was never applied).
+  # The preference stays ON; the next service stage after the restart starts again.
+  if [ "$rc" = 3 ]; then echo 'DISABLED - Planned restart: tail restored; preference preserved'; exit 0; fi
   # A clean native exit while the master is ON still means the component stopped.
   # Surface it to the suite so the other components are restored as well.
   root=/data/adb/modules/gxr_controller_suite

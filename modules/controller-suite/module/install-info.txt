@@ -3,3 +3,4 @@ KernelSU must confirm removal and verify restoration before migration.
 Installed disabled. Haptic Main remains separate.
 For 0.1.2, update BOTH suites while disabled before enabling either.
 Controller Suite owns HAL LogLevel=0; Steam Link Suite owns app priorities.
+0.1.4 restores before a KernelSU soft restart and starts again afterwards.

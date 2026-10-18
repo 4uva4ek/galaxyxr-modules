@@ -63,9 +63,11 @@ static uint32_t validate(Target& t,Memory& mem,bool allowHook){
  require(normalize_known_words(live.data(),reinterpret_cast<const unsigned char*>(disk.data()),live.size(),w),"Unknown cache/tail instruction");
  require(!memcmp(live.data(),disk.data(),RX_END),"RX differs outside known tail and Cache Bypass words");return w;
 }
-static Target inspect(pid_t pid){
+// Activation requires completed boot. Read-only preflight and restoration also run while
+// a KernelSU restart has reset sys.boot_completed; the HAL process survives that restart.
+static Target inspect(pid_t pid,bool requireBoot){
  char model[PROP_VALUE_MAX]{},boot[PROP_VALUE_MAX]{};__system_property_get("ro.product.model",model);__system_property_get("sys.boot_completed",boot);
- require(!strcmp(model,"SM-I610")&&!strcmp(boot,"1"),"Wrong model or incomplete boot");require(hash(CLIENT)==HASH,"Pinned library SHA256 mismatch");
+ require(!strcmp(model,"SM-I610"),"Wrong model");require(!requireBoot||!strcmp(boot,"1"),"Android boot not complete");require(hash(CLIENT)==HASH,"Pinned library SHA256 mismatch");
  Target t{pid,starttime(pid),read("/proc/sys/kernel/random/boot_id"),mapping(pid,CLIENT),0};identity(t);return t;
 }
 static user_pt_regs getRegs(pid_t tid){user_pt_regs r{};iovec io{&r,sizeof(r)};require(ptrace(PTRACE_GETREGSET,tid,reinterpret_cast<void*>(NT_PRSTATUS),&io)==0&&io.iov_len==sizeof(r),"GETREGSET failed");return r;}
@@ -194,11 +196,14 @@ int main(int argc,char** argv){
   if(argc==2&&!strcmp(argv[1],"--selftest")){selftest();return 0;}
   require(argc>=3,"Usage: gxr-tail-velocity PID preflight|off|hold|module-hold [BOOT_ID STARTTIME]; hold reads observe/apply GAIN/stats/off on stdin, max 180s");
   char* end=nullptr;long id=strtol(argv[1],&end,10);require(end&&!*end&&id>1&&id<INT32_MAX,"Invalid PID");std::string op=argv[2];require(op=="preflight"||op=="off"||op=="hold"||op=="module-hold","Invalid operation");
-  Target t=inspect(pid_t(id));Memory mem(t.pid);uint32_t w=validate(t,mem,true);
+  const bool moduleMode=op=="module-hold";
+  // Exit 3: a KernelSU restart is in progress and nothing is left applied (planned handoff).
+  if(moduleMode&&cachegate::restartStarted()){puts("WAITING: KernelSU restart in progress before activation; nothing applied");return 3;}
+  Target t=inspect(pid_t(id),op=="hold"||moduleMode);Memory mem(t.pid);uint32_t w=validate(t,mem,true);
   if(op=="preflight"){printf("READ_ONLY pid=%d start=%s boot=%sbase=%llx hooked=%d\n",t.pid,t.stamp.c_str(),t.boot.c_str(),(unsigned long long)t.map.base,w!=ORIGINAL);puts("PREFLIGHT PASS (no ptrace/no writes)");return 0;}
   if(op=="off"){if(w!=ORIGINAL)restore(t);else puts("Already stock");return 0;}
   require(argc==5,"hold requires the freshly inspected BOOT_ID and STARTTIME");require(t.boot==std::string(argv[3])+"\n"&&t.stamp==argv[4],"Explicit expected identity mismatch");require(w==ORIGINAL,"Already active");
-  const bool moduleMode=op=="module-hold";std::string generation;if(moduleMode)generation=cachegate::readyGeneration(true);
+  std::string generation;if(moduleMode)generation=cachegate::readyGeneration(true);bool handoff=false;
   Lock run("gxr-tail-velocity-owner-v1");armSupervisorDeath(stop);prepare(t);
   int pipefd[2];require(pipe2(pipefd,O_CLOEXEC)==0,"Guardian pipe failed");pid_t owner=getpid();std::string ownerStamp=starttime(owner);
   pid_t guardian=fork();require(guardian>=0,"Guardian fork failed");
@@ -212,7 +217,7 @@ int main(int argc,char** argv){
    while(!stopping&&Clock::now()<deadline){
     int st=0;require(waitpid(guardian,&st,WNOHANG)==0,"Guardian exited");identity(t);
     if(moduleMode){
-     require(cachegate::readyGeneration(false)==generation,"Late-load generation changed");
+     if(cachegate::restartPending(generation)){handoff=true;puts("PLANNED RESTART: KernelSU restart gate changed; restoring");break;}
      if(access("/data/adb/modules/gxr_controller_suite/disable",F_OK)==0||access("/data/adb/modules/gxr_controller_suite/remove",F_OK)==0)break;
      float gain=suiteGain();if(gain!=lastGain){mode(t,gain>0?1:0,gain);lastGain=gain;}
      if(Clock::now()>=nextHealth){require(validate(t,mem,true)!=ORIGINAL,"Tail health failed");nextHealth=Clock::now()+std::chrono::seconds(2);}
@@ -224,6 +229,6 @@ int main(int argc,char** argv){
    }
    stats(t);ok=recovery(t);
   }catch(const std::exception& e){trialOk=false;fprintf(stderr,"TRIAL ERROR: %s\n",e.what());ok=recovery(t);}
-  if(ok){char done='S';(void)!::write(pipefd[1],&done,1);}close(pipefd[1]);int st=0;pid_t got;do{got=waitpid(guardian,&st,0);}while(got<0&&errno==EINTR);return trialOk&&ok&&got==guardian&&WIFEXITED(st)&&WEXITSTATUS(st)==0?0:2;
+  if(ok){char done='S';(void)!::write(pipefd[1],&done,1);}close(pipefd[1]);int st=0;pid_t got;do{got=waitpid(guardian,&st,0);}while(got<0&&errno==EINTR);return trialOk&&ok&&got==guardian&&WIFEXITED(st)&&WEXITSTATUS(st)==0?(handoff?3:0):2;
  }catch(const std::exception& e){fprintf(stderr,"ERROR: %s\n",e.what());return 1;}
 }

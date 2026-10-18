@@ -19,6 +19,18 @@ static void lateLoadMode(){
  std::istringstream lines(output);std::string line;bool late=false,mode=false;while(std::getline(lines,line)){late|=line=="late_load: true";mode|=line=="runtime_mode: late-load";}
  require(late&&mode,"KernelSU is not late-load; cold-boot activation blocked");
 }
+// A KernelSU soft restart writes a new generation, creates busy, removes ready and
+// resets sys.boot_completed. These read-only checks never call ksud.
+static bool restartStarted(){
+ char boot[PROP_VALUE_MAX]{};__system_property_get("sys.boot_completed",boot);if(strcmp(boot,"1"))return true;
+ struct stat st{};errno=0;return lstat("/dev/ksu-restart-stage/busy",&st)==0||errno!=ENOENT;
+}
+static bool restartPending(const std::string& generation){
+ if(restartStarted())return true;
+ struct stat st{};errno=0;if(lstat("/dev/ksu-restart-stage/error",&st)==0||errno!=ENOENT)return true;
+ try{return gateFile("/dev/ksu-restart-stage/ready")!="ready"||gateFile("/dev/ksu-restart-stage/generation")!=generation;}
+ catch(const std::exception&){return true;}
+}
 static std::string readyGeneration(bool verifyMode){
  struct statfs fs{};require(statfs("/dev",&fs)==0&&fs.f_type==0x01021994,"/dev is not tmpfs");
  char boot[PROP_VALUE_MAX]{};__system_property_get("sys.boot_completed",boot);require(!strcmp(boot,"1"),"Android boot not complete");
