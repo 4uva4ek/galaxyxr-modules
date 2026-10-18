@@ -5,6 +5,8 @@
 - Pose Time supports Steam Link 2.0.20 and 2.0.23 through per-version scene profiles (GetControllerState, SubmitMessage and vendor clock locations), selected by live code bytes. Renamed and patched copies such as `.x_23` match when those functions are unchanged.
 - Recovery records name their scene profile; records from earlier builds are read as 2.0.20.
 - Controller Extrapolation status/off report WAITING (no live patch) for clients that have not loaded the OpenXR runtime, such as a background Steam Link, instead of failing; this no longer blocks updates.
+- Device check after a cold boot: Velocity Frame corrected main Steam Link and `.x_23` at the same time; Pose Time was live on `.x_23` with the 2.0.23 profile (about 11.5k packets matched and relabelled per hand). No tracking-quality or latency measurement.
+- Known limit: with two clients that both have the OpenXR runtime loaded, Controller Extrapolation status reports an error instead of a per-client state; no writes are made, but a later update is refused until one client is closed.
 
 ## 0.1.3 - 2026-10-19
 
