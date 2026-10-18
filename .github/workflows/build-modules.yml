@@ -111,6 +111,35 @@ jobs:
           GXR_SCENE_23: ${{ secrets.GXR_SCENE_23 }}
           GXR_SCENE_24: ${{ secrets.GXR_SCENE_24 }}
         run: python tools/ci_modules.py restore-input scene --directory "$RUNNER_TEMP/gxr-build-inputs"
+      - name: Restore private Steam Link 2.0.23 scene build input
+        if: steps.plan.outputs.scene == 'true'
+        env:
+          GXR_SCENE23_01: ${{ secrets.GXR_SCENE23_01 }}
+          GXR_SCENE23_02: ${{ secrets.GXR_SCENE23_02 }}
+          GXR_SCENE23_03: ${{ secrets.GXR_SCENE23_03 }}
+          GXR_SCENE23_04: ${{ secrets.GXR_SCENE23_04 }}
+          GXR_SCENE23_05: ${{ secrets.GXR_SCENE23_05 }}
+          GXR_SCENE23_06: ${{ secrets.GXR_SCENE23_06 }}
+          GXR_SCENE23_07: ${{ secrets.GXR_SCENE23_07 }}
+          GXR_SCENE23_08: ${{ secrets.GXR_SCENE23_08 }}
+          GXR_SCENE23_09: ${{ secrets.GXR_SCENE23_09 }}
+          GXR_SCENE23_10: ${{ secrets.GXR_SCENE23_10 }}
+          GXR_SCENE23_11: ${{ secrets.GXR_SCENE23_11 }}
+          GXR_SCENE23_12: ${{ secrets.GXR_SCENE23_12 }}
+          GXR_SCENE23_13: ${{ secrets.GXR_SCENE23_13 }}
+          GXR_SCENE23_14: ${{ secrets.GXR_SCENE23_14 }}
+          GXR_SCENE23_15: ${{ secrets.GXR_SCENE23_15 }}
+          GXR_SCENE23_16: ${{ secrets.GXR_SCENE23_16 }}
+          GXR_SCENE23_17: ${{ secrets.GXR_SCENE23_17 }}
+          GXR_SCENE23_18: ${{ secrets.GXR_SCENE23_18 }}
+          GXR_SCENE23_19: ${{ secrets.GXR_SCENE23_19 }}
+          GXR_SCENE23_20: ${{ secrets.GXR_SCENE23_20 }}
+          GXR_SCENE23_21: ${{ secrets.GXR_SCENE23_21 }}
+          GXR_SCENE23_22: ${{ secrets.GXR_SCENE23_22 }}
+          GXR_SCENE23_23: ${{ secrets.GXR_SCENE23_23 }}
+          GXR_SCENE23_24: ${{ secrets.GXR_SCENE23_24 }}
+          GXR_SCENE23_25: ${{ secrets.GXR_SCENE23_25 }}
+        run: python tools/ci_modules.py restore-input scene23 --directory "$RUNNER_TEMP/gxr-build-inputs"
       - name: Build and validate selected disabled packages
         if: steps.plan.outputs.any == 'true'
         env:

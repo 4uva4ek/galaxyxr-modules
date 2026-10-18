@@ -44,9 +44,10 @@ use the existing `update-feed.yml` workflow.
 ## Private build inputs
 
 Extrapolation, Velocity Frame and Pose Time need the pinned OpenXR runtime;
-Pose Time also needs the pinned Steam Link scene library. Compressed, encoded
-inputs are stored once as repository Actions secrets, in numbered chunks:
-`GXR_RUNTIME_01` through `27` and `GXR_SCENE_01` through `24`. They are restored
+Pose Time also needs the pinned Steam Link scene libraries (2.0.20 and 2.0.23).
+Compressed, encoded inputs are stored once as repository Actions secrets, in
+numbered chunks: `GXR_RUNTIME_01` through `27`, `GXR_SCENE_01` through `24`
+(2.0.20) and `GXR_SCENE23_01` through `25` (2.0.23). They are restored
 only for the selected modules, verified against the original full-file SHA-256,
 and removed from the ephemeral runner. They are never source commits, logs,
 public release assets or uploaded build artifacts. The build job has read-only

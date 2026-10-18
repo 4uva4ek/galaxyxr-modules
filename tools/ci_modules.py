@@ -20,6 +20,8 @@ RUNTIME_MODULES = {'controller-extrapolation', 'openxr-velocity-frame', 'steamli
 INPUTS = {
     'runtime': ('GXR_RUNTIME_', 27, 'libopenxr_android.so', 'a7dabaa1030cc7979efe987f212488c61b61e8afb9aa3add59f7ae4fbeff4c92'),
     'scene': ('GXR_SCENE_', 24, 'libvrlink_scene.so', 'a1f1907ee91dc30dcdb4e3924cf3cff6e78302131fa835d9eb40f3fd4946ebde'),
+    # Steam Link 2.0.23 scene library: second Pose Time profile.
+    'scene23': ('GXR_SCENE23_', 25, 'libvrlink_scene-2.0.23.so', 'e33bcd2ff35e4c202798d9433f913325e32d51df7e27b072e6450e93389d1b5c'),
 }
 # A freshly created draft release can be missing from the release listings
 # for a few seconds; publication retries the lookup instead of failing the run.
@@ -96,7 +98,7 @@ def build(names, ndk, inputs):
     run(sys.executable, 'tools/test_update_feed.py')
     run(sys.executable, 'tools/test_ci_modules.py')
     runtime = inputs/INPUTS['runtime'][2]
-    scene = inputs/INPUTS['scene'][2]
+    scenes = [inputs/INPUTS[kind][2] for kind in ('scene', 'scene23')]
     manifest = {'commit': run('git', 'rev-parse', 'HEAD', capture=True), 'modules': {}}
     for name in names:
         if name not in MODULES:
@@ -108,7 +110,8 @@ def build(names, ndk, inputs):
             run(sys.executable, f'modules/{name}/test_pre_prediction.py', '--runtime', runtime)
             run(sys.executable, f'modules/{name}/verify_package.py')
         elif name == 'steamlink-pose-time':
-            run(sys.executable, f'modules/{name}/build.py', '--ndk', ndk, '--runtime', runtime, '--scene', scene)
+            run(sys.executable, f'modules/{name}/build.py', '--ndk', ndk, '--runtime', runtime,
+                *[x for scene in scenes for x in ('--scene', scene)])
         elif name == 'ota-control':
             run(sys.executable, f'modules/{name}/build.py')
             run(sys.executable, f'modules/{name}/test_ota_ctl.py')
