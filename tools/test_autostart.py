@@ -13,7 +13,7 @@ if not SHELL and os.name == 'nt':
 
 
 class Autostart(unittest.TestCase):
-    def run_worker(self, scenario, system=0, status="MAIN pid=123"):
+    def run_worker(self, scenario, system=0, status="MAIN pid=123", source=ROOT/'tools/autostart.sh'):
         with tempfile.TemporaryDirectory() as temp:
             work = Path(temp)
             # Cold-reset boundary is covered with all six real entries in test_cold_boot_reset.py.
@@ -25,7 +25,7 @@ class Autostart(unittest.TestCase):
             (work/'proc/123').mkdir(parents=True)
             (work/'proc/mounts').write_text('tmpfs /dev tmpfs rw 0 0\n')
             (work/'proc/uptime').write_text('100.00 0.00\n')
-            (work/'proc/123/stat').write_text('123 (app with spaces) ' + '0 '*19 + '99\n')
+            (work/'proc/123/stat').write_text('123 (app with spaces) ' + '0 '*19 + '99\n', newline='\n')
             (work/'proc/123/maps').write_text('/system/lib64/test.so\n')
             (work/'pid').write_text('123\n')
             script = '''#!/bin/sh
@@ -41,7 +41,7 @@ sha256sum() { return 0; }
 pidof() { cat pid; }
 sh() {
   if [ "$2" = _auto-off ]; then echo restored > restored; return 0; fi
-  if [ "$2" = status ]; then echo "MAIN pid=123"; return 0; fi
+  if [ "$2" = status ] || [ "$2" = _auto-check ]; then echo "MAIN pid=123"; return 0; fi
   [ "$2" = _auto-on ] && [ "$3" = 123:99 ] || return 90
   echo "$3" >> calls
   ACTION_RESULT
@@ -74,7 +74,7 @@ if [ "$tick" = 3 ]; then echo 123 > pid; fi''',
             if scenario == 'not_ready':
                 (work/'proc/123/maps').write_text('')
             script = script.replace('SCENARIO', steps[scenario])
-            script += (ROOT/'tools/autostart.sh').read_text().replace('/proc/', 'proc/')
+            script += source.read_text().replace('/proc/', 'proc/')
             (work/'test.sh').write_text(script, newline='\n')
             result = subprocess.run([SHELL, 'test.sh'], cwd=work, capture_output=True, text=True, timeout=10)
             calls = (work/'calls').read_text().splitlines() if (work/'calls').exists() else []
@@ -93,7 +93,8 @@ if [ "$tick" = 3 ]; then echo 123 > pid; fi''',
 
     def test_haptic_tuning_status_survives_health_check(self):
         result, calls = self.run_worker('healthy', system=1,
-            status='MAIN pid=123 site=123400 profile=step2-amplitude-stock')
+            status='MAIN pid=123 site=123400 profile=step2-amplitude-stock',
+            source=ROOT/'modules/haptic-main/module/autostart.sh')
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(len(calls), 1)
 

@@ -1,8 +1,10 @@
-# Haptic MAIN 0.5.6
+# Haptic MAIN 0.5.7
 
-Current release **0.5.6** includes a stable `updateJson` feed for Manager updates. See [installation from Sources or ZIP](../../docs/INSTALLING-MODULES.md). The package remains automatic-only and installs **DISABLED**.
+Current release **0.5.7** includes a stable `updateJson` feed for Manager updates. See [installation from Sources or ZIP](../../docs/INSTALLING-MODULES.md). The package remains automatic-only and installs **DISABLED**.
 
-Native patch behavior and runtime scripts are unchanged from the previous public release. This is a distribution/metadata update.
+Native routing and tuning are unchanged from 0.5.6. This release makes the switch and the
+background worker lighter and re-applies the patch after a sudden Android restart; see
+[Load and restarts](#load-and-restarts).
 
 
 After `sys.boot_completed=1`, activation waits up to 20 seconds for the
@@ -13,7 +15,7 @@ See [behavior and validation](../../docs/COLD-BOOT-GUARDS-2026-10-11.md).
 
 Current controls: [Action report and recovery](../../docs/ACTION-REPORT.md).
 
-**Regular release:** [Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.5.6/gxr-haptic-main-0.5.6-auto.zip).
+**Regular release:** [Automatic ZIP](https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.5.7/gxr-haptic-main-0.5.7-auto.zip).
 Only the automatic variant is published, shipped disabled. SHA-256 is attached to the release.
 
 A KernelSU module for Galaxy XR SM-I610 that routes standard OpenXR vibration
@@ -43,11 +45,29 @@ Log: `/dev/gxr_haptic_main/log` (tmpfs). With auto disabled, a full reboot resto
 the original code. A reboot was not performed during validation; software rollback
 through Action was tested.
 
+## Load and restarts
+
+The patch itself is two places in the service's private memory: the routing instruction
+and the replaced log block. Once written, vibrations cost nothing extra. The rest of the
+module only keeps that state:
+
+- While the patch is live, the worker reads `/proc` with shell builtins every 5 seconds
+  (checkbox and process identity). It runs no getprop, pidof, hashing or `sync`. A read-only
+  memory check runs 30 seconds after activation and then every 5 minutes.
+- Integrity and pinned APK/JNI hashes are still verified by `action.sh` before every write.
+- A sudden Android restart without the KernelSU notice (zygote/system_server restart; init
+  keeps `sys.boot_completed=1`) is recognised by a new system_server identity. The patch is
+  applied again when the controller service and JNI library return, within 120 seconds.
+  A controller service exit with system_server unchanged (checked for 10 seconds), a restart
+  within 60 seconds of the patch or more than 3 restarts per worker still disable autostart.
+
 ## How it works
 
 The switcher pauses the threads of `com.sec.android.secxrcontrollerservice`,
 validates the function, and replaces the routing instruction and the diagnostic log block in its private mapping
-using ptrace. It then detaches immediately. Switching may briefly pause tracking.
+using ptrace. It then detaches immediately. All threads are interrupted together and
+collected afterwards, so the service is stopped for about a millisecond rather than for a
+polling sleep per thread; a switch to the state already in memory does not stop it at all.
 The APK and system library on disk remain unchanged.
 
 In `nativePerformHapticFeedback` at offset `0x1238c`:

@@ -110,7 +110,7 @@ nohup() { touch launched; }
 MODDIR=.
 STATE=ram
 set -- resume
-'''+(ROOT/'tools/autostart.sh').read_text().replace('/proc/','proc/')+'\nwait\n'
+'''+(ROOT/'modules/haptic-main/module/autostart.sh').read_text().replace('/proc/','proc/')+'\nwait\n'
         (self.work/'entry.sh').write_text(source,newline='\n')
         r=subprocess.run([SHELL,'./entry.sh'],cwd=self.work,capture_output=True,text=True,timeout=10)
         self.assertEqual(r.returncode,0,r.stdout+r.stderr)
@@ -126,7 +126,9 @@ set -- resume
                 # disabled keeps each entry from activation AFTER the helper;
                 # guards must nevertheless expire, without changing preference.
                 (self.work/'disable').write_text('manual OFF')
-                if module in ('haptic-main','controller-extrapolation'):
+                if module=='haptic-main':
+                    source='MODDIR=.\nSTATE=ram\n'+(ROOT/'modules/haptic-main/module/autostart.sh').read_text()
+                elif module=='controller-extrapolation':
                     source='MODDIR=.\nSTATE=ram\n'+(ROOT/'tools/autostart.sh').read_text()
                 else:
                     source=(ROOT/f'modules/{module}/module/auto.sh').read_text()

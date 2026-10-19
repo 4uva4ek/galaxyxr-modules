@@ -52,7 +52,7 @@ sleep() {
  [ "$tick" -lt 30 ] || rm -f state/auto.enabled
 }
 set -- _run
-'''.replace('STEPS',steps)+(ROOT/'tools/autostart.sh').read_text().replace('/proc/','proc/')
+'''.replace('STEPS',steps)+(ROOT/'modules/haptic-main/module/autostart.sh').read_text().replace('/proc/','proc/')
             (w/'run.sh').write_text(code,newline='\n')
             r=subprocess.run([SHELL,'./run.sh'],cwd=w,capture_output=True,text=True,timeout=10)
             calls=(w/'calls').read_text().splitlines() if (w/'calls').exists() else []

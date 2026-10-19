@@ -73,7 +73,7 @@ sh() {
     echo restored >> restores
     [ ! -f restore_failure ]; return $?
   fi
-  if [ "$2" = status ]; then echo "MAIN pid=$(cat pid)"; return 0; fi
+  if [ "$2" = status ] || [ "$2" = _auto-check ]; then echo "MAIN pid=$(cat pid)"; return 0; fi
   [ "$2" = _auto-on ] || return 90
   echo "$3" >> attempts
   [ ! -f action_unavailable ] || return 3
@@ -140,7 +140,12 @@ fi'''
 fi'''
             code = common.replace('STEPS', steps).replace('RUN', run).replace('LIMIT', '40' if scenario.endswith('dead') else '12')
             if haptic:
-                code += (ROOT/'tools/autostart.sh').read_text()
+                # system_server keeps running in these scenarios (pid 1 here).
+                (work/'proc/1').mkdir()
+                (work/'proc/1/stat').write_text('1 (system_server) '+'0 '*19+'5\n', newline='\n')
+                code = code.replace('pidof() { cat pid; }',
+                                    'pidof() { if [ "$1" = system_server ]; then echo 1; else cat pid; fi; }')
+                code += (ROOT/'modules/haptic-main/module/autostart.sh').read_text()
             else:
                 code += (ROOT/'modules/openxr-velocity-frame/module/auto.sh').read_text().replace(
                     'MODDIR=${0%/*}', 'MODDIR=.').replace('STATE=/dev/gxr_openxr_velocity_frame', 'STATE=state').replace(

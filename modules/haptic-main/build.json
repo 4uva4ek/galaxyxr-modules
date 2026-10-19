@@ -14,10 +14,10 @@
   ],
   "auto_files": [
     "auto.sh",
+    "autostart.sh",
     "service.sh"
   ],
   "auto_shared_files": [
-    "autostart.sh",
     "emulated-soft-reboot.sh",
     "cold-boot-reset.sh"
   ],

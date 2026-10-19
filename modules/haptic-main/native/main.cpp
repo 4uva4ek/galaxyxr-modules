@@ -89,22 +89,32 @@ struct Frozen {
                 if(!known) fresh.push_back(tid);
             }
             closedir(dir); if(fresh.empty()) return;
+            // Interrupt every new thread first, then collect the stops. Waiting
+            // for each thread in turn kept the already stopped ones (33-77 in
+            // the controller service) frozen for a polling sleep per thread.
+            const size_t first=threads.size();
             for(pid_t tid:fresh) {
                 if(ptrace(PTRACE_SEIZE,tid,nullptr,nullptr)==-1) { if(errno==ESRCH) continue; throw std::runtime_error("PTRACE_SEIZE denied"); }
                 threads.push_back({tid,false,0});
                 require(ptrace(PTRACE_INTERRUPT,tid,nullptr,nullptr)==0, "PTRACE_INTERRUPT failed");
-                int status=0;
-                for (;;) {
-                    pid_t got=waitpid(tid,&status,__WALL|WNOHANG);
+            }
+            for(size_t waiting=threads.size()-first; waiting;) {
+                bool progressed=false;
+                for(size_t i=first; i<threads.size(); ++i) {
+                    auto& t=threads[i]; if(t.stopped) continue;
+                    int status=0;
+                    pid_t got=waitpid(t.id,&status,__WALL|WNOHANG);
                     require(got>=0,"waitpid failed");
-                    if(got==tid) break;
-                    require(std::chrono::steady_clock::now()<deadline,"Thread stop timed out"); usleep(1000);
+                    if(got!=t.id) continue;
+                    require(WIFSTOPPED(status),"Thread exited while attaching");
+                    t.stopped=true; --waiting; progressed=true;
+                    if ((status>>16)==0) t.signal=WSTOPSIG(status);
+                    require((status>>16)==PTRACE_EVENT_STOP && WSTOPSIG(status)==SIGTRAP,
+                            "Unexpected stop; no patch applied");
                 }
-                require(WIFSTOPPED(status),"Thread exited while attaching");
-                auto& t=threads.back(); t.stopped=true;
-                if ((status>>16)==0) t.signal=WSTOPSIG(status);
-                require((status>>16)==PTRACE_EVENT_STOP && WSTOPSIG(status)==SIGTRAP,
-                        "Unexpected stop; no patch applied");
+                if(waiting && !progressed) {
+                    require(std::chrono::steady_clock::now()<deadline,"Thread stop timed out"); usleep(100);
+                }
             }
         }
         throw std::runtime_error("Thread list did not stabilize");
@@ -122,6 +132,12 @@ int main(int argc, char** argv) {
         require(disk.size()==176016 && !memcmp(disk.data()+FUNCTION,EXPECTED,sizeof(EXPECTED)),"Disk function mismatch");
         uintptr_t base=mapping(pid); Memory mem(pid); uint32_t before=validate(mem,base);
         if(mode=="status") { printf("%s pid=%d site=%lx profile=step2-amplitude-stock\n",before==2?"MAIN":(before==1?"LEGACY_MAIN":"STOCK"),pid,base+SITE); return 0; }
+        // Already in the requested state: no write, so no reason to stop the service.
+        if(mode!="toggle" && before==(mode=="on"?2u:0u)) {
+            printf("%s pid=%d: profile=step2-amplitude-stock; private memory verified; already in this state, no threads stopped\n",
+                   before?"MAIN":"STOCK",pid);
+            return 0;
+        }
         // Short critical section: ignore terminal termination, never use EXITKILL.
         signal(SIGINT,SIG_IGN); signal(SIGTERM,SIG_IGN); signal(SIGHUP,SIG_IGN);
         Frozen frozen; frozen.freeze(pid);

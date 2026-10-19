@@ -11,7 +11,15 @@ fail() { [ "${1:-}" = "" ] || echo "$*"; [ "${MODE:-status}" = status ] || : > "
 DEFAULT=toggle
 [ ! -f "$MODDIR/auto.sh" ] || DEFAULT=status
 MODE=${1:-$DEFAULT}
-case "$MODE" in toggle|on|off|status|_auto-on|_auto-off) ;; *) fail 'Expected toggle, on, off or status';; esac
+case "$MODE" in toggle|on|off|status|_auto-on|_auto-off|_auto-check) ;; *) fail 'Expected toggle, on, off or status';; esac
+# Worker health check of the process it patched: read-only status without
+# rehashing files that were verified before the patch was written.
+CHECK_ID=
+if [ "$MODE" = _auto-check ]; then
+  MODE=status
+  CHECK_ID=${2:-}
+  [ -n "$CHECK_ID" ] || fail 'Missing auto process identity'
+fi
 awk '$2 == "/dev" && $3 == "tmpfs" { ok=1 } END { exit !ok }' /proc/mounts || fail '/dev must be tmpfs'
 [ ! -L "$STATE" ] || fail 'Unsafe state path'
 umask 077
@@ -41,12 +49,18 @@ fi
 if [ "$MODE" != off ] && [ "$MODE" != status ]; then
   [ ! -f "$MODDIR/disable" ] && [ ! -f "$MODDIR/remove" ] || fail 'Module disabled or marked for removal'
 fi
-(cd "$MODDIR" && sha256sum -c SHA256SUMS) > "$STATE/checksums.log" || fail 'Module checksum failure'
 APK=/product/priv-app/secxrcontroller/secxrcontroller.apk
 JNI=/system/lib64/libsecxrcontrollerservice_jni.xrcontroller.samsung.so
-[ "$(sha256sum "$APK" | cut -d ' ' -f 1)" = 8130b5542c36235eb1e951b9245684299d6a7ddd1a8c95f231e8241e477673cb ] || fail 'Unsupported controller APK'
-[ "$(sha256sum "$JNI" | cut -d ' ' -f 1)" = 80d45131558b28107cf7e3c9a2c483bce4e2207b934e4f25e951f0fc79d1cd36 ] || fail 'Unsupported JNI library'
-TARGET=$(pidof com.sec.android.secxrcontrollerservice || true)
+if [ -z "$CHECK_ID" ]; then
+  (cd "$MODDIR" && sha256sum -c SHA256SUMS) > "$STATE/checksums.log" || fail 'Module checksum failure'
+  [ "$(sha256sum "$APK" | cut -d ' ' -f 1)" = 8130b5542c36235eb1e951b9245684299d6a7ddd1a8c95f231e8241e477673cb ] || fail 'Unsupported controller APK'
+  [ "$(sha256sum "$JNI" | cut -d ' ' -f 1)" = 80d45131558b28107cf7e3c9a2c483bce4e2207b934e4f25e951f0fc79d1cd36 ] || fail 'Unsupported JNI library'
+  TARGET=$(pidof com.sec.android.secxrcontrollerservice || true)
+else
+  TARGET=${CHECK_ID%%:*}
+  STARTED=$(sed 's/.*) //' "/proc/$TARGET/stat" 2>/dev/null | awk '{print $20}')
+  [ "$TARGET:$STARTED" = "$CHECK_ID" ] || { echo 'WAITING: controller service changed before check'; exit 3; }
+fi
 if [ -n "$AUTO_ID" ] && [ "$(getprop sys.boot_completed)" != 1 ]; then
   echo 'WAITING: Android is restarting; no writes'; exit 3
 fi
