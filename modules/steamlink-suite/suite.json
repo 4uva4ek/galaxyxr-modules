@@ -3,8 +3,7 @@
   "name": "Galaxy XR Steam Link Suite",
   "components": [
     "openxr-velocity-frame",
-    "steamlink-pose-time",
-    "openxr-priority"
+    "steamlink-pose-time"
   ],
   "replaces": [
     "gxr_steamlink_pose_time",

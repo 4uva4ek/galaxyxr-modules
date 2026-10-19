@@ -3,6 +3,7 @@ KernelSU must confirm removal and verify restoration before migration.
 Installed disabled. Haptic Main remains separate.
 0.1.3 targets only Steam Link (com.valvesoftware.steamlinkvr*) and ChronoLink
 (dev.chronolink.client*); other OpenXR apps are left unchanged.
-Controller Suite owns HAL LogLevel=0; Steam Link Suite owns app priorities.
+Controller Suite owns HAL LogLevel=0.
 0.1.6 restores before a KernelSU soft restart and starts again afterwards.
 Controller Extrapolation is no longer part of the suite.
+0.1.7 removes App Priorities; no thread priorities are changed.

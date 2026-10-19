@@ -1,17 +1,21 @@
 # Galaxy XR Steam Link Suite
 
-Author: 4uva4ek. Version 0.1.6. Requires KernelSU GXR 1.0.11 or later for reviewed migration.
+Author: 4uva4ek. Version 0.1.7. Requires KernelSU GXR 1.0.11 or later for reviewed migration.
 
-Components: openxr-velocity-frame, steamlink-pose-time, openxr-priority. Controller
-Extrapolation was removed in 0.1.6; the suite still replaces (restores and removes)
-the standalone `gxr_controller_extrapolation` module during migration.
+Components (display names since 0.1.7, SL = Steam Link, CL = ChronoLink):
+SL-CL-velocity-frame (source `openxr-velocity-frame`) and SL-pose-time (source
+`steamlink-pose-time`). Controller Extrapolation was removed in 0.1.6 and App
+Priorities (openxr-priority) in 0.1.7; the suite still replaces (restores and removes)
+the standalone `gxr_controller_extrapolation` and `gxr_stream_cpu_relief` modules
+during migration. SL-pose-time acts on Steam Link only: ChronoLink ships
+`libchronolink_client.so` without the vrlink scene code the component patches.
 
 Targets (0.1.3): packages starting with `com.valvesoftware.steamlinkvr` (Steam Link
 and renamed copies such as `.x_23`) and `dev.chronolink.client` (ChronoLink); other
 apps are never patched. Velocity Frame acts on the pinned OpenXR runtime in both
 clients. Pose Time is Steam Link only, with scene profiles for
-2.0.20 and 2.0.23 selected by live code bytes. App priorities have a Steam Link profile; ChronoLink is reported
-unchanged until its threads are profiled.
+2.0.20 and 2.0.23 selected by live code bytes. Since 0.1.7 the suite does not change
+thread priorities in either client.
 
 Automatic-only, installed disabled. KernelSU is the master activation preference.
 WebUI saves explicit tuning; it never activates a disabled suite.
@@ -61,3 +65,11 @@ handoff. Components restore their state and exit with a handoff code when
 without a failure guard, and the service stage after the restart starts it again.
 Errors outside a restart still quarantine the suite. Device validation of an
 active-to-restart cycle is pending.
+
+## App Priorities removed (0.1.7)
+
+The openxr-priority component is no longer part of the suite. It was suspected of
+causing headset reboots while active; the cause is not confirmed. The suite now
+changes no thread priorities. On update the installer restores any priorities the
+0.1.6 component still owned before the 0.1.7 package is installed, as for every
+component. The component source stays in the repository for a possible return.

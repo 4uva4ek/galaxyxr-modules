@@ -10,6 +10,18 @@ umask 077
 allowed() { [ ! -f "$MODDIR/disable" ] && [ ! -f "$MODDIR/remove" ]; }
 fail() { : > "$MODDIR/disable"; printf '%s\n' "$*" > "$MODDIR/state/failure"; echo "DISABLED - Error: $*"; return 1; }
 view() { printf '%s/%s' "$VIEWS" "$1"; }
+# Display name of a component in the status report; the view directory keeps its
+# build name. Steam Link Suite labels name the served clients (SL = Steam Link,
+# CL = ChronoLink); Pose Time serves Steam Link only.
+label() {
+ if [ "$SUITE_ID" = gxr_steamlink_suite ]; then
+  case "$1" in
+   openxr-velocity-frame) printf 'SL-CL-velocity-frame'; return;;
+   steamlink-pose-time) printf 'SL-pose-time'; return;;
+  esac
+ fi
+ printf '%s' "$1"
+}
 stop_component() {
  v=$(view "$1")
  [ -f "$v/auto.sh" ] || return 0
@@ -74,7 +86,7 @@ report() {
  [ ! -f "$MODDIR/state/failure" ] || cat "$MODDIR/state/failure"
  for component in $START_ORDER; do
   v=$(view "$component")
-  echo "--- $component ---"
+  echo "--- $(label "$component") ---"
   if [ -f "$v/action.sh" ]; then sh "$v/action.sh" status || return 1
   else echo 'DISABLED - Waiting: suite has not started.'; fi
  done

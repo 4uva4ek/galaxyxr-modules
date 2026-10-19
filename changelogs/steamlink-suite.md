@@ -1,5 +1,10 @@
 # Galaxy XR Steam Link Suite
 
+## 0.1.7 - 2026-10-19
+
+- Remove App Priorities (openxr-priority) from the suite. It was suspected of causing headset reboots while active; the cause is not confirmed. The suite no longer changes thread priorities for Steam Link or ChronoLink. The standalone `gxr_stream_cpu_relief` module is still restored and removed during migration.
+- Components are now SL-CL-velocity-frame and SL-pose-time (Action report and WebUI names; source directories unchanged). SL-pose-time applies to Steam Link only: ChronoLink ships `libchronolink_client.so` without the vrlink scene code the component patches.
+
 ## 0.1.6 - 2026-10-19
 
 - Remove Controller Extrapolation from the suite (component, `EXTRAPOLATION` setting and WebUI switch). The standalone `gxr_controller_extrapolation` module is still restored and removed during migration. This also removes the update refusal when two clients had the OpenXR runtime loaded.
