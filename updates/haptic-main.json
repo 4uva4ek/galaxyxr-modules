@@ -1,7 +1,7 @@
 {
-  "version": "0.5.6",
-  "versionCode": 12,
-  "zipUrl": "https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.5.6/gxr-haptic-main-0.5.6-auto.zip",
+  "version": "0.5.7",
+  "versionCode": 13,
+  "zipUrl": "https://github.com/4uva4ek/galaxyxr-modules/releases/download/haptic-main/v0.5.7/gxr-haptic-main-0.5.7-auto.zip",
   "changelog": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/changelogs/haptic-main.md",
-  "sha256": "1675d4fbe14ea8862c378e2ba9836fd3b4d0a8c81f855a6a6d8d2ffc1a0b72d9"
+  "sha256": "c0f37b383e5fb8b5d964618cc4b0b2f078adf9d17cafe16cdf617146227ce124"
 }
