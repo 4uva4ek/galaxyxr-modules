@@ -14,6 +14,10 @@ chmod() { return 0; }
 chcon() { return 0; }
 getprop() { echo stopped; }
 sleep() { command sleep 0.01; }
+date() {
+ [ -n "${FAKE_CLOCK:-}" ] || { command date "$@"; return; }
+ n=$(( $(command cat "$FAKE_CLOCK" 2>/dev/null || echo 1000) + 10 )); echo "$n" > "$FAKE_CLOCK"; echo "$n"
+}
 '''
  (w/'restart-hooks.sh').write_text(mocks+script)
  (w/'cold-boot-reset.sh').write_text('exit 0\n')
@@ -24,7 +28,7 @@ case "$1" in
  --status) cat "$M/native-status";;
  --prepare-coordinated-restart) touch "$M/handoff"; rm -f "$M/session-lease/boot-id"; rmdir "$M/session-lease";;
  --stop) rm -f "$M/session-lease/boot-id"; rmdir "$M/session-lease"; echo 'DISABLED - baseline' > "$M/native-status";;
- --preflight|--preflight-stopped) exit 0;;
+ --preflight|--preflight-stopped|--build-payload) exit 0;;
  *) exit 64;;
 esac
 '''
@@ -37,8 +41,8 @@ echo boot > "$M/session-lease/boot-id"
 echo "$KSU_RESTART_GENERATION" > {state}/start-ready
 echo 'ENABLED - mock verified output' > "$M/native-status"
 ''')
- def run(phase,generation):
-  env=os.environ.copy();env['KSU_RESTART_GENERATION']=generation
+ def run(phase,generation,**extra):
+  env=os.environ.copy();env['KSU_RESTART_GENERATION']=generation;env.update(extra)
   return subprocess.run(['sh',str(w/'restart-hooks.sh'),phase],env=env,capture_output=True,text=True,timeout=5)
  for generation in ('one','two','three'):
   (coord/'generation').write_text(generation+'\n')
@@ -52,4 +56,13 @@ echo 'ENABLED - mock verified output' > "$M/native-status"
  r=run('abort','three');assert r.returncode==0,(r.stdout,r.stderr)
  assert (w/'disable').exists() and not (w/'session-lease').exists()
  results.append('abort restores through native helper and preserves OFF')
+ # Each clock read advances 10 s: a never-ready status must stop by elapsed
+ # time (58 s), with its own reason, before KernelSU's 70 s hook limit.
+ (w/'disable').unlink();(w/'failure').unlink(missing_ok=True)
+ (w/'native-status').write_text('DISABLED - Waiting: mock startup\n')
+ r=run('started','three',FAKE_CLOCK=str(w/'clock'))
+ assert r.returncode==1 and (w/'disable').exists(),(r.stdout,r.stderr)
+ assert (w/'failure').read_text().strip()=='Output verification timed out'
+ assert int((w/'clock').read_text())-1010<=70
+ results.append('started hook times out by elapsed time below the KernelSU limit')
 print('PASS:',results)

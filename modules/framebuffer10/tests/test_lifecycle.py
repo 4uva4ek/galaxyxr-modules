@@ -56,6 +56,7 @@ sync() { return 0; }
 printf '%s\\n' "$*" >> "${0%/*}/../calls"
 case "$1" in
  --preflight) echo 'PREFLIGHT OK';;
+ --build-payload) echo 'PAYLOAD OK - mock';;
  --run-session) exit "${FAKE_SESSION_RESULT:-4}";;
  --status) echo 'DISABLED - KernelSU restart completed';;
  --prepare-restart) echo requested;;
@@ -82,20 +83,22 @@ esac
     passed.append('Failed handoff disables preference, keeps lease and subsequent service does not retry')
 with zipfile.ZipFile(Z) as z:
     names=set(z.namelist())
-    assert {'disable','skip_mount','service.sh','emulated-soft-reboot.sh','action.sh','payload/libvulkan_compositor.so'}<=names
+    assert {'disable','skip_mount','service.sh','emulated-soft-reboot.sh','action.sh','bin/gxr-fb10-gate'}<=names
+    # No vendor code: the color library is generated on the device.
+    assert not any(n.startswith('payload/') or n.endswith('.so') for n in names)
+    assert all('/' not in n or n.startswith('bin/') for n in names)
     assert not names.intersection({'system.prop','post-fs-data.sh','sepolicy.rule','gxr-live-control.sh','gxr-root-ready.sh'})
     manifest={line.split('  ',1)[1]:line.split('  ',1)[0] for line in z.read('SHA256SUMS').decode().splitlines()}
     assert set(manifest)==names-{'disable','SHA256SUMS'}
     for name,digest in manifest.items():
         assert hashlib.sha256(z.read(name)).hexdigest()==digest,name
-    assert manifest['payload/libvulkan_compositor.so']=='ff8e344f81c4f2ce1c3e355a70b73c3de957e800efd736bb11dd874748d6fe4c'
     assert '--run-session' in z.read('auto.sh').decode()
     assert ('version='+PROPS['version']) in z.read('module.prop').decode()
     assert {'restart-prepare.sh','restart-stopped.sh','restart-started.sh','restart-abort.sh'} <= names
     assert 'auto.sh" resume' not in z.read('service.sh').decode()
     for name in names:
         assert not name.startswith('/') and '..' not in Path(name).parts
-passed.append('Complete disabled ZIP manifest and tested color library digest verified')
+passed.append('Complete disabled ZIP manifest; no vendor payload (generated on device)')
 passed.append('Continuous session entry with standard KernelSU soft-reboot notification; no overlay/property file')
 result={'scope':'Local mocks and archive only; no headset IO','passed':passed,'zip_sha256':hashlib.sha256(Z.read_bytes()).hexdigest()}
 (H/'module-tests.json').write_text(json.dumps(result,indent=2)+'\n')

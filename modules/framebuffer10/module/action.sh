@@ -12,8 +12,8 @@ case "${1:-report}" in
   echo 'DISABLED includes waiting, recovery and errors; read the reason. Checkbox state alone is not runtime proof.'
   echo 'Continuous 10-bit SDR output. No two-minute limit. This does not enable full HDR.'
   echo 'Check the module, then use standard KernelSU service startup (documented soft reboot after root).'
-  echo 'Uncheck to request recovery from the running guardian. The interface restarts; press Action after it returns.'
-  printf 'Explicit restore: sh %s/action.sh off\n' "$MODDIR"
+  echo 'Checkbox changes apply at the next KernelSU soft reboot (OFF restores stock 8-bit output there).'
+  printf 'Immediate restore without reboot: sh %s/action.sh off (the Android interface restarts)\n' "$MODDIR"
   echo 'If recovery fails, fully remove headset power and reboot. An interrupted lease blocks automatic repetition in the same kernel boot.'
   echo 'After an error, inspect the report. A cold boot clears old guards at next startup without enabling a disabled checkbox.'
   echo 'Successful sessions can restart in the same boot. Standard KernelSU soft reboots preserve the enabled preference.'

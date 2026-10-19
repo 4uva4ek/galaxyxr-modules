@@ -63,8 +63,16 @@ on the device from the installed stock libraries — hash-checked before and aft
 patching — and bind-mounted over them; no vendor binaries ship in the package.
 Left-primary MV-HEVC video only. [Patches and validation](modules/mvhevc-eye-fix/README.md).
 
-### Deprecated and retired
-**Framebuffer10** (10-bit SDR output with corrected camera colors) is deprecated and source-only — its payload contains vendor code and is not distributed. Earlier tracking experiments (Bracket, IMU Time, HAL 360, native copy) are retired and kept locally; they are not distributed here.
+### Framebuffer10 (`gxr_framebuffer10`)
+Experimental **10-bit SDR** compositor output with correct colours (less banding in
+gradients and dark scenes; not HDR). The repaired compositor library is generated on
+the headset from its own stock library with a project edit script — hash-checked
+before and after — and bound read-only only during startup; no vendor code ships in
+the package. I610UEU2AZF3 only; requires KernelSU GXR 1.0.6+.
+[Colour fix, lifecycle and limits](modules/framebuffer10/README.md).
+
+### Retired
+Earlier tracking experiments (Bracket, IMU Time, HAL 360, native copy) are retired and kept locally; they are not distributed here.
 
 ## Safety
 

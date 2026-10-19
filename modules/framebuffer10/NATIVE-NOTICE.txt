@@ -1,1 +1,8 @@
-Project-authored native framebuffer controller. Local package also contains a modified copy of the user's pinned Samsung runtime (I610UEU2AZF3), with four embedded shader slots corrected. Vendor ownership is unchanged. This local artifact is not prepared for public redistribution. NDK runtime notices supplied separately.
+Project-authored native framebuffer controller and edit script (author 4uva4ek).
+The package contains no Samsung code. On the headset the controller reads the
+device's own stock /system/lib64/libvulkan_compositor.so (I610UEU2AZF3, SHA-256
+verified), applies the project edit script to seven embedded shader slots and
+writes the result to the module folder only after the result SHA-256 matches.
+The generated library is a local modified copy of the vendor runtime; vendor
+ownership is unchanged and it must not be redistributed. NDK runtime notices
+are supplied separately.

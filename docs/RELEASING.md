@@ -26,9 +26,11 @@ steps below remain for reviewed recovery and first-time distribution onboarding.
    `COORDINATED-RESTART-2026-10-11.md`. Do not add an early-boot activation path.
    Do not publish manual packages or restore their obsolete download links.
 
-Framebuffer10 is deprecated and source-only. Its ignored local compositor payload
-and ZIP contain proprietary vendor code and must not be uploaded. An automatic
-ZIP is not automatically eligible for public redistribution.
+Framebuffer10 ships only project code; its colour library is generated on the
+headset. Never upload a generated or locally built `libvulkan_compositor.so`
+(it is modified vendor code), and keep the build's `--contract-only` installer
+replay passing. An automatic ZIP is not automatically eligible for public
+redistribution.
 
 Do not commit build artifacts, APKs, dumps, signing keys, or device data.
 Automatic packages install disabled. Updating an enabled installation requires
