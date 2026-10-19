@@ -31,12 +31,6 @@
       "name": "Galaxy XR Controller Suite",
       "description": "Controller tracking fixes with EN/RU WebUI. Requires KernelSU GXR 1.0.11; replaces standalone controller modules.",
       "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/controller-suite.json"
-    },
-    {
-      "id": "gxr_steamlink_suite",
-      "name": "Galaxy XR Steam Link Suite",
-      "description": "PCVR velocity, pose timing and CPU relief with EN/RU WebUI. Requires KernelSU GXR 1.0.11; replaces standalone Steam Link modules.",
-      "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/steamlink-suite.json"
     }
   ]
 }

@@ -18,7 +18,10 @@ Combines Whitening, Timestamp Precision, HAL Cache Bypass, tail-velocity
 correction and HAL-wide LogLevel=0 control. One activation preference and English/Russian WebUI.
 [Components and migration](modules/controller-suite/README.md).
 
-### Steam Link Suite (`gxr_steamlink_suite`)
+### Steam Link Suite (`gxr_steamlink_suite`) - deprecated
+> **Deprecated 2026-10-19, no successor.** Removed from Sources; 0.1.7 is the final
+> release. Disable it, then remove it in the Manager.
+
 Combines Velocity Frame, Pose Time, OpenXR app priority profiles and optional
 Controller Extrapolation. The initial priority profile targets selected Steam Link
 threads at nice=-20 while the app is visible and the headset is awake. Other apps

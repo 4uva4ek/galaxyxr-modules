@@ -93,6 +93,12 @@ module-name registry in KernelSU. This requires the unreleased dependency-aware
 Manager; existing Managers do not implement these conditions.
 
 Use `gxrDeprecatedBy=successor_id` on an old module, or `deprecatedBy` in its
-update feed, for a retirement hint. Source edits do not alter published ZIPs.
+update feed, for a retirement hint. A module retired without a successor keeps
+its last feed fields and adds `"retired": true` plus a short English
+`retiredReason`; the feed then never advances again. Retirement also removes the
+entry from `modules.json`, which excludes it from Sources and automatic releases.
+Retirement never removes an installed module silently: the Manager may only offer
+removal through its guarded disable/restore/uninstall flow, with user consent.
+Source edits do not alter published ZIPs.
 For native packages, invoke the verifier with `ZIP --contract-only`; omitting
 that option retains the MV-HEVC-specific prohibition on shipped binaries.

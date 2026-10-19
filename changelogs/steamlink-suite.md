@@ -1,5 +1,9 @@
 # Galaxy XR Steam Link Suite
 
+## Deprecated - 2026-10-19
+
+- Deprecated without a successor and removed from the Sources catalogue (`modules.json`). The update feed now carries `"retired": true`; 0.1.7 is the final release. Disable the suite, then remove it in the Manager.
+
 ## 0.1.7 - 2026-10-19
 
 - Remove App Priorities (openxr-priority) from the suite. It was suspected of causing headset reboots while active; the cause is not confirmed. The suite no longer changes thread priorities for Steam Link or ChronoLink. The standalone `gxr_stream_cpu_relief` module is still restored and removed during migration.

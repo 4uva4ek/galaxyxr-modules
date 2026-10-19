@@ -3,5 +3,7 @@
   "versionCode": 8,
   "zipUrl": "https://github.com/4uva4ek/galaxyxr-modules/releases/download/steamlink-suite/v0.1.7/gxr-steamlink-suite-0.1.7-auto.zip",
   "changelog": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/changelogs/steamlink-suite.md",
-  "sha256": "9125800f2b2410017d1881ad0e50764f6cc9dd35a05f5a680b42487c35e7a44a"
+  "sha256": "9125800f2b2410017d1881ad0e50764f6cc9dd35a05f5a680b42487c35e7a44a",
+  "retired": true,
+  "retiredReason": "Steam Link Suite is deprecated and no longer maintained. Disable it, then remove it."
 }

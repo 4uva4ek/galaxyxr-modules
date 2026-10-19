@@ -1,5 +1,9 @@
 # Galaxy XR Steam Link Suite
 
+> **Deprecated (2026-10-19):** no successor. Removed from Sources; the update feed
+> carries a retirement notice and no new releases are published. Disable the suite,
+> then remove it in the Manager. Historical releases remain available.
+
 Author: 4uva4ek. Version 0.1.7. Requires KernelSU GXR 1.0.11 or later for reviewed migration.
 
 Components (display names since 0.1.7, SL = Steam Link, CL = ChronoLink):
