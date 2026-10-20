@@ -8,6 +8,13 @@
       "description": "Experimental 10-bit SDR output with corrected colour and QUAD alpha. Galaxy XR I610UEU2AZF3 only. Installs disabled.",
       "experimental": true,
       "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/framebuffer10.json"
+    },
+    {
+      "id": "gxr_systemui_optimization",
+      "name": "Galaxy XR SystemUI Optimization",
+      "description": "Experimental duplicate-wait, selected-depth and hidden-panel churn fixes for hash-pinned Galaxy XR SystemUI. Notifications and selected dialogs bench-tested; CPU savings vary. Installs disabled.",
+      "experimental": true,
+      "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/systemui-optimization.json"
     }
   ]
 }

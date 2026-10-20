@@ -29,3 +29,9 @@ node_modules/
 
 # Local framebuffer package verification receipt.
 /modules/framebuffer10/tests/module-tests.json
+
+# SystemUI compatibility signatures generated from locally supplied vendor libraries.
+/modules/systemui-optimization/native/expected.h
+/modules/systemui-optimization/native/wait_expected.h
+/modules/systemui-optimization/native/schema_expected.h
+/modules/systemui-optimization/native/panel_code.h

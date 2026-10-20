@@ -1,0 +1,9 @@
+Module author: 4uva4ek.
+The bounded ptrace guard is reused from this repository's controller-whitening module.
+expected.h, wait_expected.h and schema_expected.h contain instruction signatures from the Samsung-distributed
+libImpress-jni-vulkan.so solely for compatibility checking and restoration.
+panel_code.h includes small instruction signatures from Samsung-distributed
+libspaceflinger_jni_vulkan.so and libsysui_jni_soong_vulkan.so for the same purpose,
+plus locally generated ARM64 panel-coalescing code.
+Samsung, Google, Impress, Filament, OpenXR and Android retain their attribution.
+No complete proprietary library is distributed.

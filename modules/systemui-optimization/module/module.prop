@@ -1,0 +1,7 @@
+id=gxr_systemui_optimization
+name=Galaxy XR SystemUI Optimization (experimental)
+version=0.4.0-experimental
+versionCode=400
+author=4uva4ek
+description=Experimental combined duplicate-wait, selected-depth and hidden-panel churn fixes in pinned SystemUI private memory. Notifications and selected dialogs bench-tested; CPU savings vary. Installed disabled; Action reports status and recovery.
+updateJson=https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/systemui-optimization.json

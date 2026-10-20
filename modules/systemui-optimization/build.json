@@ -1,0 +1,11 @@
+{
+  "artifact": "gxr-systemui-optimization",
+  "binary": "gxr-systemui",
+  "ndk": "29.0.14206865",
+  "api": 34,
+  "files": ["module.prop", "action.sh", "customize.sh", "uninstall.sh", "skip_mount"],
+  "variants": ["auto"],
+  "auto_files": ["auto.sh", "service.sh"],
+  "auto_shared_files": ["cold-boot-reset.sh"],
+  "shared_files": []
+}
