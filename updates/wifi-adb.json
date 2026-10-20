@@ -1,7 +1,7 @@
 {
-  "version": "1.0.0",
-  "versionCode": 10000,
-  "zipUrl": "https://github.com/4uva4ek/galaxyxr-modules/releases/download/wifi-adb/v1.0.0/gxr-wifi-adb-1.0.0-auto.zip",
+  "version": "1.0.1",
+  "versionCode": 10001,
+  "zipUrl": "https://github.com/4uva4ek/galaxyxr-modules/releases/download/wifi-adb/v1.0.1/gxr-wifi-adb-1.0.1-auto.zip",
   "changelog": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/changelogs/wifi-adb.md",
-  "sha256": "06f516ea160b5ed56a262055effe9b58a14b6a0b45fc0db560ee21ff77b81055"
+  "sha256": "a1908f1a3248940b93dad323a7ce108671219e90b84b008ebdf497c5cb0caf53"
 }
