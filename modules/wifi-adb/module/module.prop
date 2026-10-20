@@ -1,0 +1,7 @@
+id=gxr_wifi_adb
+name=Wi-Fi ADB
+version=1.0.0
+versionCode=10000
+author=4uva4ek
+description=Automatically start authenticated ADB TCP on port 5555. Installs disabled.
+updateJson=https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/wifi-adb.json
