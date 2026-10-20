@@ -240,3 +240,19 @@ Consequently its standard replacement attempt stops safely despite an
 independent native DISABLED verification. This is a report-format incompatibility,
 not evidence that a live patch remains. New 0.4.0 provides action off/status and
 verified GXR_UPDATE_STATE=STOCK for subsequent standard updates.
+
+Publication: `systemui-optimization/v0.4.0` is a prerelease listed only in
+`modules-experimental.json`. Source commit `3ccf395`, verified feed `9621d17`.
+The clean release build is byte-identical to the tested ZIP:
+SHA256 `28fefa0d69a77478230fc1fd884a197258320b613b46e8e0a702d2024484b00b`.
+GitHub's uploaded-asset digest matches. Catalogue, contract and build/release CI
+passed; the stable-feed workflow correctly skipped this prerelease.
+
+The known local 0.3.0 was subsequently migrated under the module-control lock
+after checking its original package manifest and native stock state. The new
+helper independently verified all three components before replacement. Old
+files/state were preserved, 0.4.0 was installed OFF, and the new Action reported
+DISABLED plus GXR_UPDATE_STATE=STOCK. The old directory was archived to the PC
+and every archived payload hash verified before obsolete device backups and
+test files were removed. No enable/restart occurred; final power state was
+Dozing/sleep_button with SystemUI PID 4342 unchanged.

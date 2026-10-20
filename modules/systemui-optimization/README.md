@@ -3,7 +3,8 @@
 Author: **4uva4ek**
 
 Experimental private-memory optimizations for the pinned Galaxy XR SystemUI
-library. No published release or proven broad performance improvement yet.
+libraries, distributed through `modules-experimental.json`. Broad performance
+improvement remains unproven beyond the documented bench measurements.
 Original device libraries are never overwritten.
 
 ## Candidates
@@ -177,6 +178,15 @@ Action is status-only. Uninstall does not depend on Android services.
 The installer-facing `action.sh off` explicitly restores; `action.sh status`
 emits `GXR_UPDATE_STATE=STOCK` only after successful native stock verification
 or confirmed absence of the process. Clicking Action remains status-only.
+
+The unpublished local 0.3.0 lacks this installer protocol. Its automatic upgrade
+is refused safely. Legacy migration requires checking the original package
+manifest, explicitly stopping/restoring with the old auto/native helpers,
+independently verifying all three components are stock with the new helper,
+preserving the old directory and all guard/config files, and replacing OFF
+under the module-control lock. Do not interpret a restoration refusal as proof
+that removal is safe, or remove a live module. A reviewed migration of the
+known local 0.3.0 has been validated; subsequent versions use the normal installer.
 
 Do not enable or distribute a candidate on the strength of emulator tests alone.
 
