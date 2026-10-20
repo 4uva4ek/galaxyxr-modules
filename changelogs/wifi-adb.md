@@ -4,6 +4,15 @@
 
 No pending changes.
 
+## 1.0.1 — 2026-10-20
+
+- Wait for boot completion, Wi-Fi IPv4 and adbd without disabling the module.
+- Suspend health failure counting while Wi-Fi is disconnected.
+- Tolerate transient ADB restarts and retry up to three times per kernel boot.
+- Report waiting reasons in Action; retain rollback and fail-closed handling.
+- Host regression tests cover delayed prerequisites, reconnects and recovery.
+  Cold-boot timing on hardware remains unverified.
+
 ## 1.0.0 — 2026-10-20
 
 - Add automatic authenticated ADB TCP on port 5555.
