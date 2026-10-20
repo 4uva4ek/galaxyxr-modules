@@ -1,0 +1,7 @@
+{
+  "version": "0.4.0-experimental",
+  "versionCode": 400,
+  "zipUrl": "https://github.com/4uva4ek/galaxyxr-modules/releases/download/systemui-optimization/v0.4.0/gxr-systemui-optimization-0.4.0-experimental-auto.zip",
+  "changelog": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/changelogs/systemui-optimization.md",
+  "sha256": "28fefa0d69a77478230fc1fd884a197258320b613b46e8e0a702d2024484b00b"
+}

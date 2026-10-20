@@ -1,12 +1,18 @@
 # SystemUI Optimization
 
-## Unreleased
+## 0.4.0-experimental — 2026-10-20
 
 - 0.4.0-experimental: combine retained wait/depth fixes with panel coalescing.
   Validate both components, roll back failed activation, reject mixed status/on
   and restore known partial states on off. Pin all three library hashes.
   Add verified STOCK reporting and installer-facing off without changing the
   status-only Action button. Keep disabled automatic packaging.
+- Combined bench CPU: 55.30% before, 53.32% with all fixes, 59.64% after.
+  Notification, volume-dialog and contrast-dialog show/hide transitions passed.
+  CPU savings vary; not all critical dialog types or visual/input behavior have
+  been validated. Published only in the experimental catalogue as a prerelease.
+
+## Local development history before the first public release
 - Add a separate panel-coalescing prototype; fix identity matching for reused
   NodeHandle proxies. Device traces confirm removal of 12 hidden-panel toggle
   cycles per frame while notification, volume and contrast-dialog transitions
