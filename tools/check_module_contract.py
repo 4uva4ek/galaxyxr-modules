@@ -30,7 +30,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tools'))
 import update_feed  # noqa: E402
 
-ROOT_ENTRIES = {'.gitattributes', '.github', '.gitignore', 'AGENTS.md', 'README.md', 'modules.json',
+ROOT_ENTRIES = {'.gitattributes', '.github', '.gitignore', 'AGENTS.md', 'README.md', 'modules.json', 'modules-experimental.json',
                 'changelogs', 'docs', 'modules', 'templates', 'tools', 'updates'}
 LIFECYCLE = {'action.sh', 'auto.sh', 'service.sh', 'customize.sh'}
 REJECTED = {'post-fs-data.sh', 'post-mount.sh', 'system.prop', 'sepolicy.rule', 'boot-completed.sh',

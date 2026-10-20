@@ -29,7 +29,10 @@ For an unpublished or retired module this is only a reserved address: it may
 return 404 and does not mean updates are available. Do not create fake feed JSON,
 download links or hashes to make an unfinished channel look live.
 
-`modules.json` and `updates/NAME.json` describe reviewed public distribution.
+`modules.json`, optional `modules-experimental.json` and `updates/NAME.json`
+describe reviewed public distribution. Experimental-only entries belong in the
+separate catalogue so older Managers cannot discover them. They remain excluded
+from stable automatic release and feed promotion.
 They are separate from the local source inventory. Add a module to public
 distribution only after explicit publication authorization and lifecycle review.
 Prereleases do not advance the stable feed. Retired modules and local vendor
