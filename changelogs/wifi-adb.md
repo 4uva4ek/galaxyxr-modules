@@ -4,6 +4,13 @@
 
 No pending changes.
 
+## 1.0.2 — 2026-10-20
+
+- Report verified restoration using the KernelSU GXR installer contract.
+- Save the volatile rollback baseline to verify status after worker exit.
+- Upgrading from 1.0.0 may require a reviewed removal of the already stopped
+  old module: its status report lacks the installer restoration marker.
+
 ## 1.0.1 — 2026-10-20
 
 - Wait for boot completion, Wi-Fi IPv4 and adbd without disabling the module.

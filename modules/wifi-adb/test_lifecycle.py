@@ -88,6 +88,7 @@ elif [ "$SCENARIO" != insecure ] && [ "$SCENARIO" != restart_failure ] && [ "$SC
     [ "$result" = 0 ]
     [ -f observed-active ]
     [ ! -f "$MOD_TEST/runtime/error" ]
+    bash "$MOD_TEST/adb-ctl.sh" status | grep -q '^DISABLED - No module-owned live changes;'
     if [ "$SCENARIO" = daemon_reset ]; then [ "$(cat restarts)" = 3 ]; fi
     if [ "$SCENARIO" = reconnect ]; then [ "$(cat restarts)" = 2 ]; fi
 else

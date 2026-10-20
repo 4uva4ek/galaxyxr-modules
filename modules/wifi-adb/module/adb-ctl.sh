@@ -23,6 +23,11 @@ report() {
     if [ -f "$STATE/active" ] && healthy; then
         echo 'ENABLED - ADB TCP listening on port 5555.'
         ip -4 addr show wlan0 2>/dev/null | awk '/inet / {split($2,a,"/"); print "Connect: adb connect " a[1] ":5555"}'
+    elif [ ! -d "$STATE/lock" ] && [ ! -f "$STATE/error" ] &&
+         [ ! -f "$STATE/active" ] &&
+         { [ ! -f "$STATE/baseline" ] ||
+           [ "$(getprop service.adb.tcp.port)" = "$(cat "$STATE/baseline")" ]; }; then
+        echo 'DISABLED - No module-owned live changes; checkbox ON requires standard KernelSU startup.'
     else
         echo 'DISABLED - Module activation is absent or unconfirmed.'
     fi
@@ -50,7 +55,7 @@ mkdir -p "$STATE" || exit 1
 chmod 700 "$STATE"
 BOOT=$(cat /proc/sys/kernel/random/boot_id) || exit 1
 if [ "$(cat "$STATE/boot" 2>/dev/null)" != "$BOOT" ]; then
-    rm -f "$STATE/active" "$STATE/error" "$STATE/waiting" "$STATE/retries"
+    rm -f "$STATE/active" "$STATE/error" "$STATE/waiting" "$STATE/retries" "$STATE/baseline"
     rmdir "$STATE/lock" 2>/dev/null
     printf '%s\n' "$BOOT" > "$STATE/boot"
 fi
@@ -101,6 +106,7 @@ wait_ready() {
 }
 wait_ready || exit 0
 OLD_PORT=$(getprop service.adb.tcp.port)
+printf '%s\n' "$OLD_PORT" > "$STATE/baseline" || fail 'Cannot save rollback baseline.'
 RETRIES=$(cat "$STATE/retries" 2>/dev/null)
 case "$RETRIES" in ''|*[!0-9]*) RETRIES=0 ;; esac
 activate() {
