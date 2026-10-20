@@ -1,0 +1,7 @@
+id=gxr_logging_warning
+name=Logging Warning
+version=0.1.0
+versionCode=100
+author=4uva4ek
+description=WARNING threshold for Android global and per-tag logging. Reversible RAM-only properties; vendor bypasses are not suppressed.
+updateJson=https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/logging-warning.json

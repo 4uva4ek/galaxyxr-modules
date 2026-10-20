@@ -3,6 +3,12 @@
   "name": "Galaxy XR Modules",
   "modules": [
     {
+      "id": "gxr_logging_warning",
+      "name": "Logging Warning",
+      "description": "Reduce Android logging to WARNING while preserving stricter levels. Reversible RAM-only properties; installs disabled.",
+      "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/logging-warning.json"
+    },
+    {
       "id": "gxr_wifi_adb",
       "name": "Wi-Fi ADB",
       "description": "Authenticated ADB TCP on port 5555. Installs disabled; runtime activation on headset is not yet validated.",
