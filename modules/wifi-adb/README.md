@@ -31,7 +31,7 @@ python modules/wifi-adb/build.py
 ```
 
 Output: `dist/wifi-adb/gxr-wifi-adb-1.0.0-auto.zip`.
-The update URL is reserved and unpublished. On 2026-10-20, version 1.0.0 was
+Published through Sources and the per-module update feed. On 2026-10-20, version 1.0.0 was
 installed disabled on a Galaxy XR using the reviewed GXR installer. All installed
 checksums matched and Action confirmed the disabled state. Activation and network
 connectivity have not been tested on the device; host checks cannot prove vendor

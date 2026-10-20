@@ -10,11 +10,11 @@ For memory patches after installation: tick the module's checkbox, then use the 
 
 ## Modules
 
-### Wi-Fi ADB (`gxr_wifi_adb`) — source only
+### Wi-Fi ADB (`gxr_wifi_adb`)
 Automatically enables authenticated ADB TCP on port 5555 when the module starts.
 Installs disabled; disabling restores the previous volatile TCP configuration.
 Installation on Galaxy XR is verified; runtime activation remains untested.
-Not yet published in Sources or Releases.
+Available through Sources and Releases; approve the computer's RSA prompt.
 [Build, setup and recovery](modules/wifi-adb/README.md).
 
 ### Haptic MAIN (`gxr_haptic_main`)

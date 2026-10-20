@@ -3,6 +3,12 @@
   "name": "Galaxy XR Modules",
   "modules": [
     {
+      "id": "gxr_wifi_adb",
+      "name": "Wi-Fi ADB",
+      "description": "Authenticated ADB TCP on port 5555. Installs disabled; runtime activation on headset is not yet validated.",
+      "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/wifi-adb.json"
+    },
+    {
       "id": "gxr_haptic_main",
       "name": "Haptics MAIN",
       "description": "Route controller haptics to the grip motor.",

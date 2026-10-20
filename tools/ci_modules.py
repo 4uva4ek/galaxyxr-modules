@@ -117,6 +117,9 @@ def build(names, ndk, inputs):
         elif name == 'steamlink-pose-time':
             run(sys.executable, f'modules/{name}/build.py', '--ndk', ndk, '--runtime', runtime,
                 *[x for scene in scenes for x in ('--scene', scene)])
+        elif name == 'wifi-adb':
+            run(sys.executable, f'modules/{name}/build.py')
+            run(sys.executable, f'modules/{name}/test_lifecycle.py')
         elif name == 'ota-control':
             run(sys.executable, f'modules/{name}/build.py')
             run(sys.executable, f'modules/{name}/test_ota_ctl.py')
