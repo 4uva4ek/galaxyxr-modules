@@ -28,14 +28,27 @@ and SHA-256 sidecars on 2026-10-12. HAL Cache Bypass 0.1.1 joins the catalogue
 with its own feed and unchanged native/lifecycle payload. Installation requires
 a GXR Manager with the generic GXR lifecycle-contract installer; older Managers
 with the five-module allowlist cannot install it. Framebuffer10 0.5.1 ships no
-vendor code and is distributed as a separate experimental prerelease. It is
-intentionally excluded from the Modules catalogue and stable update feeds. OpenXR QUALITY 0.1.1 is experimental but available in the public
+vendor code and is distributed as an experimental prerelease. Its catalogue
+entry is in `modules-experimental.json` with `experimental: true`; KernelSU GXR 1.0.16+ shows a red Experimental
+label in the source card and installation confirmation. Older Managers read only `modules.json` and do not see entries
+that exist exclusively in the experimental catalogue. Experimental feeds are reviewed and updated manually to
+point at published artifacts, and are excluded from stable automatic release
+and feed promotion. OpenXR QUALITY 0.1.1 is experimental but available in the public
 catalogue. New installation uses the generic GXR installer; existing unpublished
 QUALITY 0.1.0 needs the reviewed migration in its module README because its old
 Action script lacks the update contract. Other modules require
 explicit publication authorization and lifecycle review before catalogue entry.
 
 ## Release process
+
+Keep experiments in `modules-experimental.json` (schemaVersion 1, same entry
+format). The new Manager combines both files and always marks entries from the
+experimental file. Duplicate IDs across catalogues are rejected. `experimental`
+is an optional JSON boolean on ordinary entries, default `false`; putting a
+flagged entry in the ordinary file would still expose it to old Managers. It is a display and release-channel flag, not an installation block.
+For experimental entries the maintainer verifies the published ZIP identity,
+version and SHA-256 before updating its feed. Do not replace an existing release
+asset. Ordinary entries keep the stable publication process below.
 
 1. Build and validate the module locally as described in RELEASING.md. Keep the
    disabled marker and all compatibility, restoration and failure guards.

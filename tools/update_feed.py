@@ -16,22 +16,37 @@ ROOT = Path(__file__).resolve().parents[1]
 REPO = '4uva4ek/galaxyxr-modules'
 # Explicit public distribution allowlist. Source-only and local experiments
 # cannot become downloadable merely because somebody creates a release tag.
-def load_registry():
+def load_registry(include_experimental=False):
     registry = json.loads((ROOT / 'modules.json').read_text('utf-8'))
     if registry['schemaVersion'] != 1:
         raise ValueError('Unsupported catalogue schema')
+    entries = list(registry['modules'])
+    extra_path = ROOT / 'modules-experimental.json'
+    if extra_path.exists():
+        extra = json.loads(extra_path.read_text('utf-8'))
+        if extra['schemaVersion'] != 1:
+            raise ValueError('Unsupported experimental catalogue schema')
+        entries.extend({**entry, 'experimental': True} for entry in extra['modules'])
     modules = {}
-    for entry in registry['modules']:
+    experimental = set()
+    for entry in entries:
         name = Path(urlsplit(entry['updateJson']).path).stem
         expected = f'https://raw.githubusercontent.com/{REPO}/main/updates/{name}.json'
         if (not re.fullmatch(r'[a-z0-9-]+', name) or entry['updateJson'] != expected
                 or name in modules or entry['id'] in modules.values()):
             raise ValueError('Invalid/duplicate public catalogue entry')
         modules[name] = entry['id']
-    return modules
+        if type(entry.get('experimental', False)) is not bool:
+            raise ValueError('experimental must be a boolean')
+        if entry.get('experimental', False):
+            experimental.add(name)
+    return {name: module_id for name, module_id in modules.items()
+            if include_experimental or name not in experimental}
 
 
 MODULES = load_registry()
+ALL_MODULES = load_registry(include_experimental=True)
+EXPERIMENTAL = set(ALL_MODULES) - set(MODULES)
 
 
 def validate(archive, module, version):

@@ -76,7 +76,7 @@ gradients and dark scenes; not HDR). The repaired compositor library is generate
 the headset from its own stock library with a project edit script — hash-checked
 before and after — and bound read-only only during startup; no vendor code ships in
 the package. I610UEU2AZF3 only; requires KernelSU GXR 1.0.6+.
-[Experimental release 0.5.1](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/framebuffer10/v0.5.1). Not listed in the Modules catalogue.
+[Experimental release 0.5.1](https://github.com/4uva4ek/galaxyxr-modules/releases/tag/framebuffer10/v0.5.1). Listed with an experimental flag; KernelSU GXR 1.0.16+ displays it in red. Listed only in the experimental catalogue, hidden from older Managers.
 [Colour fix, lifecycle and limits](modules/framebuffer10/README.md).
 
 ### Retired

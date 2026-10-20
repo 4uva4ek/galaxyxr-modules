@@ -1,15 +1,46 @@
 """Checks for stable promotion: no device access or package execution."""
 import hashlib
+import json
 import tempfile
 import unittest
 import zipfile
 from unittest.mock import patch
 from pathlib import Path
 from update_feed import promote
+import update_feed
 import check_catalogue
 
 
 class CatalogueTests(unittest.TestCase):
+    def test_experimental_entries_are_not_stable_release_candidates(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            entries = [
+                {'id': 'gxr_regular', 'updateJson': f'https://raw.githubusercontent.com/{update_feed.REPO}/main/updates/regular.json'},
+                {'id': 'gxr_trial', 'experimental': True,
+                 'updateJson': f'https://raw.githubusercontent.com/{update_feed.REPO}/main/updates/trial.json'},
+            ]
+            def save():
+                (root / 'modules.json').write_text(json.dumps({'schemaVersion': 1, 'modules': entries}))
+            save()
+            with patch.object(update_feed, 'ROOT', root):
+                self.assertEqual({'regular': 'gxr_regular'}, update_feed.load_registry())
+                self.assertEqual({'regular': 'gxr_regular', 'trial': 'gxr_trial'},
+                                 update_feed.load_registry(include_experimental=True))
+                (root / 'modules-experimental.json').write_text(json.dumps({
+                    'schemaVersion': 1, 'modules': [entries.pop()]}))
+                save()
+                self.assertEqual({'regular': 'gxr_regular'}, update_feed.load_registry())
+                self.assertEqual({'regular': 'gxr_regular', 'trial': 'gxr_trial'},
+                                 update_feed.load_registry(include_experimental=True))
+                (root / 'modules-experimental.json').unlink()
+                entries.append({'id': 'gxr_trial',
+                    'updateJson': f'https://raw.githubusercontent.com/{update_feed.REPO}/main/updates/trial.json'})
+                entries[1]['experimental'] = 'true'
+                save()
+                with self.assertRaises(ValueError):
+                    update_feed.load_registry()
+
     def test_first_release_and_existing_feed_validation(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

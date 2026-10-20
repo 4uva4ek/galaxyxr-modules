@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "name": "Galaxy XR Experimental Modules",
+  "modules": [
+    {
+      "id": "gxr_framebuffer10",
+      "name": "Galaxy XR Framebuffer10",
+      "description": "Experimental 10-bit SDR output with corrected colour and QUAD alpha. Galaxy XR I610UEU2AZF3 only. Installs disabled.",
+      "experimental": true,
+      "updateJson": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/updates/framebuffer10.json"
+    }
+  ]
+}

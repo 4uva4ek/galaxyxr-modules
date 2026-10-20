@@ -1,0 +1,7 @@
+{
+  "version": "0.5.1-experimental",
+  "versionCode": 501,
+  "zipUrl": "https://github.com/4uva4ek/galaxyxr-modules/releases/download/framebuffer10/v0.5.1/gxr-framebuffer10-0.5.1-experimental-auto.zip",
+  "changelog": "https://raw.githubusercontent.com/4uva4ek/galaxyxr-modules/main/changelogs/framebuffer10.md",
+  "sha256": "549e75b07bcb8d53f578277ae788e8e01fb1b09dda6a4d7767ad9ee161dcee89"
+}

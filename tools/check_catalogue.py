@@ -1,6 +1,6 @@
 """Check the repository source catalogue without requiring native build inputs."""
 import json
-from update_feed import MODULES, REPO, ROOT
+from update_feed import ALL_MODULES as MODULES, EXPERIMENTAL, REPO, ROOT
 
 def check():
     for name, module_id in MODULES.items():
@@ -18,7 +18,8 @@ def check():
         feed = json.loads(feed_path.read_text('utf-8'))
         assert 0 < feed['versionCode'] <= int(props['versionCode']), f'{name}: feed/source version mismatch'
         version = feed['version']
-        assert feed['zipUrl'] == f'https://github.com/{REPO}/releases/download/{name}/v{version}/gxr-{name}-{version}-auto.zip'
+        tag_version = version.removesuffix('-experimental') if name in EXPERIMENTAL else version
+        assert feed['zipUrl'] == f'https://github.com/{REPO}/releases/download/{name}/v{tag_version}/gxr-{name}-{version}-auto.zip'
         assert feed['changelog'] == f'https://raw.githubusercontent.com/{REPO}/main/changelogs/{name}.md'
     print(f'Catalogue: {len(MODULES)} independent public modules verified')
 
