@@ -57,6 +57,7 @@ case "${1:-status}" in
   done
   allowed || exit 0
   (cd "$MODDIR" && sha256sum -c SHA256SUMS) || fail 'Package integrity mismatch'
+  generated=$("$BIN" --build-payload 2>&1) || fail "$generated"
   chown 0:0 "$MODDIR/payload/libvulkan_compositor.so" &&
    chmod 0444 "$MODDIR/payload/libvulkan_compositor.so" &&
    chcon u:object_r:system_lib_file:s0 "$MODDIR/payload/libvulkan_compositor.so" || fail 'Cannot prepare separate library copy'

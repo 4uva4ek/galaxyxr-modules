@@ -1,22 +1,17 @@
-Galaxy XR Framebuffer10 0.3.1-experimental
+Galaxy XR Framebuffer10 0.5.1-experimental (author 4uva4ek)
 
-Continuous 10-bit SDR with corrected camera shader output. Not full HDR.
-Requires the KernelSU GXR coordinated restart API; 1.0.3 adds hook diagnostics.
-Prepare temporary startup changes while Android is stopped, start once through
-KernelSU, verify output, then remove the bind and selector. An independent
-guardian monitors the running session. Original system files are not modified.
+Continuous 10-bit SDR output with correct colours on firmware I610UEU2AZF3.
+Removes 8-bit banding in gradients. Not HDR: brightness and gamut unchanged.
+Requires KernelSU GXR 1.0.6 or later (coordinated restart, generic installer).
 
-Install/update disabled. Enable separately, then request a coordinated restart.
-Action reports actual status and recovery instructions. Disable requests verified
-restoration, which may restart Android. Full power removal clears runtime changes;
-enabled modules can reapply at a later startup. Cold kernel boot expires old
-failure guards without changing ON/OFF preferences; soft reboot retains guards.
+No vendor code ships in this package. Before the first activation the module
+generates its color library from this headset's own stock compositor library
+(stock and result SHA-256 verified) and keeps it in the module folder.
+Any other firmware is refused and the module stays disabled.
 
-Three consecutive soft restarts passed. The prior started-hook exit 1 did not
-recur, but its original cause is unknown. Cold-boot/visual validation of the final
-combination remains pending. Separate-draw UNORM alpha blending remains a limit.
-
-This local ZIP contains a modified proprietary Samsung compositor library and
-must not be publicly redistributed. Only project-authored source is published.
-See NATIVE-NOTICE.txt in the source tree (NOTICE.txt in the local ZIP), README.md
-and docs/COORDINATED-RESTART-2026-10-11.md for requirements and protocol details.
+Installs disabled. Check the module, then use a KernelSU soft reboot.
+Uncheck to turn it off; it restores stock 8-bit output. Immediate restore:
+sh /data/adb/modules/gxr_framebuffer10/action.sh off
+Original system files and partitions are never written; a temporary
+read-only bind is used during startup only. Full power removal clears all
+runtime changes. Action reports the verified state and recovery steps.

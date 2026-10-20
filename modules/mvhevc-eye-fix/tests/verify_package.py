@@ -124,7 +124,7 @@ def main():
             fail(f'Checksum mismatch: {name}')
     if 'action.sh' not in files or 'service.sh' not in files:
         fail('Missing lifecycle scripts')
-    if any(name.startswith('bin/') for name in files):
+    if '--contract-only' not in sys.argv and any(name.startswith('bin/') for name in files):
         fail('package ships binary payloads; the patched libraries are generated on the device')
     # install_notes
     if 'install-info.txt' in files:

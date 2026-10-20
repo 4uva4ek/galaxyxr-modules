@@ -29,7 +29,8 @@ static const char* KEY="cpm.10bit_framebuffers";
 static const char* LIB="/system/lib64/libvulkan_compositor.so";
 static const char* PAYLOAD="/data/adb/modules/gxr_framebuffer10/payload/libvulkan_compositor.so";
 static const char* STOCK="54f9c32c6a80198dff06ae8cda56a0f81d87b660c67f62bc452725f241e0733e";
-static const char* PATCH="ff8e344f81c4f2ce1c3e355a70b73c3de957e800efd736bb11dd874748d6fe4c";
+static const char* PATCH="f8e5cfeb7aefeabf922315eb8ca13a71a95df686ac85e3b6742d3ddb2964c142";
+#include "payload_patch.inc"
 static volatile sig_atomic_t interrupted=0;
 static void stop_signal(int) { interrupted=1; }
 static uint64_t real_ms() { timespec t{}; if(clock_gettime(CLOCK_BOOTTIME,&t)) _exit(90); return uint64_t(t.tv_sec)*1000+t.tv_nsec/1000000; }
@@ -61,6 +62,79 @@ static std::string readfile(const std::string& p) {
 }
 static bool digest(const char* p,const char* expected){auto r=command({"/system/bin/sha256sum",p});return r.code==0&&r.text.rfind(expected,0)==0;}
 static std::string linkname(const std::string& p){char b[256];ssize_t n=readlink(p.c_str(),b,sizeof(b));return n>0?std::string(b,size_t(n)):"";}
+// The package ships no vendor code. The payload is generated here from the
+// device's own stock library with the project edit script (payload_patch.inc):
+// per shader slot a new header, then COPY/SKIP counts of stock instructions and
+// INSERTed project instructions. Any mismatch fails closed.
+static bool readAll(const char* p,std::string& s){
+    int f=open(p,O_RDONLY|O_CLOEXEC|O_NOFOLLOW);if(f<0)return false;
+    struct stat st{};if(fstat(f,&st)||!S_ISREG(st.st_mode)||st.st_size<=0||st.st_size>256*1024*1024){close(f);return false;}
+    s.resize(size_t(st.st_size));size_t pos=0;
+    while(pos<s.size()){ssize_t n=read(f,&s[pos],s.size()-pos);if(n<=0){close(f);return false;}pos+=size_t(n);}
+    close(f);return true;
+}
+static bool applyPatch(const std::string& src,std::string& out,std::string& why){
+    const uint32_t* p=kPayloadPatch;const size_t total=sizeof(kPayloadPatch)/4;
+    if(total<2||p[0]!=0x30314246){why="edit script header";return false;}
+    out=src;size_t k=2;
+    for(uint32_t slot=0;slot<p[1];slot++){
+        if(k+3>total){why="edit script truncated";return false;}
+        size_t start=p[k],len=p[k+1],count=p[k+2];k+=3;
+        if(start%4||len%4||len<20||start+len+4>src.size()||k+count>total||count<6){why="slot bounds";return false;}
+        const uint32_t* ops=p+k;k+=count;
+        std::vector<uint32_t> in(len/4);memcpy(in.data(),src.data()+start,len);
+        // Precompiled shaders are adjacent; their registered lengths live in a
+        // separate table. The whole stock library is SHA-256 checked by caller.
+        if(in[0]!=0x07230203){why="stock shader slot";return false;}
+        std::vector<size_t> at;for(size_t w=5;w<in.size();){size_t n=in[w]>>16;if(!n||w+n>in.size()){why="stock instruction stream";return false;}at.push_back(w);w+=n;}
+        std::vector<uint32_t> res(ops,ops+5);size_t i=0,o=5;
+        for(;;){
+            if(o>=count){why="edit script stream";return false;}
+            uint32_t kind=ops[o]>>28,n=ops[o]&0x0fffffff;o++;
+            if(kind==0)break;
+            if(kind==1||kind==2){
+                if(i+n>at.size()){why="copy past end";return false;}
+                if(kind==1){size_t a=at[i],b=i+n<at.size()?at[i+n]:in.size();res.insert(res.end(),in.begin()+long(a),in.begin()+long(b));}
+                i+=n;
+            }else if(kind==3){
+                if(o+n>count){why="insert past end";return false;}
+                res.insert(res.end(),ops+o,ops+o+n);o+=n;
+            }else{why="edit operation";return false;}
+        }
+        if(i!=at.size()||o!=count||res.size()*4!=len){why="slot result size";return false;}
+        memcpy(&out[start],res.data(),len);
+    }
+    if(k!=total){why="edit script trailing data";return false;}
+    return true;
+}
+static int buildPayload(){
+    if(geteuid()!=0){puts("DISABLED - root required to generate payload");return 1;}
+    if(digest(PAYLOAD,PATCH)){puts("PAYLOAD OK - generated color library present and verified");return 0;}
+    if(!digest(LIB,STOCK)){puts("DISABLED - stock compositor library is not the supported build; payload not generated");return 2;}
+    std::string src,out,why;
+    if(!readAll(LIB,src)){puts("DISABLED - cannot read stock compositor library");return 3;}
+    if(!applyPatch(src,out,why)){printf("DISABLED - payload edit script rejected: %s\n",why.c_str());return 3;}
+    std::string dir=std::string(MODULE)+"/payload",tmp=std::string(PAYLOAD)+".tmp";
+    mkdir(dir.c_str(),0755);unlink(tmp.c_str());
+    int f=open(tmp.c_str(),O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW|O_CLOEXEC,0600);
+    if(f<0){puts("DISABLED - cannot create payload file");return 3;}
+    size_t pos=0;while(pos<out.size()){ssize_t n=write(f,out.data()+pos,out.size()-pos);if(n<=0){close(f);unlink(tmp.c_str());puts("DISABLED - payload write failed");return 3;}pos+=size_t(n);}
+    bool ok=fsync(f)==0&&fchown(f,0,0)==0&&fchmod(f,0444)==0&&
+        fsetxattr(f,"security.selinux","u:object_r:system_lib_file:s0",sizeof("u:object_r:system_lib_file:s0"),0)==0;
+    close(f);
+    if(!ok||!digest(tmp.c_str(),PATCH)){unlink(tmp.c_str());puts("DISABLED - generated payload failed verification");return 3;}
+    if(rename(tmp.c_str(),PAYLOAD)){unlink(tmp.c_str());puts("DISABLED - cannot install generated payload");return 3;}
+    int d=open(dir.c_str(),O_RDONLY|O_DIRECTORY|O_CLOEXEC);if(d>=0){fsync(d);close(d);}
+    puts("PAYLOAD OK - color library generated from the stock library and verified");return 0;
+}
+// Host/offline check of the same edit script: apply to a stock copy.
+static int applyFile(const char* in,const char* outPath){
+    std::string src,out,why;if(!readAll(in,src)){puts("cannot read input");return 1;}
+    if(!applyPatch(src,out,why)){printf("rejected: %s\n",why.c_str());return 1;}
+    int f=open(outPath,O_WRONLY|O_CREAT|O_TRUNC|O_CLOEXEC,0644);if(f<0)return 1;
+    size_t pos=0;while(pos<out.size()){ssize_t n=write(f,out.data()+pos,out.size()-pos);if(n<=0){close(f);return 1;}pos+=size_t(n);}
+    close(f);puts("APPLIED - verify the SHA-256 against build.json");return 0;
+}
 static bool sameFile(const char* a,const char* b){struct stat x{},y{};return !stat(a,&x)&&!stat(b,&y)&&x.st_dev==y.st_dev&&x.st_ino==y.st_ino;}
 static bool mounted(){std::istringstream in(readfile("/proc/self/mountinfo"));std::string l;while(std::getline(in,l)){std::istringstream row(l);std::string a,b,c,d,e;row>>a>>b>>c>>d>>e;if(e==LIB)return true;}return false;}
 static int libraryHelper(bool bind){
@@ -182,8 +256,12 @@ struct Backend {
     bool off(){return get(KEY)=="false" || get(KEY)=="0" || get(KEY).empty();}
     bool softRestartRequested(){return mock?(scenario=="soft-restart"||scenario=="soft-restart-failed"||scenario=="coordinated-handoff")&&time>=20000:
         access((std::string(DIR)+"/soft-restart").c_str(),F_OK)==0;}
+    // Only an explicit stop (action.sh off, uninstall) or a signal ends a running
+    // session at once. The KernelSU checkbox applies at the next soft reboot.
     bool requestStop(){return interrupted || (mock&&continuous&&time>=300000) || (!mock &&
-        (access((std::string(DIR)+"/stop").c_str(),F_OK)==0||access((std::string(MODULE)+"/disable").c_str(),F_OK)==0||access((std::string(MODULE)+"/remove").c_str(),F_OK)==0));}
+        access((std::string(DIR)+"/stop").c_str(),F_OK)==0);}
+    bool preferenceOff(){return mock?scenario=="planned-disable"&&time>=20000:
+        access((std::string(MODULE)+"/disable").c_str(),F_OK)==0||access((std::string(MODULE)+"/remove").c_str(),F_OK)==0;}
     bool pulse(char c){return watchdogFd<0||write(watchdogFd,&c,1)==1;}
     bool disableModule(){
         if(mock)return true;
@@ -232,6 +310,16 @@ static bool recover(Backend& b){
     }b.pause(500);}while(b.now()<end);
     b.report("DISABLED","ERROR: output/framework restoration not fully verified; power-cycle required");return false;
 }
+// Checkbox OFF took effect at a KernelSU soft reboot: KernelSU itself stops and
+// restarts Android, and the selector and library bind are already gone after
+// startup. Clear the remaining oneshot guard; never restart anything here.
+static bool plannedStop(Backend& b){
+    b.pulse('R');
+    bool ok=b.set(KEY,"false")&&b.off()&&b.restoreLibrary()&&b.set("ctl.oneshot_off","surfaceflinger");
+    b.report("DISABLED",ok?"checkbox OFF applied at KernelSU soft reboot; original library and service flags restored; Android restarts with stock 8-bit output"
+                          :"ERROR: soft-reboot restoration incomplete; power-cycle required");
+    return ok;
+}
 static bool handoffRestart(Backend& b,const std::string& previous){
     // KernelSU owns stop/start for an intentional soft reboot. Do not race it
     // with another service restart, and preserve the checked preference.
@@ -258,7 +346,7 @@ static bool handoffRestart(Backend& b,const std::string& previous){
     return false;
 }
 static int trial(Backend& b,unsigned seconds){
-    bool modified=false,ready=false,completed=false;uint64_t hard=b.now()+90000+seconds*1000;std::string activeIdentity;
+    bool modified=false,ready=false,completed=false,planned=false;uint64_t hard=b.now()+90000+seconds*1000;std::string activeIdentity;int activePid=0;
     try {
         b.report("DISABLED","arming temporary oneshot service guard");
         // Set modified before call: a timeout may occur after a command applies.
@@ -299,7 +387,7 @@ static int trial(Backend& b,unsigned seconds){
                 if(!dependentsRestarted){if(!b.coordinated&&!b.restartDependents())throw std::runtime_error("XR dependency restart failed");dependentsRestarted=true;}
                 auto r=b.renderer();
                 if(!cameraShaders(r,!b.continuous)||!b.frameworkReady()){if(!b.mock)save("renderer-waiting.txt",r);b.pause(500);continue;}
-                if(!b.mock){save("renderer-active.txt",r);save("maps-active.txt",readfile("/proc/"+std::to_string(pid)+"/maps"));save("active-pid",std::to_string(pid));activeIdentity=identity(pid);save("active-identity",activeIdentity);}
+                if(!b.mock){save("renderer-active.txt",r);save("maps-active.txt",readfile("/proc/"+std::to_string(pid)+"/maps"));save("active-pid",std::to_string(pid));activePid=pid;activeIdentity=identity(pid);save("active-identity",activeIdentity);}
                 ready=true;b.report("ENABLED",b.continuous?"color patch mapping, 10-bit framebuffer/HWC and framework verified; active until disabled; SDR output":"patched camera shaders, 10-bit framebuffer AND HWC verified; visual window 120 seconds");break;
             }
             b.pause(250);
@@ -314,12 +402,18 @@ static int trial(Backend& b,unsigned seconds){
                 if(handoffRestart(b,activeIdentity))return 4;
                 throw std::runtime_error("KernelSU restart handoff failed; no automatic retry");
             }
+            if(b.mock&&b.scenario=="planned-disable"&&b.time>=20000)b.running=false; // KernelSU stop (simulation)
+            if(b.get("init.svc.surfaceflinger")!="running"&&b.preferenceOff()&&!b.softRestartRequested()){planned=true;break;}
             if((b.get("init.svc.surfaceflinger")!="running"||!b.off())&&!b.softRestartRequested())throw std::runtime_error("service exit or external property change");
-            if(!b.mock&&++checks%30==0){int pid=sfpid();if((identity(pid)!=activeIdentity||!patchedMapping(pid))&&!b.softRestartRequested())throw std::runtime_error("compositor identity/library changed");}
-            if(!b.mock&&checks%100==0){if((!formats(b.dump(),43,true)||!cameraShaders(b.renderer(),false))&&!b.softRestartRequested())throw std::runtime_error("output or camera shader health check failed");}
+            // Lightweight steady state: no fork and no dumpsys while running. Full
+            // dumpsys holds compositor locks and can cause periodic hitches. Buffers,
+            // format and shaders cannot change without a new compositor process.
+            if(!b.mock&&++checks%30==0&&identity(activePid)!=activeIdentity&&!b.softRestartRequested())throw std::runtime_error("compositor identity changed");
+            if(!b.mock&&checks%100==0&&!patchedMapping(activePid)&&!b.softRestartRequested())throw std::runtime_error("compositor library mapping changed");
             if(b.mock&&b.scenario=="runtime-crash")b.running=false;
             b.pause(100);
         }
+        if(planned)return plannedStop(b)?0:3;
         completed=b.continuous||!b.requestStop();
     } catch(const std::exception& e){b.report("DISABLED",std::string("test ended: ")+e.what());}
     bool ok=!modified||recover(b);
@@ -395,8 +489,10 @@ int main(int argc,char**argv){
     signal(SIGTERM,stop_signal);signal(SIGINT,stop_signal);
     Backend b;
 #ifndef __ANDROID__
-    if(argc<2||(strcmp(argv[1],"--simulate")&&strcmp(argv[1],"--simulate-session")&&strcmp(argv[1],"--simulate-coordinated")&&strcmp(argv[1],"--watchdog-fixture"))){puts("HOST TEST BUILD - mock modes only");return 64;}
+    if(argc<2||(strcmp(argv[1],"--simulate")&&strcmp(argv[1],"--simulate-session")&&strcmp(argv[1],"--simulate-coordinated")&&strcmp(argv[1],"--watchdog-fixture")&&strcmp(argv[1],"--apply-patch"))){puts("HOST TEST BUILD - mock modes only");return 64;}
 #endif
+    if(argc==4&&!strcmp(argv[1],"--apply-patch"))return applyFile(argv[2],argv[3]);
+    if(argc==2&&!strcmp(argv[1],"--build-payload"))return buildPayload();
     if(argc==2&&!strcmp(argv[1],"--mapping-fixture"))return mappingFixture();
     if(argc==2&&!strcmp(argv[1],"--inspect-mapping")){printf("%s",mappingDetails(sfpid()).c_str());return 0;}
     if(argc==3&&!strcmp(argv[1],"--watchdog-fixture"))return watchdogFixture(argv[2]);
@@ -406,7 +502,7 @@ int main(int argc,char**argv){
         b.mock=true;b.continuous=!strcmp(argv[1],"--simulate-session");b.scenario=argv[2];
         b.coordinated=!strcmp(argv[1],"--simulate-coordinated");
         if(b.coordinated){b.continuous=true;b.running=false;}
-        const std::vector<std::string> allowed={"normal","oneshot-denied","startup-crash","clear-denied","output-stays8","dump-timeout","runtime-crash","bind-denied","unmount-denied","bad-shader","framework-stuck","soft-restart","soft-restart-failed","coordinated-start-timeout","coordinated-handoff"};
+        const std::vector<std::string> allowed={"normal","oneshot-denied","startup-crash","clear-denied","output-stays8","dump-timeout","runtime-crash","bind-denied","unmount-denied","bad-shader","framework-stuck","soft-restart","soft-restart-failed","coordinated-start-timeout","coordinated-handoff","planned-disable"};
         if(std::find(allowed.begin(),allowed.end(),b.scenario)==allowed.end())return 64;
         int rc=trial(b,120);printf("SIMULATION ONLY rc=%d starts=%d selector=%d oneshot=%d external_starts=%d\n",rc,b.starts,b.prop,b.one,b.externalStarts);return rc;
     }

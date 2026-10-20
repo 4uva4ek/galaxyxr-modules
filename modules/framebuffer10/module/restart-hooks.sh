@@ -16,12 +16,20 @@ fail() {
  echo "DISABLED - ERROR: $*"
  exit 1
 }
+# Waits are bounded by elapsed time, below KernelSU's per-hook limits
+# (prepare/abort 30 s, stopped 45 s, started 70 s), so a slow status call can
+# never let ksud kill the hook before it reports its own reason.
+START=$(date +%s)
+expired() { [ $(( $(date +%s) - START )) -ge "$1" ]; }
 [ -n "${KSU_RESTART_GENERATION:-}" ] && [ -f /dev/ksu-restart-stage/busy ] || fail 'KernelSU coordinated restart required'
 [ "$(cat /dev/ksu-restart-stage/generation)" = "$KSU_RESTART_GENERATION" ] || fail 'Restart generation mismatch'
 case "$1" in
  prepare)
   sh "$MODDIR/cold-boot-reset.sh" "$MODDIR" "$STATE.guard" || exit $?
   (cd "$MODDIR" && sha256sum -c SHA256SUMS) || fail 'Package integrity mismatch'
+  # The package ships no vendor code: generate (or verify) the color library
+  # from this device's stock library before Android stops.
+  "$BIN" --build-payload || fail 'Color library could not be generated from the stock library'
   chown 0:0 "$MODDIR/payload/libvulkan_compositor.so"
   chmod 0444 "$MODDIR/payload/libvulkan_compositor.so"
   chcon u:object_r:system_lib_file:s0 "$MODDIR/payload/libvulkan_compositor.so"
@@ -34,28 +42,25 @@ case "$1" in
   fi
   ;;
  stopped)
-  count=0
   while [ -d "$MODDIR/session-lease" ]; do
-   count=$((count+1)); [ "$count" -le 15 ] || fail 'Previous guardian did not hand off'
+   ! expired 15 || fail 'Previous guardian did not hand off'
    sleep 1
   done
   [ ! -f "$MODDIR/disable" ] || fail 'Module disabled during preparation'
   nohup sh "$MODDIR/auto.sh" resume-coordinated > /dev/gxr-framebuffer10-launch.log 2>&1 < /dev/null &
-  count=0
   while [ ! -f "$STATE/start-ready" ] || [ "$(cat "$STATE/start-ready")" != "$KSU_RESTART_GENERATION" ]; do
    [ ! -f "$MODDIR/disable" ] || fail 'Native preparation failed; inspect launcher log'
-   count=$((count+1)); [ "$count" -le 20 ] || fail 'Native startup preparation timed out'
+   ! expired 38 || fail 'Native startup preparation timed out'
    sleep 1
   done
   echo 'DISABLED - Prepared: KernelSU may start Android once.'
   ;;
  started)
-  count=0
   while :; do
    status=$("$BIN" --status) || fail 'Native output verification failed'
    case "$status" in ENABLED*) printf '%s\n' "$status"; exit 0;; esac
    [ ! -f "$MODDIR/disable" ] || fail 'Native session stopped during verification'
-   count=$((count+1)); [ "$count" -le 60 ] || fail 'Output verification timed out'
+   ! expired 58 || fail 'Output verification timed out'
    sleep 1
   done
   ;;
@@ -63,9 +68,7 @@ case "$1" in
   : > "$MODDIR/disable"
   if [ -d "$MODDIR/session-lease" ]; then
    "$BIN" --stop
-   count=0
-   while [ -d "$MODDIR/session-lease" ]; do
-    count=$((count+1)); [ "$count" -le 20 ] || break
+   while [ -d "$MODDIR/session-lease" ] && ! expired 18; do
     sleep 1
    done
   fi

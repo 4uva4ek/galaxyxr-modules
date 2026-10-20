@@ -27,8 +27,5 @@
   "auto_shared_files": [
     "cold-boot-reset.sh"
   ],
-  "shared_files": [],
-  "binary_files": {
-    "payload/libvulkan_compositor.so": "ff8e344f81c4f2ce1c3e355a70b73c3de957e800efd736bb11dd874748d6fe4c"
-  }
+  "shared_files": []
 }
